@@ -1,2 +1,840 @@
 /* Lunch Roulette - Modern UI Styles */
-/* This file will be populated in later tasks */
+/* モダンUIトレンドに合わせたスタイリング、レスポンシブデザイン対応 */
+
+/* ===== CSS Variables (カスタムプロパティ) ===== */
+:root {
+  /* カラーパレット - Material Design 3.0準拠 */
+  --primary-color: #6750a4;
+  --primary-light: #9a82db;
+  --primary-dark: #4f378b;
+  --secondary-color: #625b71;
+  --secondary-light: #8b83a0;
+  --secondary-dark: #463d54;
+  
+  /* サーフェスカラー */
+  --surface-color: #fffbfe;
+  --surface-variant: #f4eff4;
+  --surface-container: #f0edf1;
+  --surface-container-high: #ebe8ec;
+  
+  /* テキストカラー */
+  --on-surface: #1c1b1f;
+  --on-surface-variant: #49454f;
+  --on-primary: #ffffff;
+  --on-secondary: #ffffff;
+  
+  /* アクセントカラー */
+  --success-color: #4caf50;
+  --warning-color: #ff9800;
+  --error-color: #f44336;
+  --info-color: #2196f3;
+  
+  /* シャドウ */
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-2: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  --shadow-3: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+  
+  /* ボーダーラディウス */
+  --radius-small: 8px;
+  --radius-medium: 12px;
+  --radius-large: 16px;
+  --radius-xl: 24px;
+  
+  /* スペーシング */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  
+  /* タイポグラフィ */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  
+  /* トランジション */
+  --transition-fast: 0.15s ease-out;
+  --transition-base: 0.25s ease-out;
+  --transition-slow: 0.35s ease-out;
+}
+
+/* ===== リセット・ベーススタイル ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  color: var(--on-surface);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== レイアウト ===== */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== ヘッダー ===== */
+.header {
+  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-xl) 0;
+}
+
+.app-title {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: white;
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+}
+
+.title-icon {
+  font-size: 2.5rem;
+  animation: bounce 2s infinite;
+}
+
+.app-subtitle {
+  font-size: var(--font-size-lg);
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 300;
+}
+
+/* ===== 情報セクション ===== */
+.info-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.info-card {
+  background: var(--surface-color);
+  border-radius: var(--radius-large);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-2);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-3);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.card-icon {
+  font-size: var(--font-size-xl);
+}
+
+.card-title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--on-surface);
+  flex: 1;
+}
+
+.default-badge {
+  background: var(--warning-color);
+  color: white;
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-small);
+  font-weight: 500;
+}
+
+.card-content {
+  color: var(--on-surface-variant);
+}
+
+/* 位置情報カード */
+.location-text {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.city {
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.region {
+  margin-left: var(--spacing-sm);
+  opacity: 0.8;
+}
+
+.coordinates {
+  font-size: var(--font-size-sm);
+  font-family: 'Courier New', monospace;
+  opacity: 0.7;
+}
+
+/* 天気情報カード */
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.weather-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.weather-info {
+  flex: 1;
+}
+
+.temperature {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-bottom: var(--spacing-xs);
+}
+
+.description {
+  font-size: var(--font-size-lg);
+  color: var(--on-surface-variant);
+}
+
+.weather-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.weather-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.detail-label {
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.weather-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-good {
+  color: var(--success-color);
+  font-weight: 500;
+}
+
+.status-caution {
+  color: var(--warning-color);
+  font-weight: 500;
+}
+
+/* ===== ルーレットセクション ===== */
+.roulette-section {
+  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.roulette-container {
+  background: var(--surface-color);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
+  box-shadow: var(--shadow-2);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-bottom: var(--spacing-md);
+}
+
+.section-description {
+  color: var(--on-surface-variant);
+  margin-bottom: var(--spacing-xl);
+  font-size: var(--font-size-lg);
+}
+
+.roulette-btn {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: var(--on-primary);
+  border: none;
+  border-radius: var(--radius-large);
+  padding: var(--spacing-lg) var(--spacing-2xl);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  min-width: 200px;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.roulette-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-3);
+}
+
+.roulette-btn:active {
+  transform: translateY(0);
+}
+
+.roulette-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-icon {
+  font-size: var(--font-size-xl);
+  animation: spin 2s linear infinite paused;
+}
+
+.roulette-btn:disabled .btn-icon {
+  animation-play-state: running;
+}
+
+.btn-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* エラーメッセージ */
+.error-message {
+  background: var(--error-color);
+  color: white;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-medium);
+  margin-top: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  animation: slideIn var(--transition-base);
+}
+
+.error-icon {
+  font-size: var(--font-size-lg);
+}
+
+/* ===== レストランセクション ===== */
+.restaurant-section {
+  animation: fadeInUp var(--transition-slow);
+}
+
+.restaurant-card {
+  background: var(--surface-color);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-3);
+  max-width: 800px;
+  margin: 0 auto var(--spacing-xl);
+  transition: transform var(--transition-base);
+}
+
+.restaurant-card:hover {
+  transform: translateY(-4px);
+}
+
+.restaurant-card .card-header {
+  padding: var(--spacing-lg);
+  background: var(--surface-container);
+  border-bottom: 1px solid var(--surface-variant);
+}
+
+.restaurant-name {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--on-surface);
+  margin: 0;
+}
+
+.restaurant-genre {
+  background: var(--secondary-color);
+  color: var(--on-secondary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-small);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.card-image {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+}
+
+.restaurant-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.restaurant-card:hover .restaurant-photo {
+  transform: scale(1.05);
+}
+
+.image-overlay {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+}
+
+.distance-badge {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-large);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  backdrop-filter: blur(10px);
+}
+
+.card-content {
+  padding: var(--spacing-lg);
+}
+
+.restaurant-info {
+  margin-bottom: var(--spacing-lg);
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--surface-variant);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.info-label {
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  min-width: 80px;
+  font-size: var(--font-size-sm);
+}
+
+.info-value {
+  flex: 1;
+  color: var(--on-surface);
+  word-break: break-word;
+}
+
+.restaurant-description {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--surface-container);
+  border-radius: var(--radius-medium);
+  border-left: 4px solid var(--primary-color);
+}
+
+.restaurant-description p {
+  color: var(--on-surface-variant);
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-medium);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  border: none;
+  flex: 1;
+  justify-content: center;
+  min-width: 140px;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: var(--on-primary);
+  box-shadow: var(--shadow-1);
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
+}
+
+.btn-secondary {
+  background: var(--surface-container);
+  color: var(--on-surface);
+  border: 2px solid var(--surface-variant);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-container-high);
+  border-color: var(--secondary-color);
+  transform: translateY(-1px);
+}
+
+.retry-section {
+  text-align: center;
+  margin-top: var(--spacing-xl);
+}
+
+.retry-btn {
+  background: var(--surface-container);
+  color: var(--on-surface);
+  border: 2px solid var(--secondary-color);
+  border-radius: var(--radius-large);
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.retry-btn:hover {
+  background: var(--secondary-color);
+  color: var(--on-secondary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-2);
+}
+
+/* ===== フッター ===== */
+.footer {
+  margin-top: auto;
+  padding: var(--spacing-xl) 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.footer-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.footer-text {
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.footer-text a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+  transition: color var(--transition-fast);
+}
+
+.footer-text a:hover {
+  color: white;
+}
+
+.footer-note {
+  font-size: var(--font-size-xs);
+  opacity: 0.7;
+  line-height: 1.5;
+}
+
+/* ===== アニメーション ===== */
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===== レスポンシブデザイン ===== */
+/* タブレット */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-sm);
+  }
+  
+  .app-title {
+    font-size: var(--font-size-2xl);
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .title-icon {
+    font-size: 2rem;
+  }
+  
+  .info-section {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .roulette-container {
+    padding: var(--spacing-lg);
+  }
+  
+  .roulette-btn {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-lg);
+    min-width: 180px;
+  }
+  
+  .card-image {
+    height: 250px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .btn {
+    flex: none;
+  }
+}
+
+/* モバイル */
+@media (max-width: 480px) {
+  .container {
+    padding: var(--spacing-xs);
+  }
+  
+  .header {
+    padding: var(--spacing-lg) 0;
+    margin-bottom: var(--spacing-xl);
+  }
+  
+  .app-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .app-subtitle {
+    font-size: var(--font-size-base);
+  }
+  
+  .info-card {
+    padding: var(--spacing-md);
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+  
+  .card-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  .weather-main {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .weather-details {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .roulette-container {
+    padding: var(--spacing-md);
+  }
+  
+  .section-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .section-description {
+    font-size: var(--font-size-base);
+  }
+  
+  .roulette-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-base);
+    min-width: 160px;
+  }
+  
+  .card-image {
+    height: 200px;
+  }
+  
+  .restaurant-card .card-header {
+    padding: var(--spacing-md);
+  }
+  
+  .restaurant-name {
+    font-size: var(--font-size-lg);
+  }
+  
+  .card-content {
+    padding: var(--spacing-md);
+  }
+  
+  .info-row {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    align-items: flex-start;
+  }
+  
+  .info-label {
+    min-width: auto;
+  }
+  
+  .distance-badge {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+}
+
+/* 高解像度ディスプレイ対応 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .weather-icon {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* ダークモード対応（将来の拡張用） */
+@media (prefers-color-scheme: dark) {
+  /* ダークモード用のスタイルは将来実装予定 */
+}
+
+/* アクセシビリティ - 動きを減らす設定 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .title-icon {
+    animation: none;
+  }
+}
+
+/* 印刷用スタイル */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .container {
+    max-width: none;
+    padding: 0;
+  }
+  
+  .header,
+  .roulette-section,
+  .footer {
+    display: none;
+  }
+  
+  .restaurant-card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}
