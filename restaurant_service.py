@@ -131,8 +131,26 @@ class RestaurantService:
             print(f"レストラン検索成功: {len(restaurants)}件取得")
             return restaurants
             
+        except requests.exceptions.HTTPError as e:
+            # HTTPエラー（レート制限、認証エラーなど）
+            if e.response.status_code == 429:
+                print(f"レストラン検索API レート制限エラー: {e}")
+                # レート制限時は古いキャッシュデータを使用を試行
+                fallback_data = self._get_fallback_cache_data(cache_key)
+                if fallback_data:
+                    return fallback_data
+            elif e.response.status_code == 401:
+                print(f"レストラン検索API 認証エラー: {e}")
+            else:
+                print(f"レストラン検索API HTTPエラー: {e}")
+            return []
+            
         except requests.exceptions.RequestException as e:
             print(f"レストラン検索API リクエストエラー: {e}")
+            # ネットワークエラー時は古いキャッシュデータを使用を試行
+            fallback_data = self._get_fallback_cache_data(cache_key)
+            if fallback_data:
+                return fallback_data
             return []
             
         except (ValueError, KeyError) as e:
@@ -399,6 +417,46 @@ class RestaurantService:
         except Exception as e:
             print(f"レストラン詳細取得エラー (ID: {restaurant_id}): {e}")
             return None
+    
+    def _get_fallback_cache_data(self, cache_key: str) -> List[Dict]:
+        """
+        期限切れでも利用可能なキャッシュデータを取得（フォールバック用）
+        
+        Args:
+            cache_key (str): キャッシュキー
+            
+        Returns:
+            list: キャッシュされたレストラン情報、存在しない場合は空リスト
+        """
+        try:
+            from database import get_db_connection
+            
+            with get_db_connection(self.cache_service.db_path) as conn:
+                cursor = conn.execute('''
+                    SELECT data FROM cache 
+                    WHERE cache_key = ?
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                ''', (cache_key,))
+                
+                row = cursor.fetchone()
+                
+                if row is None:
+                    return []
+                
+                # 期限切れでもデータを返す（フォールバック用）
+                fallback_data = self.cache_service.deserialize_data(row['data'])
+                
+                # ソース情報を更新
+                for restaurant in fallback_data:
+                    restaurant['source'] = 'fallback_cache'
+                
+                print(f"フォールバック用キャッシュデータを使用（期限切れ）: {len(fallback_data)}件")
+                return fallback_data
+                
+        except Exception as e:
+            print(f"フォールバックキャッシュ取得エラー: {e}")
+            return []
     
     def validate_restaurant_data(self, restaurant_data: Dict) -> bool:
         """

@@ -14,8 +14,10 @@ Lunch Roulette - メインアプリケーション
 
 from flask import Flask, render_template, request, jsonify
 import os
+import logging
 from database import init_database
 from cache_service import CacheService
+from error_handler import ErrorHandler
 
 # Flaskアプリケーションの初期化
 app = Flask(__name__)
@@ -29,6 +31,15 @@ app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
 # キャッシュサービスの初期化
 cache_service = CacheService(db_path=app.config['DATABASE'])
+
+# エラーハンドラーの初期化
+error_handler = ErrorHandler()
+
+# ログ設定
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 
 def init_db():
@@ -98,6 +109,9 @@ def index():
         # エラーハンドリング：エラー時はデフォルト情報でページを表示
         app.logger.error(f'メインページ表示でエラーが発生: {str(e)}')
         
+        # エラーハンドラーでエラー情報を処理
+        error_info = error_handler.handle_location_error(e, fallback_available=True)
+        
         # デフォルトデータでページを表示
         default_data = {
             'location': {
@@ -118,7 +132,8 @@ def index():
             'is_default_location': True,
             'is_default_weather': True,
             'weather_summary': '晴れ 20°C UV指数3',
-            'is_good_walking_weather': True
+            'is_good_walking_weather': True,
+            'error_message': error_info  # エラーメッセージを追加
         }
         
         return render_template('index.html', **default_data)
@@ -139,12 +154,14 @@ def roulette():
         from weather_service import WeatherService
         from restaurant_service import RestaurantService
         from restaurant_selector import RestaurantSelector
+        from distance_calculator import DistanceCalculator
         
         # サービスインスタンスを作成
         location_service = LocationService(cache_service)
         weather_service = WeatherService(cache_service=cache_service)
         restaurant_service = RestaurantService(cache_service=cache_service)
-        restaurant_selector = RestaurantSelector()
+        distance_calculator = DistanceCalculator(error_handler)
+        restaurant_selector = RestaurantSelector(distance_calculator, error_handler)
         
         # リクエストデータを取得
         request_data = request.get_json() or {}
@@ -174,10 +191,15 @@ def roulette():
         
         # レストランが見つからない場合
         if not restaurants:
+            # レストラン未発見エラーを処理
+            no_restaurant_error = ValueError("近くにレストランが見つかりませんでした")
+            error_info = error_handler.handle_restaurant_error(no_restaurant_error, fallback_available=False)
+            
             return jsonify({
                 'success': False,
-                'message': '近くにランチに適したレストランが見つかりませんでした',
-                'suggestion': '検索範囲を広げるか、時間を置いて再度お試しください',
+                'error_info': error_info,
+                'message': error_info['message'],
+                'suggestion': error_info['suggestion'],
                 'weather': {
                     'description': weather_data['description'],
                     'temperature': weather_data['temperature'],
@@ -189,9 +211,15 @@ def roulette():
         selected_restaurant = restaurant_selector.select_random_restaurant(restaurants, user_lat, user_lon)
         
         if not selected_restaurant:
+            # レストラン選択エラーを処理
+            selection_error = ValueError("レストラン選択中にエラーが発生しました")
+            error_info = error_handler.handle_restaurant_error(selection_error, fallback_available=False)
+            
             return jsonify({
                 'success': False,
-                'message': 'レストラン選択中にエラーが発生しました',
+                'error_info': error_info,
+                'message': error_info['message'],
+                'suggestion': error_info['suggestion'],
                 'weather': {
                     'description': weather_data['description'],
                     'temperature': weather_data['temperature'],
@@ -247,19 +275,29 @@ def roulette():
     except ValueError as e:
         # 入力値エラー
         app.logger.error(f'ルーレット処理で入力値エラー: {str(e)}')
+        error_info = error_handler.handle_location_error(e, fallback_available=False)
+        
         return jsonify({
             'error': True,
-            'message': '位置情報が正しくありません',
-            'details': str(e)
+            'error_info': error_info,
+            'message': error_info['message'],
+            'suggestion': error_info['suggestion']
         }), 400
         
     except Exception as e:
         # その他のエラー
         app.logger.error(f'ルーレット処理で予期しないエラー: {str(e)}')
+        
+        # 汎用エラーハンドリング
+        from error_handler import ErrorType
+        error_type, error_info = error_handler.handle_api_error('roulette', e, fallback_available=False)
+        user_message = error_handler.create_user_friendly_message(error_info)
+        
         return jsonify({
             'error': True,
-            'message': 'レストラン検索中にエラーが発生しました',
-            'details': 'サーバー内部エラーが発生しました。しばらく時間を置いて再度お試しください。'
+            'error_info': user_message,
+            'message': user_message['message'],
+            'suggestion': user_message['suggestion']
         }), 500
 
 
