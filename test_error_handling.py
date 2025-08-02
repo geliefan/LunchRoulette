@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-エラーハンドリングの統合テスチE
-吁E��エラー状況での動作をチE��チE
+エラーハンドリングの統合テスト
+様々なエラー状況での動作をテスト
 """
 
 import pytest
@@ -20,32 +20,32 @@ from error_handler import ErrorHandler
 
 
 class TestErrorHandling:
-    """エラーハンドリングの統合テスチE""
+    """エラーハンドリングの統合テスト"""
 
     @pytest.fixture
     def temp_db_path(self):
-        """チE��ト用の一時データベ�Eスファイルパス"""
+        """テスト用の一時データベースファイルパス"""
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as temp_file:
             temp_path = temp_file.name
         yield temp_path
-        # チE��ト後にファイルを削除�E�Eindowsでの権限エラー対策！E
+        # テスト後にファイルを削除（Windowsでの権限エラー対策）
         try:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
         except (PermissionError, OSError):
-            # Windows環墁E��ファイルが使用中の場合�E無要E
+            # Windows環境でファイルが使用中の場合は無視
             pass
 
     @pytest.fixture
     def cache_service(self, temp_db_path):
-        """チE��ト用CacheServiceインスタンス"""
+        """テスト用CacheServiceインスタンス"""
         return CacheService(db_path=temp_db_path)
 
     def test_cache_service_database_error_handling(self, temp_db_path):
-        """CacheService チE�Eタベ�EスエラーハンドリングチE��チE""
+        """CacheService データベースエラーハンドリングテスト"""
         cache_service = CacheService(db_path='/invalid/path/cache.db')
 
-        # チE�Eタベ�Eスアクセスエラー時�E動作確誁E
+        # データベースアクセスエラー時の動作確認
         result = cache_service.set_cached_data('test_key', {'data': 'test'})
         assert result is False
 
@@ -56,29 +56,29 @@ class TestErrorHandling:
         assert delete_result is False
 
     def test_cache_service_serialization_error_handling(self, cache_service):
-        """CacheService シリアライゼーションエラーハンドリングチE��チE""
-        # シリアライズできなぁE��ブジェクチE
+        """CacheService シリアライゼーションエラーハンドリングテスト"""
+        # シリアライズできないオブジェクト
         def unserializable_data(x):
-            return x  # 関数オブジェクチE
+            return x  # 関数オブジェクト
 
-        with pytest.raises(ValueError, match="チE�Eタのシリアライズに失敁E):
+        with pytest.raises(ValueError, match="データのシリアライズに失敗"):
             cache_service.serialize_data(unserializable_data)
 
-        # 無効なJSON斁E���E
-        with pytest.raises(ValueError, match="チE�EタのチE��リアライズに失敁E):
+        # 無効なJSON文字列
+        with pytest.raises(ValueError, match="データのデシリアライズに失敗"):
             cache_service.deserialize_data("invalid json {")
 
     @patch('location_service.requests.get')
     def test_location_service_network_error_handling(self, mock_get, cache_service):
-        """LocationService ネットワークエラーハンドリングチE��チE""
+        """LocationService ネットワークエラーハンドリングテスト"""
         location_service = LocationService(cache_service=cache_service)
 
-        # ネットワークエラーをシミュレーチE
+        # ネットワークエラーをシミュレート
         mock_get.side_effect = requests.exceptions.ConnectionError("Network unreachable")
 
         result = location_service.get_location_from_ip('192.168.1.1')
 
-        # チE��ォルト位置が返されることを確誁E
+        # デフォルト位置が返されることを確認
         assert result['source'] == 'default'
         assert result['city'] == '東京'
         assert result['latitude'] == 35.6812
@@ -86,10 +86,10 @@ class TestErrorHandling:
 
     @patch('location_service.requests.get')
     def test_location_service_api_error_handling(self, mock_get, cache_service):
-        """LocationService APIエラーハンドリングチE��チE""
+        """LocationService APIエラーハンドリングテスト"""
         location_service = LocationService(cache_service=cache_service)
 
-        # APIエラーレスポンスをシミュレーチE
+        # APIエラーレスポンスをシミュレート
         mock_response = Mock()
         mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {
@@ -100,24 +100,24 @@ class TestErrorHandling:
 
         result = location_service.get_location_from_ip('invalid.ip')
 
-        # チE��ォルト位置が返されることを確誁E
+        # デフォルト位置が返されることを確認
         assert result['source'] == 'default'
 
     @patch('location_service.requests.get')
     def test_location_service_rate_limit_handling(self, mock_get, cache_service):
-        """LocationService レート制限ハンドリングチE��チE""
+        """LocationService レート制限ハンドリングテスト"""
         location_service = LocationService(cache_service=cache_service)
 
-        # 事前にキャチE��ュチE�Eタを設宁E
+        # 事前にキャッシュデータを設定
         cache_service.generate_cache_key('location', ip='192.168.1.1')
         old_data = {
             'latitude': 35.6762,
             'longitude': 139.6503,
-            'city': '十E��田区',
+            'city': '渋谷区',
             'source': 'ipapi.co'
         }
 
-        # 期限刁E��キャチE��ュを直接チE�Eタベ�Eスに挿入
+        # 期限切れキャッシュを直接データベースに挿入
         with patch('location_service.get_db_connection') as mock_get_db_connection:
             mock_conn = MagicMock()
             mock_cursor = MagicMock()
@@ -127,7 +127,7 @@ class TestErrorHandling:
                 'data': cache_service.serialize_data(old_data)
             }
 
-            # レート制限エラーをシミュレーチE
+            # レート制限エラーをシミュレート
             mock_response = Mock()
             mock_response.status_code = 429
             mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("429 Too Many Requests")
@@ -135,15 +135,15 @@ class TestErrorHandling:
 
             result = location_service.get_location_from_ip('192.168.1.1')
 
-            # フォールバックキャチE��ュチE�Eタが返されることを確誁E
+            # フォールバックキャッシュデータが返されることを確認
             assert result['source'] == 'fallback_cache'
 
     @patch('weather_service.requests.get')
     def test_weather_service_api_error_handling(self, mock_get, cache_service):
-        """WeatherService APIエラーハンドリングチE��チE""
+        """WeatherService APIエラーハンドリングテスト"""
         weather_service = WeatherService(api_key="test_key", cache_service=cache_service)
 
-        # 認証エラーをシミュレーチE
+        # 認証エラーをシミュレート
         mock_response = Mock()
         mock_response.status_code = 401
         mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("401 Unauthorized")
@@ -151,50 +151,50 @@ class TestErrorHandling:
 
         result = weather_service.get_current_weather(35.6812, 139.7671)
 
-        # チE��ォルト天気情報が返されることを確誁E
+        # デフォルト天気情報が返されることを確認
         assert result['source'] == 'default'
         assert result['temperature'] == 20.0
         assert result['condition'] == 'clear'
 
     def test_weather_service_no_api_key_handling(self, cache_service):
-        """WeatherService APIキーなしハンドリングチE��チE""
+        """WeatherService APIキーなしハンドリングテスト"""
         weather_service = WeatherService(api_key=None, cache_service=cache_service)
 
         result = weather_service.get_current_weather(35.6812, 139.7671)
 
-        # チE��ォルト天気情報が返されることを確誁E
+        # デフォルト天気情報が返されることを確認
         assert result['source'] == 'default'
 
     @patch('restaurant_service.requests.get')
     def test_restaurant_service_api_error_handling(self, mock_get, cache_service):
-        """RestaurantService APIエラーハンドリングチE��チE""
+        """RestaurantService APIエラーハンドリングテスト"""
         restaurant_service = RestaurantService(api_key="test_key", cache_service=cache_service)
 
-        # HTTPエラーをシミュレーチE
+        # HTTPエラーをシミュレート
         mock_response = Mock()
         mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("500 Internal Server Error")
         mock_get.return_value = mock_response
 
         result = restaurant_service.search_restaurants(35.6812, 139.7671)
 
-        # 空のリストが返されることを確誁E
+        # 空のリストが返されることを確認
         assert result == []
 
     def test_restaurant_service_no_api_key_handling(self, cache_service):
-        """RestaurantService APIキーなしハンドリングチE��チE""
+        """RestaurantService APIキーなしハンドリングテスト"""
         restaurant_service = RestaurantService(api_key=None, cache_service=cache_service)
 
         result = restaurant_service.search_restaurants(35.6812, 139.7671)
 
-        # 空のリストが返されることを確誁E
+        # 空のリストが返されることを確認
         assert result == []
 
     def test_distance_calculator_invalid_input_handling(self):
-        """DistanceCalculator 無効入力ハンドリングチE��チE""
+        """DistanceCalculator 無効入力ハンドリングテスト"""
         error_handler = ErrorHandler()
         distance_calculator = DistanceCalculator(error_handler=error_handler)
 
-        # 無効な座標での計箁E
+        # 無効な座標での計算
         with pytest.raises(ValueError):
             distance_calculator.calculate_distance(95.0, 139.0, 35.0, 139.0)
 
@@ -202,7 +202,7 @@ class TestErrorHandling:
             distance_calculator.calculate_distance("invalid", 139.0, 35.0, 139.0)
 
     def test_distance_calculator_calculation_error_handling(self):
-        """DistanceCalculator 計算エラーハンドリングチE��チE""
+        """DistanceCalculator 計算エラーハンドリングテスト"""
         mock_error_handler = Mock()
         mock_error_handler.handle_distance_calculation_error.return_value = {
             'message': 'Distance calculation error',
@@ -215,13 +215,13 @@ class TestErrorHandling:
         with patch('math.sin', side_effect=Exception("Math error")):
             result = distance_calculator.calculate_distance(35.0, 139.0, 36.0, 140.0)
 
-            # エラーハンドラーが呼ばれ、概算距離が返されることを確誁E
+            # エラーハンドラーが呼ばれ、概算距離が返されることを確認
             mock_error_handler.handle_distance_calculation_error.assert_called_once()
             assert isinstance(result, float)
             assert result > 0
 
     def test_distance_calculator_walking_distance_error_handling(self):
-        """DistanceCalculator 徒歩距離計算エラーハンドリングチE��チE""
+        """DistanceCalculator 徒歩距離計算エラーハンドリングテスト"""
         mock_error_handler = Mock()
         mock_error_handler.handle_distance_calculation_error.return_value = {
             'message': 'Walking distance calculation error'
@@ -233,14 +233,14 @@ class TestErrorHandling:
         with patch.object(distance_calculator, 'calculate_distance', side_effect=Exception("Distance error")):
             result = distance_calculator.calculate_walking_distance(35.0, 139.0, 36.0, 140.0)
 
-            # エラー時�EチE��ォルト値が返されることを確誁E
+            # エラー時にデフォルト値が返されることを確認
             assert result['distance_km'] == 0.5
             assert result['distance_m'] == 500
             assert result['walking_time_minutes'] == 8
             assert 'error_info' in result
 
     def test_error_handler_distance_calculation_error(self):
-        """ErrorHandler 距離計算エラーハンドリングチE��チE""
+        """ErrorHandler 距離計算エラーハンドリングテスト"""
         error_handler = ErrorHandler()
 
         test_error = ValueError("Test distance calculation error")
@@ -252,8 +252,8 @@ class TestErrorHandling:
         assert result['error_type'] == 'ValueError'
 
     def test_multiple_service_error_cascade(self, cache_service):
-        """褁E��サービスエラーカスケードテスチE""
-        # すべてのサービスでエラーが発生する状況をシミュレーチE
+        """複数サービスエラーカスケードテスト"""
+        # すべてのサービスでエラーが発生する状況をシミュレート
 
         # LocationService: ネットワークエラー
         with patch('location_service.requests.get', side_effect=requests.exceptions.ConnectionError("Network error")):
@@ -261,12 +261,12 @@ class TestErrorHandling:
             location_result = location_service.get_location_from_ip('192.168.1.1')
             assert location_result['source'] == 'default'
 
-        # WeatherService: APIキーなぁE
+        # WeatherService: APIキーなし
         weather_service = WeatherService(api_key=None, cache_service=cache_service)
         weather_result = weather_service.get_current_weather(35.6812, 139.7671)
         assert weather_result['source'] == 'default'
 
-        # RestaurantService: APIキーなぁE
+        # RestaurantService: APIキーなし
         restaurant_service = RestaurantService(api_key=None, cache_service=cache_service)
         restaurant_result = restaurant_service.search_restaurants(35.6812, 139.7671)
         assert restaurant_result == []
@@ -283,10 +283,10 @@ class TestErrorHandling:
             assert isinstance(distance_result, float)
 
     def test_graceful_degradation_scenario(self, cache_service):
-        """グレースフルチE��ラチE�EションシナリオチE��チE""
-        # 一部のサービスが利用できなぁE��況での動作確誁E
+        """グレースフルデグラデーションシナリオテスト"""
+        # 一部のサービスが利用できない状況での動作確認
 
-        # LocationService: 成功�E�キャチE��ュから�E�E
+        # LocationService: 成功（キャッシュから取得）
         location_service = LocationService(cache_service=cache_service)
         cache_key = cache_service.generate_cache_key('location', ip='auto')
         cache_service.set_cached_data(cache_key, {
@@ -298,22 +298,22 @@ class TestErrorHandling:
         location_result = location_service.get_location_from_ip()
         assert location_result['source'] == 'ipapi.co'
 
-        # WeatherService: APIエラー ↁEチE��ォルト天氁E
+        # WeatherService: APIエラー → デフォルト天気
         with patch('weather_service.requests.get', side_effect=requests.exceptions.HTTPError("API Error")):
             weather_service = WeatherService(api_key="test_key", cache_service=cache_service)
             weather_result = weather_service.get_current_weather(35.6812, 139.7671)
             assert weather_result['source'] == 'default'
 
-        # RestaurantService: APIエラー ↁE空リスチE
+        # RestaurantService: APIエラー → 空リスト
         with patch('restaurant_service.requests.get', side_effect=requests.exceptions.HTTPError("API Error")):
             restaurant_service = RestaurantService(api_key="test_key", cache_service=cache_service)
             restaurant_result = restaurant_service.search_restaurants(35.6812, 139.7671)
             assert restaurant_result == []
 
-        # シスチE��全体としては部刁E��に動作することを確誁E
+        # システム全体としては部分的に動作することを確認
         assert location_result is not None
         assert weather_result is not None
-        assert restaurant_result is not None  # 空リストでめENone ではなぁE
+        assert restaurant_result is not None  # 空リストでもNone ではない
 
 
 if __name__ == '__main__':

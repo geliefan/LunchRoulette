@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-最終統合テスチE
-Flask エンド�Eイント、データベ�Eス操作、エラーハンドリングの統合テスチE
+最終統合テスト
+Flask エンドポイント、データベース操作、エラーハンドリングの統合テスト
 
-こ�EチE��トファイルは task 9.2 の要件を満たしまぁE
-- Flask エンド�Eイント�EチE��トケースを作�E
-- チE�Eタベ�Eス操作�EチE��トケースを作�E
-- エラーハンドリングのチE��トケースを作�E
+このテストファイルは task 9.2 の要件を満たします:
+- Flask エンドポイントのテストケースを作成
+- データベース操作のテストケースを作成
+- エラーハンドリングのテストケースを作成
 """
 
 import pytest
@@ -35,7 +35,7 @@ class TestIntegrationFinal:
 
     @pytest.fixture
     def temp_db_path(self):
-        """チE��ト用の一時データベ�Eスファイルパス"""
+        """テスト用の一時データベースファイルパス"""
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as temp_file:
             temp_path = temp_file.name
         yield temp_path
@@ -47,13 +47,13 @@ class TestIntegrationFinal:
 
     @pytest.fixture
     def cache_service(self, temp_db_path):
-        """チE��ト用CacheServiceインスタンス"""
+        """テスト用CacheServiceインスタンス"""
         init_database(temp_db_path)
         return CacheService(db_path=temp_db_path)
 
     @pytest.fixture
     def client(self, temp_db_path):
-        """チE��ト用FlaskクライアンチE""
+        """テスト用Flaskクライアント"""
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
         app.config['DATABASE'] = temp_db_path
@@ -64,24 +64,24 @@ class TestIntegrationFinal:
                 yield client
 
     # =============================================================================
-    # Flask エンド�Eイント�EチE��トケース
+    # Flask エンドポイントのテストケース
     # =============================================================================
 
     def test_main_page_endpoint_loads_successfully(self, client):
-        """メインペ�Eジエンド�Eイント正常読み込みチE��チE""
+        """メインページエンドポイント正常読み込みテスト"""
         response = client.get('/')
 
         assert response.status_code == 200
         assert response.content_type.startswith('text/html')
 
-        # HTMLコンチE��チE�E基本確誁E
+        # HTMLコンテンツの基本確認
         html_content = response.data.decode('utf-8')
         assert '<!DOCTYPE html>' in html_content
-        assert 'ルーレチE��を回ぁE in html_content
+        assert 'ルーレットを回す' in html_content
         assert '<title>' in html_content
 
     def test_roulette_endpoint_with_coordinates(self, client):
-        """ルーレチE��エンド�Eイント座標指定テスチE""
+        """ルーレットエンドポイント座標指定テスト"""
         request_data = {
             'latitude': 35.6812,
             'longitude': 139.7671
@@ -95,7 +95,7 @@ class TestIntegrationFinal:
         assert response.content_type == 'application/json'
 
         data = response.get_json()
-        # APIキーが設定されてぁE��ぁE��合�Eレストランが見つからなぁE
+        # APIキーが設定されていない場合、またはレストランが見つからない場合
         if data.get('success'):
             assert 'restaurant' in data
             assert 'distance' in data
@@ -104,7 +104,7 @@ class TestIntegrationFinal:
             assert 'message' in data
 
     def test_roulette_endpoint_without_coordinates(self, client):
-        """ルーレチE��エンド�Eイント座標なしテスチE""
+        """ルーレットエンドポイント座標なしテスト"""
         request_data = {}
 
         response = client.post('/roulette',
@@ -115,16 +115,16 @@ class TestIntegrationFinal:
         assert response.content_type == 'application/json'
 
         data = response.get_json()
-        # 座標がなぁE��合�EIPから取得される
+        # 座標がない場合、IPから取得される
         assert 'success' in data
 
     def test_roulette_endpoint_invalid_json(self, client):
-        """ルーレチE��エンド�Eイント無効JSONチE��チE""
+        """ルーレットエンドポイント無効JSONテスト"""
         response = client.post('/roulette',
                                data='invalid json',
                                content_type='application/json')
 
-        # 無効なJSONは500エラーになめE
+        # 無効なJSONは500エラーになる
         assert response.status_code == 500
 
         data = response.get_json()
@@ -132,7 +132,7 @@ class TestIntegrationFinal:
         assert 'message' in data
 
     def test_404_error_handler(self, client):
-        """404エラーハンドラーチE��チE""
+        """404エラーハンドラーテスト"""
         response = client.get('/nonexistent-page')
 
         assert response.status_code == 404
@@ -140,42 +140,42 @@ class TestIntegrationFinal:
         if response.content_type == 'application/json':
             data = response.get_json()
             assert data['error'] is True
-            assert 'ペ�Eジが見つかりません' in data['message']
+            assert 'ページが見つかりません' in data['message']
 
     def test_method_not_allowed(self, client):
-        """メソチE��不許可チE��チE""
-        # POSTエンド�EイントにGETリクエスチE
+        """メソッド不許可テスト"""
+        # POSTエンドポイントにGETリクエスト
         response = client.get('/roulette')
 
         assert response.status_code == 405
 
     def test_endpoint_with_large_request(self, client):
-        """大きなリクエスト�E琁E��スチE""
+        """大きなリクエスト処理テスト"""
         large_data = {
             'latitude': 35.6812,
             'longitude': 139.7671,
-            'extra_data': 'x' * 10000  # 10KB の余�EなチE�Eタ
+            'extra_data': 'x' * 10000  # 10KB の余分なデータ
         }
 
         response = client.post('/roulette',
                                data=json.dumps(large_data),
                                content_type='application/json')
 
-        # 大きなリクエストでも�E琁E��れる�E�忁E��な部刁E�Eみ使用�E�E
+        # 大きなリクエストでも処理される（適切な部分のみ使用）
         assert response.status_code in [200, 413]
 
     # =============================================================================
-    # チE�Eタベ�Eス操作�EチE��トケース
+    # データベース操作のテストケース
     # =============================================================================
 
     def test_database_initialization(self, temp_db_path):
-        """チE�Eタベ�Eス初期化テスチE""
+        """データベース初期化テスト"""
         result = init_database(temp_db_path)
 
         assert result is True
         assert os.path.exists(temp_db_path)
 
-        # チE�Eブルが作�EされてぁE��ことを確誁E
+        # テーブルが作成されていることを確認
         with sqlite3.connect(temp_db_path) as conn:
             cursor = conn.execute("""
                 SELECT name FROM sqlite_master
@@ -185,51 +185,51 @@ class TestIntegrationFinal:
             assert table_exists is True
 
     def test_database_connection(self, temp_db_path):
-        """チE�Eタベ�Eス接続テスチE""
+        """データベース接続テスト"""
         init_database(temp_db_path)
 
         with get_db_connection(temp_db_path) as conn:
             assert conn is not None
 
-            # 基本皁E��クエリ実行テスチE
+            # 基本的なクエリ実行テスト
             cursor = conn.execute("SELECT COUNT(*) FROM cache")
             count = cursor.fetchone()[0]
             assert count == 0
 
     def test_cache_crud_operations(self, cache_service):
-        """キャチE��ュCRUD操作テスチE""
-        # チE�Eタ保孁E
+        """キャッシュCRUD操作テスト"""
+        # データ保存
         test_data = {'message': 'Hello Integration', 'number': 42}
         cache_key = cache_service.generate_cache_key('integration_test', param='value')
 
         result = cache_service.set_cached_data(cache_key, test_data, ttl=300)
         assert result is True
 
-        # チE�Eタ取征E
+        # データ取得
         retrieved_data = cache_service.get_cached_data(cache_key)
         assert retrieved_data == test_data
 
-        # チE�Eタ削除
+        # データ削除
         delete_result = cache_service.delete_cached_data(cache_key)
         assert delete_result is True
 
-        # 削除後�E取得確誁E
+        # 削除後の確認
         retrieved_after_delete = cache_service.get_cached_data(cache_key)
         assert retrieved_after_delete is None
 
     def test_cache_expiration_cleanup(self, temp_db_path):
-        """キャチE��ュ期限刁E��クリーンアチE�EチE��チE""
+        """キャッシュ期限切れクリーンアップテスト"""
         init_database(temp_db_path)
 
-        # チE��トデータを挿入�E�有効・期限刁E��混在�E�E
+        # テストデータを挿入（有効・期限切れ混在）
         with sqlite3.connect(temp_db_path) as conn:
-            # 有効なキャチE��ュ
+            # 有効なキャッシュ
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
             """, ('valid_key', '{"test": "valid"}', datetime.now() + timedelta(hours=1)))
 
-            # 期限刁E��キャチE��ュ
+            # 期限切れキャッシュ
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
@@ -237,23 +237,23 @@ class TestIntegrationFinal:
 
             conn.commit()
 
-        # クリーンアチE�E実衁E
+        # クリーンアップ実行
         deleted_count = cleanup_expired_cache(temp_db_path)
         assert deleted_count == 1
 
-        # 有効なキャチE��ュのみ残ってぁE��ことを確誁E
+        # 有効なキャッシュのみ残っていることを確認
         with sqlite3.connect(temp_db_path) as conn:
             cursor = conn.execute("SELECT COUNT(*) FROM cache")
             remaining_count = cursor.fetchone()[0]
             assert remaining_count == 1
 
     def test_database_statistics(self, temp_db_path):
-        """チE�Eタベ�Eス統計テスチE""
+        """データベース統計テスト"""
         init_database(temp_db_path)
 
-        # チE��トデータを挿入
+        # テストデータを挿入
         with sqlite3.connect(temp_db_path) as conn:
-            # 有効なキャチE��ュ
+            # 有効なキャッシュ
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
@@ -264,7 +264,7 @@ class TestIntegrationFinal:
                 VALUES (?, ?, ?)
             """, ('valid_key2', '{"test": "valid2"}', datetime.now() + timedelta(hours=2)))
 
-            # 期限刁E��キャチE��ュ
+            # 期限切れキャッシュ
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
@@ -280,14 +280,14 @@ class TestIntegrationFinal:
         assert stats['database_size'] > 0
 
     def test_database_concurrent_access(self, temp_db_path):
-        """チE�Eタベ�Eス同時アクセスチE��チE""
+        """データベース同時アクセステスト"""
         init_database(temp_db_path)
 
-        # 褁E��のCacheServiceインスタンスで同じチE�Eタベ�Eスにアクセス
+        # 異なるCacheServiceインスタンスで同じデータベースにアクセス
         cache_service1 = CacheService(db_path=temp_db_path)
         cache_service2 = CacheService(db_path=temp_db_path)
 
-        # 異なるキーでチE�Eタを保孁E
+        # 異なるキーでデータを保存
         key1 = cache_service1.generate_cache_key('test1', param='value1')
         key2 = cache_service2.generate_cache_key('test2', param='value2')
 
@@ -300,7 +300,7 @@ class TestIntegrationFinal:
         assert result1 is True
         assert result2 is True
 
-        # 両方のチE�Eタが正しく保存されてぁE��ことを確誁E
+        # 両方のデータが正しく保存されていることを確認
         retrieved_data1 = cache_service1.get_cached_data(key1)
         retrieved_data2 = cache_service2.get_cached_data(key2)
 
@@ -308,40 +308,40 @@ class TestIntegrationFinal:
         assert retrieved_data2 == data2
 
     def test_database_transaction_rollback(self, temp_db_path):
-        """チE�Eタベ�EストランザクションロールバックチE��チE""
+        """データベーストランザクションロールバックテスト"""
         init_database(temp_db_path)
 
         try:
             with get_db_connection(temp_db_path) as conn:
-                # 正常なチE�Eタ挿入
+                # 正常なデータ挿入
                 conn.execute("""
                     INSERT INTO cache (cache_key, data, expires_at)
                     VALUES (?, ?, ?)
                 """, ('test_key', '{"test": "data"}', datetime.now() + timedelta(hours=1)))
 
-                # 意図皁E��エラーを発生させる�E�無効なSQL�E�E
+                # 意図的にエラーを発生させる（無効なSQL）
                 conn.execute("INVALID SQL STATEMENT")
 
         except sqlite3.Error:
-            # エラーが発生することを期征E
+            # エラーが発生することを期待
             pass
 
-        # トランザクションがロールバックされてぁE��ことを確誁E
+        # トランザクションがロールバックされていることを確認
         with sqlite3.connect(temp_db_path) as conn:
             cursor = conn.execute("SELECT COUNT(*) FROM cache")
             count = cursor.fetchone()[0]
             assert count == 0
 
     # =============================================================================
-    # エラーハンドリングのチE��トケース
+    # エラーハンドリングのテストケース
     # =============================================================================
 
     def test_cache_service_database_error_handling(self):
-        """CacheService チE�Eタベ�EスエラーハンドリングチE��チE""
-        # 無効なパスでCacheServiceを作�E
+        """CacheService データベースエラーハンドリングテスト"""
+        # 無効なパスでCacheServiceを作成
         cache_service = CacheService(db_path='/invalid/path/cache.db')
 
-        # チE�Eタベ�Eスアクセスエラー時�E動作確誁E
+        # データベースアクセスエラー時の動作確認
         result = cache_service.set_cached_data('test_key', {'data': 'test'})
         assert result is False
 
@@ -353,46 +353,46 @@ class TestIntegrationFinal:
 
     @patch('location_service.requests.get')
     def test_location_service_network_error_handling(self, mock_get, cache_service):
-        """LocationService ネットワークエラーハンドリングチE��チE""
+        """LocationService ネットワークエラーハンドリングテスト"""
         location_service = LocationService(cache_service=cache_service)
 
-        # ネットワークエラーをシミュレーチE
+        # ネットワークエラーをシミュレート
         mock_get.side_effect = requests.exceptions.ConnectionError("Network unreachable")
 
         result = location_service.get_location_from_ip('192.168.1.1')
 
-        # チE��ォルト位置が返されることを確誁E
+        # デフォルト位置が返されることを確認
         assert result['source'] == 'default'
         assert result['city'] == '東京'
         assert result['latitude'] == 35.6812
         assert result['longitude'] == 139.7671
 
     def test_weather_service_no_api_key_handling(self, cache_service):
-        """WeatherService APIキーなしハンドリングチE��チE""
+        """WeatherService APIキーなしハンドリングテスト"""
         weather_service = WeatherService(api_key=None, cache_service=cache_service)
 
         result = weather_service.get_current_weather(35.6812, 139.7671)
 
-        # チE��ォルト天気情報が返されることを確誁E
+        # デフォルト天気情報が返されることを確認
         assert result['source'] == 'default'
         assert result['temperature'] == 20.0
         assert result['condition'] == 'clear'
 
     def test_restaurant_service_no_api_key_handling(self, cache_service):
-        """RestaurantService APIキーなしハンドリングチE��チE""
+        """RestaurantService APIキーなしハンドリングテスト"""
         restaurant_service = RestaurantService(api_key=None, cache_service=cache_service)
 
         result = restaurant_service.search_restaurants(35.6812, 139.7671)
 
-        # 空のリストが返されることを確誁E
+        # 空のリストが返されることを確認
         assert result == []
 
     def test_distance_calculator_error_handling(self):
-        """DistanceCalculator エラーハンドリングチE��チE""
+        """DistanceCalculator エラーハンドリングテスト"""
         error_handler = ErrorHandler()
         distance_calculator = DistanceCalculator(error_handler=error_handler)
 
-        # 無効な座標での計算（エラーハンドリングされる！E
+        # 無効な座標での計算（エラーハンドリングされる）
         result = distance_calculator.calculate_distance(95.0, 139.0, 35.0, 139.0)
 
         # エラーハンドリングにより概算値が返される
@@ -400,10 +400,10 @@ class TestIntegrationFinal:
         assert result > 0
 
     def test_error_handler_basic_functionality(self):
-        """ErrorHandler 基本機�EチE��チE""
+        """ErrorHandler 基本機能テスト"""
         error_handler = ErrorHandler()
 
-        # 距離計算エラーハンドリングチE��チE
+        # 距離計算エラーハンドリングテスト
         test_error = ValueError("Test distance calculation error")
         result = error_handler.handle_distance_calculation_error(test_error)
 
@@ -413,54 +413,54 @@ class TestIntegrationFinal:
         assert result['fallback_used'] is True
 
     def test_service_graceful_degradation(self, cache_service):
-        """サービスグレースフルチE��ラチE�EションチE��チE""
-        # LocationService: チE��ォルト位置使用
+        """サービスグレースフルデグラデーションテスト"""
+        # LocationService: デフォルト位置使用
         location_service = LocationService(cache_service=cache_service)
         location_result = location_service.get_location_from_ip('invalid.ip')
         assert location_result['source'] == 'default'
 
-        # WeatherService: APIキーなぁEↁEチE��ォルト天氁E
+        # WeatherService: APIキーなしでデフォルト天気
         weather_service = WeatherService(api_key=None, cache_service=cache_service)
         weather_result = weather_service.get_current_weather(35.6812, 139.7671)
         assert weather_result['source'] == 'default'
 
-        # RestaurantService: APIキーなぁEↁE空リスチE
+        # RestaurantService: APIキーなしで空リスト
         restaurant_service = RestaurantService(api_key=None, cache_service=cache_service)
         restaurant_result = restaurant_service.search_restaurants(35.6812, 139.7671)
         assert restaurant_result == []
 
-        # シスチE��全体としては部刁E��に動作することを確誁E
+        # システム全体としては正常に動作することを確認
         assert location_result is not None
         assert weather_result is not None
-        assert restaurant_result is not None  # 空リストでめENone ではなぁE
+        assert restaurant_result is not None  # 空リストでNone ではない
 
     def test_application_error_recovery(self, client):
-        """アプリケーションエラー回復チE��チE""
-        # 1. 正常なリクエスチE
+        """アプリケーションエラー回復テスト"""
+        # 1. 正常なリクエスト
         response = client.get('/')
         assert response.status_code == 200
 
-        # 2. エラーが発生するリクエスチE
+        # 2. エラーが発生するリクエスト
         response = client.post('/roulette',
                                data='invalid json',
                                content_type='application/json')
         assert response.status_code == 500
 
-        # 3. 再度正常なリクエスト（アプリケーションが回復してぁE��ことを確認！E
+        # 3. 再度正常なリクエスト（アプリケーションが回復していることを確認）
         response = client.get('/')
         assert response.status_code == 200
 
     # =============================================================================
-    # 統合シナリオチE��チE
+    # 統合シナリオテスト
     # =============================================================================
 
     def test_full_application_workflow(self, client):
-        """アプリケーション全体ワークフローチE��チE""
-        # 1. メインペ�Eジアクセス
+        """アプリケーション全体ワークフローテスト"""
+        # 1. メインページアクセス
         response = client.get('/')
         assert response.status_code == 200
 
-        # 2. ルーレチE��実衁E
+        # 2. ルーレット実行
         request_data = {
             'latitude': 35.6812,
             'longitude': 139.7671
@@ -473,33 +473,33 @@ class TestIntegrationFinal:
         assert response.status_code == 200
         data = response.get_json()
 
-        # 成功また�Eエラーレスポンスが返される
+        # 成功またはエラーレスポンスが返される
         assert 'success' in data or 'error' in data
 
-        # 3. 存在しなぁE�Eージアクセス�E�E04エラー�E�E
+        # 3. 存在しないページアクセスで404エラー
         response = client.get('/nonexistent')
         assert response.status_code == 404
 
     def test_database_and_cache_integration(self, temp_db_path):
-        """チE�Eタベ�EスとキャチE��ュ統合テスチE""
-        # チE�Eタベ�Eス初期匁E
+        """データベースとキャッシュ統合テスト"""
+        # データベース初期化
         init_database(temp_db_path)
 
-        # キャチE��ュサービス作�E
+        # キャッシュサービス作成
         cache_service = CacheService(db_path=temp_db_path)
 
-        # チE�Eタ保存�E取得�E削除の一連の流れ
+        # データ保存・取得・削除の一連の流れ
         test_data = {'integration': 'test', 'timestamp': datetime.now().isoformat()}
         cache_key = cache_service.generate_cache_key('integration', test='final')
 
-        # 保孁E
+        # 保存
         assert cache_service.set_cached_data(cache_key, test_data, ttl=300) is True
 
-        # 取征E
+        # 取得
         retrieved = cache_service.get_cached_data(cache_key)
         assert retrieved == test_data
 
-        # 統計確誁E
+        # 統計確認
         stats = get_cache_stats(temp_db_path)
         assert stats['total_records'] >= 1
         assert stats['valid_records'] >= 1
@@ -507,7 +507,7 @@ class TestIntegrationFinal:
         # 削除
         assert cache_service.delete_cached_data(cache_key) is True
 
-        # 削除後確誁E
+        # 削除後確認
         assert cache_service.get_cached_data(cache_key) is None
 
 

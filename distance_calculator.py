@@ -5,16 +5,16 @@ from error_handler import ErrorHandler
 
 class DistanceCalculator:
     """
-    ハ�Eバ�Eサイン公式を使用した距離計算クラス
-    地琁E���E2点間�E距離を緯度・経度から計算すめE
+    ハバースイン公式を使用した距離計算クラス
+    地球上の2点間の距離を緯度・経度から計算する
     """
 
-    # 地琁E�E半征E��Em�E�E
+    # 地球の半径 (km)
     EARTH_RADIUS_KM = 6371.0
 
     def __init__(self, error_handler: Optional[ErrorHandler] = None):
         """
-        DistanceCalculatorクラスの初期匁E
+        DistanceCalculatorクラスの初期化
 
         Args:
             error_handler (ErrorHandler, optional): エラーハンドラー
@@ -23,7 +23,7 @@ class DistanceCalculator:
 
     def calculate_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """
-        ハ�Eバ�Eサイン公式を使用して2点間�E距離を計箁E
+        ハバースイン公式を使用して2点間の距離を計算
 
         Args:
             lat1 (float): 地点1の緯度
@@ -32,10 +32,10 @@ class DistanceCalculator:
             lon2 (float): 地点2の経度
 
         Returns:
-            float: 2点間�E距離�E�Em�E�E
+            float: 2点間の距離 (km)
 
         Raises:
-            ValueError: 緯度・経度の値が無効な場吁E
+            ValueError: 緯度・経度の値が無効な場合
         """
         try:
             # 入力値の検証
@@ -48,31 +48,31 @@ class DistanceCalculator:
             lat2_rad = math.radians(lat2)
             lon2_rad = math.radians(lon2)
 
-            # 緯度・経度の差を計箁E
+            # 緯度・経度の差を計算
             dlat = lat2_rad - lat1_rad
             dlon = lon2_rad - lon1_rad
 
-            # ハ�Eバ�Eサイン公式を適用
+            # ハバースイン公式を適用
             a = (math.sin(dlat / 2) ** 2
                  + math.cos(lat1_rad) * math.cos(lat2_rad)
                  * math.sin(dlon / 2) ** 2)
 
             c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-            # 距離を計算！Em�E�E
+            # 距離を計算 (km)
             distance_km = self.EARTH_RADIUS_KM * c
 
             return round(distance_km, 3)  # 小数点第3位まで
 
         except Exception as e:
-            # エラーハンドリング�E�距離計算エラー時�E概算距離を返す
+            # エラーハンドリング: 距離計算エラー時に概算距離を返す
             error_info = self.error_handler.handle_distance_calculation_error(e)
             print(f"距離計算エラー: {error_info['message']}")
             return self._calculate_approximate_distance(lat1, lon1, lat2, lon2)
 
     def calculate_walking_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> dict:
         """
-        徒歩距離と所要時間を計箁E
+        徒歩距離と所要時間を計算
 
         Args:
             lat1 (float): 地点1の緯度
@@ -81,20 +81,20 @@ class DistanceCalculator:
             lon2 (float): 地点2の経度
 
         Returns:
-            dict: 距離惁E���E�距離、徒歩時間、表示用斁E���E�E�E
+            dict: 距離、徒歩時間、表示用距離、表示用時間
         """
         try:
-            # 直線距離を計箁E
+            # 直線距離を計算
             distance_km = self.calculate_distance(lat1, lon1, lat2, lon2)
 
-            # 徒歩距離は直線距離の紁E.3倍として計算（道路の迂回を老E�E�E�E
+            # 徒歩距離は直線距離の1.3倍として計算（道路の迂回を考慮）
             walking_distance_km = distance_km * 1.3
             walking_distance_m = walking_distance_km * 1000
 
-            # 徒歩時間を計算（時送Ekmで計算！E
-            walking_time_minutes = int(walking_distance_km * 15)  # 4km/h = 15刁Ekm
+            # 徒歩時間を計算（時速4kmで計算）
+            walking_time_minutes = int(walking_distance_km * 15)  # 4km/h = 15分/km
 
-            # 表示用の距離斁E���Eを生戁E
+            # 表示用の距離フォーマット
             if walking_distance_m < 1000:
                 distance_display = f"{int(walking_distance_m)}m"
             else:
@@ -105,20 +105,20 @@ class DistanceCalculator:
                 'distance_m': int(walking_distance_m),
                 'walking_time_minutes': walking_time_minutes,
                 'distance_display': distance_display,
-                'time_display': f"徒歩約{walking_time_minutes}刁E
+                'time_display': f"徒歩約{walking_time_minutes}分"
             }
 
         except Exception as e:
             error_info = self.error_handler.handle_distance_calculation_error(e)
             print(f"徒歩距離計算エラー: {error_info['message']}")
-            # エラー時�EチE��ォルト値を返す
+            # エラー時はデフォルト値を返す
             return {
                 'distance_km': 0.5,
                 'distance_m': 500,
                 'walking_time_minutes': 8,
-                'distance_display': "紁E00m",
-                'time_display': "徒歩紁E刁E,
-                'error_info': error_info  # エラー惁E��を追加
+                'distance_display': "約500m",
+                'time_display': "徒歩約8分",
+                'error_info': error_info  # エラー情報を追加
             }
 
     def _validate_coordinates(self, lat: float, lon: float) -> None:
@@ -130,20 +130,20 @@ class DistanceCalculator:
             lon (float): 経度
 
         Raises:
-            ValueError: 緯度・経度の値が無効な場吁E
+            ValueError: 緯度・経度の値が無効な場合
         """
         if not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)):
-            raise ValueError("緯度・経度は数値である忁E��がありまぁE)
+            raise ValueError("緯度・経度は数値である必要があります")
 
         if not (-90 <= lat <= 90):
-            raise ValueError(f"緯度は-90から90の篁E��である忁E��がありまぁE {lat}")
+            raise ValueError(f"緯度は-90から90の範囲である必要があります: {lat}")
 
         if not (-180 <= lon <= 180):
-            raise ValueError(f"経度は-180から180の篁E��である忁E��がありまぁE {lon}")
+            raise ValueError(f"経度は-180から180の範囲である必要があります: {lon}")
 
     def _calculate_approximate_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """
-        簡易的な距離計算（エラー時�Eフォールバック�E�E
+        簡易的な距離計算（エラー時のフォールバック）
 
         Args:
             lat1 (float): 地点1の緯度
@@ -152,25 +152,25 @@ class DistanceCalculator:
             lon2 (float): 地点2の経度
 
         Returns:
-            float: 概算距離�E�Em�E�E
+            float: 概算距離 (km)
         """
         try:
-            # 簡易的な直線距離計算（平面近似�E�E
+            # 簡易的な直線距離計算（平面近似）
             lat_diff = abs(lat2 - lat1)
             lon_diff = abs(lon2 - lon1)
 
-            # 1度あたり�E距離�E�日本付近での概算値�E�E
-            lat_km_per_degree = 111.0  # 緯度1度 ≁E111km
-            lon_km_per_degree = 91.0   # 経度1度 ≁E91km�E�東京付近！E
+            # 1度あたりの距離（日本付近での概算値）
+            lat_km_per_degree = 111.0  # 緯度1度 ≈ 111km
+            lon_km_per_degree = 91.0   # 経度1度 ≈ 91km（東京付近）
 
             lat_distance = lat_diff * lat_km_per_degree
             lon_distance = lon_diff * lon_km_per_degree
 
-            # ピタゴラスの定理で概算距離を計箁E
+            # ピタゴラスの定理で概算距離を計算
             approximate_distance = math.sqrt(lat_distance**2 + lon_distance**2)
 
             return round(approximate_distance, 3)
 
         except Exception:
-            # 最終的なフォールバック�E�固定値を返す
+            # 最終的なフォールバックとして固定値を返す
             return 0.5  # 500m

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-チE�Eタベ�Eス操作�E統合テスチE
-実際のSQLiteチE�Eタベ�Eスとの統合をチE��チE
+データベース操作の統合テスト
+実際のSQLiteデータベースとの統合をテスト
 """
 
 import pytest
@@ -19,30 +19,30 @@ from cache_service import CacheService
 
 
 class TestDatabaseIntegration:
-    """チE�Eタベ�Eス操作�E統合テスチE""
+    """データベース操作の統合テスト"""
 
     @pytest.fixture
     def temp_db_path(self):
-        """チE��ト用の一時データベ�Eスファイルパス"""
+        """テスト用の一時データベースファイルパス"""
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as temp_file:
             temp_path = temp_file.name
         yield temp_path
-        # チE��ト後にファイルを削除�E�Eindowsでの権限エラー対策！E
+        # テスト後にファイルを削除（Windowsでの権限エラー対策）
         try:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
         except (PermissionError, OSError):
-            # Windows環墁E��ファイルが使用中の場合�E無要E
+            # Windows環境でファイルが使用中の場合は無視
             pass
 
     def test_init_database_success(self, temp_db_path):
-        """チE�Eタベ�Eス初期化�E功テスチE""
+        """データベース初期化成功テスト"""
         result = init_database(temp_db_path)
 
         assert result is True
         assert os.path.exists(temp_db_path)
 
-        # チE�Eブルが作�EされてぁE��ことを確誁E
+        # テーブルが作成されていることを確認
         with sqlite3.connect(temp_db_path) as conn:
             cursor = conn.execute("""
                 SELECT name FROM sqlite_master
@@ -52,53 +52,53 @@ class TestDatabaseIntegration:
             assert table_exists is True
 
     def test_init_database_existing_file(self, temp_db_path):
-        """既存データベ�Eスファイルの初期化テスチE""
-        # 最初�E初期匁E
+        """既存データベースファイルの初期化テスト"""
+        # 最初に初期化
         init_database(temp_db_path)
 
-        # 既存ファイルに対する再�E期化
+        # 既存ファイルに対する再初期化
         result = init_database(temp_db_path)
 
         assert result is True
         assert os.path.exists(temp_db_path)
 
     def test_get_db_connection_success(self, temp_db_path):
-        """チE�Eタベ�Eス接続取得�E功テスチE""
+        """データベース接続取得成功テスト"""
         init_database(temp_db_path)
 
         with get_db_connection(temp_db_path) as conn:
             assert conn is not None
 
-            # 基本皁E��クエリ実行テスチE
+            # 基本的なクエリ実行テスト
             cursor = conn.execute("SELECT COUNT(*) FROM cache")
             count = cursor.fetchone()[0]
             assert count == 0
 
     def test_get_db_connection_row_factory(self, temp_db_path):
-        """チE�Eタベ�Eス接続�ERow FactoryチE��チE""
+        """データベース接続のRow Factoryテスト"""
         init_database(temp_db_path)
 
         with get_db_connection(temp_db_path) as conn:
-            # チE��トデータを挿入
+            # テストデータを挿入
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
             """, ('test_key', '{"test": "data"}', datetime.now() + timedelta(hours=1)))
             conn.commit()
 
-            # Row Factoryが設定されてぁE��ことを確誁E
+            # Row Factoryが設定されていることを確認
             cursor = conn.execute("SELECT cache_key, data FROM cache WHERE cache_key = ?", ('test_key',))
             row = cursor.fetchone()
 
-            # 辞書形式でアクセスできることを確誁E
+            # 辞書形式でアクセスできることを確認
             assert row['cache_key'] == 'test_key'
             assert row['data'] == '{"test": "data"}'
 
     def test_cache_table_structure(self, temp_db_path):
-        """キャチE��ュチE�Eブル構造確認テスチE""
+        """キャッシュテーブル構造確認テスト"""
         init_database(temp_db_path)
 
-        # チE�Eブル構造を確誁E
+        # テーブル構造を確認
         with sqlite3.connect(temp_db_path) as conn:
             cursor = conn.execute("PRAGMA table_info(cache)")
             columns = cursor.fetchall()
@@ -111,18 +111,18 @@ class TestDatabaseIntegration:
             assert 'expires_at' in column_names
 
     def test_cleanup_expired_cache_success(self, temp_db_path):
-        """期限刁E��キャチE��ュクリーンアチE�E成功チE��チE""
+        """期限切れキャッシュクリーンアップ成功テスト"""
         init_database(temp_db_path)
 
-        # チE��トデータを挿入�E�有効・期限刁E��混在�E�E
+        # テストデータを挿入（有効・期限切れ混在）
         with sqlite3.connect(temp_db_path) as conn:
-            # 有効なキャチE��ュ
+            # 有効なキャッシュ
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
             """, ('valid_key', '{"test": "valid"}', datetime.now() + timedelta(hours=1)))
 
-            # 期限刁E��キャチE��ュ
+            # 期限切れキャッシュ
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
@@ -135,12 +135,12 @@ class TestDatabaseIntegration:
 
             conn.commit()
 
-        # クリーンアチE�E実衁E
+        # クリーンアップ実行
         deleted_count = cleanup_expired_cache(temp_db_path)
 
         assert deleted_count == 2
 
-        # 有効なキャチE��ュのみ残ってぁE��ことを確誁E
+        # 有効なキャッシュのみ残っていることを確認
         with sqlite3.connect(temp_db_path) as conn:
             cursor = conn.execute("SELECT COUNT(*) FROM cache")
             remaining_count = cursor.fetchone()[0]
@@ -151,10 +151,10 @@ class TestDatabaseIntegration:
             assert remaining_key == 'valid_key'
 
     def test_cleanup_expired_cache_no_expired(self, temp_db_path):
-        """期限刁E��キャチE��ュなし�EクリーンアチE�EチE��チE""
+        """期限切れキャッシュなしのクリーンアップテスト"""
         init_database(temp_db_path)
 
-        # 有効なキャチE��ュのみ挿入
+        # 有効なキャッシュのみ挿入
         with sqlite3.connect(temp_db_path) as conn:
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
@@ -167,12 +167,12 @@ class TestDatabaseIntegration:
         assert deleted_count == 0
 
     def test_get_cache_stats_success(self, temp_db_path):
-        """キャチE��ュ統計取得�E功テスチE""
+        """キャッシュ統計取得成功テスト"""
         init_database(temp_db_path)
 
-        # チE��トデータを挿入
+        # テストデータを挿入
         with sqlite3.connect(temp_db_path) as conn:
-            # 有効なキャチE��ュ
+            # 有効なキャッシュ
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
@@ -183,7 +183,7 @@ class TestDatabaseIntegration:
                 VALUES (?, ?, ?)
             """, ('valid_key2', '{"test": "valid2"}', datetime.now() + timedelta(hours=2)))
 
-            # 期限刁E��キャチE��ュ
+            # 期限切れキャッシュ
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
@@ -199,7 +199,7 @@ class TestDatabaseIntegration:
         assert stats['database_size'] > 0
 
     def test_get_cache_stats_empty_database(self, temp_db_path):
-        """空チE�Eタベ�Eスの統計取得テスチE""
+        """空データベースの統計取得テスト"""
         init_database(temp_db_path)
 
         stats = get_cache_stats(temp_db_path)
@@ -210,18 +210,18 @@ class TestDatabaseIntegration:
         assert stats['database_size'] > 0  # ファイルサイズは0より大きい
 
     def test_cache_service_database_integration(self, temp_db_path):
-        """CacheServiceとチE�Eタベ�Eスの統合テスチE""
+        """CacheServiceとデータベースの統合テスト"""
         init_database(temp_db_path)
         cache_service = CacheService(db_path=temp_db_path)
 
-        # チE�Eタ保孁E
+        # データ保存
         test_data = {'message': 'Hello Integration', 'number': 42}
         cache_key = cache_service.generate_cache_key('integration_test', param='value')
 
         result = cache_service.set_cached_data(cache_key, test_data, ttl=300)
         assert result is True
 
-        # チE�Eタベ�Eスに直接アクセスして確誁E
+        # データベースに直接アクセスして確認
         with sqlite3.connect(temp_db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.execute("SELECT * FROM cache WHERE cache_key = ?", (cache_key,))
@@ -231,44 +231,44 @@ class TestDatabaseIntegration:
             assert row['cache_key'] == cache_key
             assert '"message": "Hello Integration"' in row['data']
 
-        # CacheService経由でチE�Eタ取征E
+        # CacheService経由でデータ取得
         retrieved_data = cache_service.get_cached_data(cache_key)
         assert retrieved_data == test_data
 
     def test_database_transaction_rollback(self, temp_db_path):
-        """チE�Eタベ�EストランザクションロールバックチE��チE""
+        """データベーストランザクションロールバックテスト"""
         init_database(temp_db_path)
 
         try:
             with get_db_connection(temp_db_path) as conn:
-                # 正常なチE�Eタ挿入
+                # 正常なデータ挿入
                 conn.execute("""
                     INSERT INTO cache (cache_key, data, expires_at)
                     VALUES (?, ?, ?)
                 """, ('test_key', '{"test": "data"}', datetime.now() + timedelta(hours=1)))
 
-                # 意図皁E��エラーを発生させる�E�無効なSQL�E�E
+                # 意図的なエラーを発生させる（無効なSQL）
                 conn.execute("INVALID SQL STATEMENT")
 
         except sqlite3.Error:
-            # エラーが発生することを期征E
+            # エラーが発生することを期待
             pass
 
-        # トランザクションがロールバックされてぁE��ことを確誁E
+        # トランザクションがロールバックされていることを確認
         with sqlite3.connect(temp_db_path) as conn:
             cursor = conn.execute("SELECT COUNT(*) FROM cache")
             count = cursor.fetchone()[0]
             assert count == 0
 
     def test_database_concurrent_access_simulation(self, temp_db_path):
-        """チE�Eタベ�Eス同時アクセスシミュレーションチE��チE""
+        """データベース同時アクセスシミュレーションテスト"""
         init_database(temp_db_path)
 
-        # 褁E��のCacheServiceインスタンスで同じチE�Eタベ�Eスにアクセス
+        # 複数のCacheServiceインスタンスで同じデータベースにアクセス
         cache_service1 = CacheService(db_path=temp_db_path)
         cache_service2 = CacheService(db_path=temp_db_path)
 
-        # 異なるキーでチE�Eタを保孁E
+        # 異なるキーでデータを保存
         key1 = cache_service1.generate_cache_key('test1', param='value1')
         key2 = cache_service2.generate_cache_key('test2', param='value2')
 
@@ -281,7 +281,7 @@ class TestDatabaseIntegration:
         assert result1 is True
         assert result2 is True
 
-        # 両方のチE�Eタが正しく保存されてぁE��ことを確誁E
+        # 両方のデータが正しく保存されていることを確認
         retrieved_data1 = cache_service1.get_cached_data(key1)
         retrieved_data2 = cache_service2.get_cached_data(key2)
 
@@ -289,15 +289,15 @@ class TestDatabaseIntegration:
         assert retrieved_data2 == data2
 
     def test_database_file_permissions(self, temp_db_path):
-        """チE�Eタベ�Eスファイル権限テスチE""
+        """データベースファイル権限テスト"""
         init_database(temp_db_path)
 
-        # ファイルが存在し、読み書き可能であることを確誁E
+        # ファイルが存在し、読み書き可能であることを確認
         assert os.path.exists(temp_db_path)
         assert os.access(temp_db_path, os.R_OK)
         assert os.access(temp_db_path, os.W_OK)
 
-        # ファイルサイズぁEより大きいことを確誁E
+        # ファイルサイズが0より大きいことを確認
         file_size = os.path.getsize(temp_db_path)
         assert file_size > 0
 
