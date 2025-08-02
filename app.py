@@ -14,8 +14,8 @@ Lunch Roulette - メインアプリケーション
 
 from flask import Flask, render_template, request, jsonify
 import os
-import sqlite3
-from datetime import datetime
+from database import init_database
+from cache_service import CacheService
 
 # Flaskアプリケーションの初期化
 app = Flask(__name__)
@@ -27,23 +27,16 @@ app.config['DATABASE'] = 'cache.db'
 # デバッグモード（本番環境では無効にする）
 app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
+# キャッシュサービスの初期化
+cache_service = CacheService(db_path=app.config['DATABASE'])
+
 
 def init_db():
     """
     SQLiteキャッシュデータベースを初期化
     アプリケーション起動時に実行される
     """
-    with sqlite3.connect(app.config['DATABASE']) as conn:
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS cache (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                cache_key TEXT UNIQUE NOT NULL,
-                data TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                expires_at TIMESTAMP NOT NULL
-            )
-        ''')
-        conn.commit()
+    return init_database(app.config['DATABASE'])
 
 
 @app.route('/')
