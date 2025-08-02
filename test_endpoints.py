@@ -2,162 +2,165 @@
 # -*- coding: utf-8 -*-
 
 """
-Flask エンドポイントの簡単なテスト
-Task 5の実装を検証する
+Flask エンド�Eイント�E簡単なチE��チE
+Task 5の実裁E��検証する
 """
 
+
+from app import app
 import sys
 import os
 
 # プロジェクトルートをパスに追加
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app import app
-import json
 
 def test_main_page_endpoint():
-    """メインページエンドポイント（GET /）のテスト"""
+    """メインペ�Eジエンド�Eイント！EET /�E��EチE��チE""
     print("=" * 50)
-    print("メインページエンドポイント（GET /）のテスト")
+    print("メインペ�Eジエンド�Eイント！EET /�E��EチE��チE)
     print("=" * 50)
-    
+
     with app.test_client() as client:
         try:
             response = client.get('/')
-            print(f"ステータスコード: {response.status_code}")
+            print(f"スチE�EタスコーチE {response.status_code}")
             print(f"Content-Type: {response.content_type}")
-            
+
             if response.status_code == 200:
-                print("✓ メインページエンドポイントが正常に動作しています")
-                # HTMLレスポンスの基本的な確認
+                print("✁Eメインペ�Eジエンド�Eイントが正常に動作してぁE��ぁE)
+                # HTMLレスポンスの基本皁E��確誁E
                 if b'html' in response.data.lower():
-                    print("✓ HTMLレスポンスが返されています")
+                    print("✁EHTMLレスポンスが返されてぁE��ぁE)
                 else:
-                    print("⚠ HTMLレスポンスではない可能性があります")
+                    print("⚠ HTMLレスポンスではなぁE��能性がありまぁE)
             else:
-                print(f"✗ エラー: ステータスコード {response.status_code}")
+                print(f"✁Eエラー: スチE�EタスコーチE{response.status_code}")
                 print(f"レスポンス: {response.data.decode('utf-8')[:200]}...")
-                
+
         except Exception as e:
-            print(f"✗ テスト実行エラー: {e}")
+            print(f"✁EチE��ト実行エラー: {e}")
+
 
 def test_roulette_endpoint():
-    """ルーレットエンドポイント（POST /roulette）のテスト"""
+    """ルーレチE��エンド�Eイント！EOST /roulette�E��EチE��チE""
     print("\n" + "=" * 50)
-    print("ルーレットエンドポイント（POST /roulette）のテスト")
+    print("ルーレチE��エンド�Eイント！EOST /roulette�E��EチE��チE)
     print("=" * 50)
-    
+
     with app.test_client() as client:
         try:
-            # 位置情報なしでのテスト
-            print("\n1. 位置情報なしでのテスト:")
-            response = client.post('/roulette', 
-                                 json={},
-                                 content_type='application/json')
-            
-            print(f"ステータスコード: {response.status_code}")
-            
+            # 位置惁E��なしでのチE��チE
+            print("\n1. 位置惁E��なしでのチE��チE")
+            response = client.post('/roulette',
+                                   json={},
+                                   content_type='application/json')
+
+            print(f"スチE�EタスコーチE {response.status_code}")
+
             if response.status_code in [200, 400, 500]:
                 try:
                     data = response.get_json()
-                    print(f"レスポンス形式: JSON")
-                    
+                    print("レスポンス形弁E JSON")
+
                     if data.get('success'):
-                        print("✓ 成功レスポンス")
+                        print("✁E成功レスポンス")
                         if 'restaurant' in data:
-                            print(f"  レストラン名: {data['restaurant'].get('name', 'N/A')}")
+                            print(f"  レストラン吁E {data['restaurant'].get('name', 'N/A')}")
                             print(f"  距離: {data.get('distance', {}).get('distance_display', 'N/A')}")
                     elif data.get('error') or not data.get('success'):
-                        print("⚠ エラーレスポンス（正常な動作）")
-                        print(f"  メッセージ: {data.get('message', 'N/A')}")
-                    
+                        print("⚠ エラーレスポンス�E�正常な動作！E)
+                        print(f"  メチE��ージ: {data.get('message', 'N/A')}")
+
                 except Exception as e:
-                    print(f"✗ JSONレスポンス解析エラー: {e}")
+                    print(f"✁EJSONレスポンス解析エラー: {e}")
                     print(f"レスポンス: {response.data.decode('utf-8')[:200]}...")
             else:
-                print(f"✗ 予期しないステータスコード: {response.status_code}")
-            
-            # 位置情報ありでのテスト
-            print("\n2. 位置情報ありでのテスト:")
+                print(f"✁E予期しなぁE��チE�EタスコーチE {response.status_code}")
+
+            # 位置惁E��ありでのチE��チE
+            print("\n2. 位置惁E��ありでのチE��チE")
             test_data = {
-                'latitude': 35.6812,  # 東京駅
+                'latitude': 35.6812,  # 東京駁E
                 'longitude': 139.7671
             }
-            
+
             response = client.post('/roulette',
-                                 json=test_data,
-                                 content_type='application/json')
-            
-            print(f"ステータスコード: {response.status_code}")
-            
+                                   json=test_data,
+                                   content_type='application/json')
+
+            print(f"スチE�EタスコーチE {response.status_code}")
+
             if response.status_code in [200, 400, 500]:
                 try:
                     data = response.get_json()
-                    print(f"レスポンス形式: JSON")
-                    
+                    print("レスポンス形弁E JSON")
+
                     if data.get('success'):
-                        print("✓ 成功レスポンス")
+                        print("✁E成功レスポンス")
                         if 'restaurant' in data:
-                            print(f"  レストラン名: {data['restaurant'].get('name', 'N/A')}")
+                            print(f"  レストラン吁E {data['restaurant'].get('name', 'N/A')}")
                             print(f"  ジャンル: {data['restaurant'].get('genre', 'N/A')}")
                             print(f"  距離: {data.get('distance', {}).get('distance_display', 'N/A')}")
                             print(f"  徒歩時間: {data.get('distance', {}).get('time_display', 'N/A')}")
                     elif data.get('error') or not data.get('success'):
                         print("⚠ エラーレスポンス")
-                        print(f"  メッセージ: {data.get('message', 'N/A')}")
-                        # APIキーが設定されていない場合は正常な動作
+                        print(f"  メチE��ージ: {data.get('message', 'N/A')}")
+                        # APIキーが設定されてぁE��ぁE��合�E正常な動佁E
                         if 'APIキー' in data.get('message', '') or 'レストランが見つかりません' in data.get('message', ''):
-                            print("  （APIキー未設定またはレストラン未発見のため正常）")
-                    
+                            print("  �E�EPIキー未設定また�Eレストラン未発見�Eため正常�E�E)
+
                 except Exception as e:
-                    print(f"✗ JSONレスポンス解析エラー: {e}")
+                    print(f"✁EJSONレスポンス解析エラー: {e}")
                     print(f"レスポンス: {response.data.decode('utf-8')[:200]}...")
             else:
-                print(f"✗ 予期しないステータスコード: {response.status_code}")
-                
+                print(f"✁E予期しなぁE��チE�EタスコーチE {response.status_code}")
+
         except Exception as e:
-            print(f"✗ テスト実行エラー: {e}")
+            print(f"✁EチE��ト実行エラー: {e}")
+
 
 def test_error_handlers():
-    """エラーハンドラーのテスト"""
+    """エラーハンドラーのチE��チE""
     print("\n" + "=" * 50)
-    print("エラーハンドラーのテスト")
+    print("エラーハンドラーのチE��チE)
     print("=" * 50)
-    
+
     with app.test_client() as client:
         try:
-            # 404エラーテスト
-            print("\n1. 404エラーテスト:")
+            # 404エラーチE��チE
+            print("\n1. 404エラーチE��チE")
             response = client.get('/nonexistent-page')
-            print(f"ステータスコード: {response.status_code}")
-            
+            print(f"スチE�EタスコーチE {response.status_code}")
+
             if response.status_code == 404:
-                print("✓ 404エラーハンドラーが動作しています")
+                print("✁E404エラーハンドラーが動作してぁE��ぁE)
                 try:
                     data = response.get_json()
                     if data and data.get('error'):
-                        print(f"  エラーメッセージ: {data.get('message', 'N/A')}")
-                except:
-                    print("  レスポンス形式: HTML")
+                        print(f"  エラーメチE��ージ: {data.get('message', 'N/A')}")
+                except BaseException:
+                    print("  レスポンス形弁E HTML")
             else:
-                print(f"✗ 予期しないステータスコード: {response.status_code}")
-                
+                print(f"✁E予期しなぁE��チE�EタスコーチE {response.status_code}")
+
         except Exception as e:
-            print(f"✗ テスト実行エラー: {e}")
+            print(f"✁EチE��ト実行エラー: {e}")
+
 
 if __name__ == '__main__':
-    print("Flask エンドポイントテスト開始")
-    print("Task 5: Flaskルーティングとエンドポイントの実装 - 検証")
-    
-    # テスト実行
+    print("Flask エンド�Eイントテスト開姁E)
+    print("Task 5: FlaskルーチE��ングとエンド�Eイント�E実裁E- 検証")
+
+    # チE��ト実衁E
     test_main_page_endpoint()
     test_roulette_endpoint()
     test_error_handlers()
-    
+
     print("\n" + "=" * 50)
-    print("テスト完了")
+    print("チE��ト完亁E)
     print("=" * 50)
-    print("\n注意:")
-    print("- APIキーが設定されていない場合、一部の機能は制限されます")
-    print("- 実際のAPI呼び出しは外部サービスの可用性に依存します")
-    print("- キャッシュ機能により、2回目以降のテストは高速化されます")
+    print("\n注愁E")
+    print("- APIキーが設定されてぁE��ぁE��合、一部の機�Eは制限されまぁE)
+    print("- 実際のAPI呼び出し�E外部サービスの可用性に依存しまぁE)
+    print("- キャチE��ュ機�Eにより、E回目以降�EチE��ト�E高速化されまぁE)

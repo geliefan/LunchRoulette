@@ -1,87 +1,87 @@
 # 設計文書
 
-## 概要
+## 概要E
 
-Lunch Rouletteは、Flask Webフレームワークを使用したシンプルなWebアプリケーションです。ユーザーの位置情報と天気データを組み合わせて、近くのレストランをランダムに推薦します。PythonAnywhere無料プランの制約内で動作するよう設計されています。
+Lunch Rouletteは、Flask Webフレームワークを使用したシンプルなWebアプリケーションです。ユーザーの位置惁E��と天気データを絁E��合わせて、近くのレストランをランダムに推薦します。PythonAnywhere無料�Eランの制紁E�Eで動作するよぁE��計されてぁE��す、E
 
-## 関連技術理論
+## 関連技術理諁E
 
-### 地理情報システム（GIS）
-- **ハーバーサイン公式**: 地球上の2点間の距離を計算する数学的手法
-- **IPジオロケーション**: IPアドレスから地理的位置を推定する技術
+### 地琁E��報シスチE���E�EIS�E�E
+- **ハ�Eバ�Eサイン公弁E*: 地琁E���E2点間�E距離を計算する数学皁E��況E
+- **IPジオロケーション**: IPアドレスから地琁E��位置を推定する技衁E
 - **座標系**: 緯度・経度を使用したWGS84座標系を採用
 
 ### API統合パターン
 - **RESTful API**: Hot Pepper Gourmet APIとOpenWeatherMap APIとの通信
-- **レート制限**: 無料プランの制約に対応するためのAPI呼び出し制御
-- **エラーハンドリング**: 外部API障害時の適切な処理
+- **レート制陁E*: 無料�Eランの制紁E��対応するため�EAPI呼び出し制御
+- **エラーハンドリング**: 外部API障害時�E適刁E��処琁E
 
-### キャッシング戦略
-- **時間ベースキャッシュ**: 10分間のTTL（Time To Live）
-- **SQLiteキャッシュ**: ローカルデータベースを使用した高速アクセス
-- **キャッシュ無効化**: タイムスタンプベースの自動期限切れ
+### キャチE��ング戦略
+- **時間ベ�EスキャチE��ュ**: 10刁E��のTTL�E�Eime To Live�E�E
+- **SQLiteキャチE��ュ**: ローカルチE�Eタベ�Eスを使用した高速アクセス
+- **キャチE��ュ無効匁E*: タイムスタンプ�Eースの自動期限�EめE
 
-## アーキテクチャ
+## アーキチE��チャ
 
-### システム構成
+### シスチE��構�E
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   フロントエンド   │    │   Flaskバックエンド  │    │   外部API        │
-│   (HTML/CSS/JS)  │◄──►│   (Python)      │◄──►│   (Hot Pepper,   │
-│                 │    │                 │    │   OpenWeather)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                              │
+┌─────────────────━E   ┌─────────────────━E   ┌─────────────────━E
+━E  フロントエンチE  ━E   ━E  FlaskバックエンチE ━E   ━E  外部API        ━E
+━E  (HTML/CSS/JS)  │◄──►━E  (Python)      │◄──►━E  (Hot Pepper,   ━E
+━E                ━E   ━E                ━E   ━E  OpenWeather)  ━E
+└─────────────────━E   └─────────────────━E   └─────────────────━E
+                              ━E
                               ▼
-                       ┌─────────────────┐
-                       │   SQLiteキャッシュ │
-                       │                 │
-                       └─────────────────┘
+                       ┌─────────────────━E
+                       ━E  SQLiteキャチE��ュ ━E
+                       ━E                ━E
+                       └─────────────────━E
 ```
 
-### レイヤー構成
-1. **プレゼンテーション層**: HTML/CSS/JavaScript（バニラJS）
-2. **アプリケーション層**: Flask ルーティングとビジネスロジック
-3. **データアクセス層**: SQLiteキャッシュとAPI統合
+### レイヤー構�E
+1. **プレゼンチE�Eション層**: HTML/CSS/JavaScript�E�バニラJS�E�E
+2. **アプリケーション層**: Flask ルーチE��ングとビジネスロジチE��
+3. **チE�Eタアクセス層**: SQLiteキャチE��ュとAPI統吁E
 4. **外部サービス層**: Hot Pepper Gourmet API、OpenWeatherMap API
 
-## コンポーネントと インターフェース
+## コンポ�Eネントと インターフェース
 
 ### Flaskアプリケーション構造
 ```
 lunch_roulette/
 ├── app.py              # メインアプリケーション
-├── wsgi.py            # PythonAnywhere用WSGI設定
-├── requirements.txt   # 依存関係
+├── wsgi.py            # PythonAnywhere用WSGI設宁E
+├── requirements.txt   # 依存関俁E
 ├── static/
-│   ├── css/
-│   │   └── style.css  # モダンUIスタイル
-│   └── js/
-│       └── main.js    # フロントエンドロジック
+━E  ├── css/
+━E  ━E  └── style.css  # モダンUIスタイル
+━E  └── js/
+━E      └── main.js    # フロントエンドロジチE��
 ├── templates/
-│   └── index.html     # メインページテンプレート
-└── cache.db           # SQLiteキャッシュデータベース
+━E  └── index.html     # メインペ�EジチE��プレーチE
+└── cache.db           # SQLiteキャチE��ュチE�Eタベ�Eス
 ```
 
-### 主要コンポーネント
+### 主要コンポ�EネンチE
 
 #### 1. LocationService
 ```python
 class LocationService:
-    """IPアドレスから位置情報を取得するサービス"""
+    """IPアドレスから位置惁E��を取得するサービス"""
     def get_location_from_ip(self, ip_address: str) -> dict
 ```
 
 #### 2. WeatherService
 ```python
 class WeatherService:
-    """OpenWeatherMap APIから天気情報を取得"""
+    """OpenWeatherMap APIから天気情報を取征E""
     def get_current_weather(self, lat: float, lon: float) -> dict
 ```
 
 #### 3. RestaurantService
 ```python
 class RestaurantService:
-    """Hot Pepper Gourmet APIからレストラン情報を取得"""
+    """Hot Pepper Gourmet APIからレストラン惁E��を取征E""
     def search_restaurants(self, lat: float, lon: float, radius: int) -> list
     def filter_by_budget(self, restaurants: list, max_budget: int) -> list
 ```
@@ -89,7 +89,7 @@ class RestaurantService:
 #### 4. CacheService
 ```python
 class CacheService:
-    """SQLiteを使用したキャッシング機能"""
+    """SQLiteを使用したキャチE��ング機�E"""
     def get_cached_data(self, key: str) -> dict
     def set_cached_data(self, key: str, data: dict, ttl: int) -> None
     def is_cache_valid(self, timestamp: datetime) -> bool
@@ -98,27 +98,27 @@ class CacheService:
 #### 5. DistanceCalculator
 ```python
 class DistanceCalculator:
-    """ハーバーサイン公式を使用した距離計算"""
+    """ハ�Eバ�Eサイン公式を使用した距離計箁E""
     def calculate_distance(self, lat1: float, lon1: float, 
                           lat2: float, lon2: float) -> float
 ```
 
-### APIエンドポイント
+### APIエンド�EインチE
 
 #### GET /
-- **目的**: メインページの表示
-- **レスポンス**: HTML テンプレート
-- **処理**: 位置情報検出、天気情報取得、ページレンダリング
+- **目皁E*: メインペ�Eジの表示
+- **レスポンス**: HTML チE��プレーチE
+- **処琁E*: 位置惁E��検�E、天気情報取得、�Eージレンダリング
 
 #### POST /roulette
-- **目的**: レストラン推薦の実行
-- **リクエスト**: JSON（位置情報）
-- **レスポンス**: JSON（レストラン情報）
-- **処理**: レストラン検索、距離計算、ランダム選択
+- **目皁E*: レストラン推薦の実衁E
+- **リクエスチE*: JSON�E�位置惁E���E�E
+- **レスポンス**: JSON�E�レストラン惁E���E�E
+- **処琁E*: レストラン検索、距離計算、ランダム選抁E
 
-## データモデル
+## チE�EタモチE��
 
-### キャッシュテーブル構造
+### キャチE��ュチE�Eブル構造
 ```sql
 CREATE TABLE cache (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -129,7 +129,7 @@ CREATE TABLE cache (
 );
 ```
 
-### レストランデータ構造
+### レストランチE�Eタ構造
 ```json
 {
     "id": "string",
@@ -158,124 +158,124 @@ CREATE TABLE cache (
 
 ## エラーハンドリング
 
-### エラー分類と対応
+### エラー刁E��と対忁E
 
 #### 1. 外部API エラー
-- **Hot Pepper API障害**: キャッシュデータの使用、エラーメッセージ表示
-- **OpenWeatherMap API障害**: デフォルト天気情報の表示
-- **レート制限超過**: キャッシュデータの優先使用
+- **Hot Pepper API障害**: キャチE��ュチE�Eタの使用、エラーメチE��ージ表示
+- **OpenWeatherMap API障害**: チE��ォルト天気情報の表示
+- **レート制限趁E��**: キャチE��ュチE�Eタの優先使用
 
-#### 2. データ処理エラー
-- **位置情報取得失敗**: デフォルト位置（東京駅）の使用
-- **レストラン検索結果なし**: 範囲拡大または代替提案
+#### 2. チE�Eタ処琁E��ラー
+- **位置惁E��取得失敁E*: チE��ォルト位置�E�東京駁E���E使用
+- **レストラン検索結果なぁE*: 篁E��拡大また�E代替提桁E
 - **距離計算エラー**: 概算距離の表示
 
-#### 3. システムエラー
-- **データベース接続エラー**: インメモリキャッシュへのフォールバック
-- **テンプレートエラー**: 最小限のHTMLレスポンス
+#### 3. シスチE��エラー
+- **チE�Eタベ�Eス接続エラー**: インメモリキャチE��ュへのフォールバック
+- **チE��プレートエラー**: 最小限のHTMLレスポンス
 
-### エラーレスポンス形式
+### エラーレスポンス形弁E
 ```json
 {
     "error": true,
-    "message": "エラーメッセージ",
-    "fallback_data": "代替データ（可能な場合）"
+    "message": "エラーメチE��ージ",
+    "fallback_data": "代替チE�Eタ�E�可能な場合！E
 }
 ```
 
-## テスト戦略
+## チE��ト戦略
 
-### テストレベル
+### チE��トレベル
 
-#### 1. 単体テスト
-- **対象**: 各サービスクラスの個別メソッド
-- **ツール**: pytest
-- **カバレッジ**: 80%以上を目標
+#### 1. 単体テスチE
+- **対象**: 吁E��ービスクラスの個別メソチE��
+- **チE�Eル**: pytest
+- **カバレチE��**: 80%以上を目樁E
 
-#### 2. 統合テスト
-- **対象**: API エンドポイントとデータベース操作
-- **モック**: 外部API呼び出しのモック化
+#### 2. 統合テスチE
+- **対象**: API エンド�EイントとチE�Eタベ�Eス操佁E
+- **モチE��**: 外部API呼び出し�EモチE��匁E
 - **シナリオ**: 正常系・異常系の両方
 
-#### 3. E2Eテスト
-- **対象**: ブラウザでの完全なユーザーフロー
-- **ツール**: Selenium（オプション）
-- **シナリオ**: ページ読み込み→ボタンクリック→結果表示
+#### 3. E2EチE��チE
+- **対象**: ブラウザでの完�Eなユーザーフロー
+- **チE�Eル**: Selenium�E�オプション�E�E
+- **シナリオ**: ペ�Eジ読み込み→�EタンクリチE��→結果表示
 
-### テストデータ
-- **モックAPI レスポンス**: 実際のAPI構造に基づく
-- **テスト用データベース**: インメモリSQLite
-- **位置情報**: 東京都内の固定座標
+### チE��トデータ
+- **モチE��API レスポンス**: 実際のAPI構造に基づぁE
+- **チE��ト用チE�Eタベ�Eス**: インメモリSQLite
+- **位置惁E��**: 東京都冁E�E固定座樁E
 
-## UI/UXデザイン
+## UI/UXチE��イン
 
 ### モダンUIトレンド採用
 
-#### 1. デザインシステム
-- **カラーパレット**: Material Design 3.0準拠
-- **タイポグラフィ**: システムフォント使用
-- **アイコン**: Font Awesome または Material Icons
+#### 1. チE��インシスチE��
+- **カラーパレチE��**: Material Design 3.0準拠
+- **タイポグラフィ**: シスチE��フォント使用
+- **アイコン**: Font Awesome また�E Material Icons
 
 #### 2. レスポンシブデザイン
-- **ブレークポイント**: モバイルファースト
-- **グリッドシステム**: CSS Grid / Flexbox
-- **タッチ対応**: 44px以上のタップターゲット
+- **ブレークポインチE*: モバイルファースチE
+- **グリチE��シスチE��**: CSS Grid / Flexbox
+- **タチE��対忁E*: 44px以上�EタチE�EターゲチE��
 
 #### 3. インタラクション
-- **ローディング状態**: スピナーとスケルトンUI
-- **アニメーション**: CSS transitions（60fps）
-- **フィードバック**: ホバー・フォーカス状態
+- **ローチE��ング状慁E*: スピナーとスケルトンUI
+- **アニメーション**: CSS transitions�E�E0fps�E�E
+- **フィードバチE��**: ホバー・フォーカス状慁E
 
-### コンポーネント設計
+### コンポ�Eネント設訁E
 
 #### 1. ヘッダー
-- 位置情報表示
-- 天気情報カード
-- ルーレットボタン
+- 位置惁E��表示
+- 天気情報カーチE
+- ルーレチE��ボタン
 
-#### 2. レストランカード
-- 画像（aspect-ratio: 16:9）
-- レストラン名・ジャンル
+#### 2. レストランカーチE
+- 画像！Espect-ratio: 16:9�E�E
+- レストラン名�Eジャンル
 - 距離・予算情報
 - マップリンクボタン
 
-#### 3. 状態管理
-- ローディング状態
-- エラー状態
-- 空状態（結果なし）
+#### 3. 状態管琁E
+- ローチE��ング状慁E
+- エラー状慁E
+- 空状態（結果なし！E
 
-## セキュリティ考慮事項
+## セキュリチE��老E�E事頁E
 
-### データ保護
-- **APIキー**: 環境変数での管理
-- **入力検証**: SQLインジェクション対策
-- **XSS対策**: テンプレートエスケープ
+### チE�Eタ保護
+- **APIキー**: 環墁E��数での管琁E
+- **入力検証**: SQLインジェクション対筁E
+- **XSS対筁E*: チE��プレートエスケーチE
 
 ### プライバシー
-- **位置情報**: IPベースのみ、GPS不使用
-- **ログ**: 個人情報の非記録
-- **キャッシュ**: 個人識別情報の除外
+- **位置惁E��**: IPベ�Eスのみ、GPS不使用
+- **ログ**: 個人惁E��の非記録
+- **キャチE��ュ**: 個人識別惁E��の除夁E
 
-## パフォーマンス最適化
+## パフォーマンス最適匁E
 
-### フロントエンド
-- **CSS/JS最小化**: 本番環境での圧縮
-- **画像最適化**: WebP形式の使用
-- **キャッシュ戦略**: ブラウザキャッシュの活用
+### フロントエンチE
+- **CSS/JS最小化**: 本番環墁E��の圧縮
+- **画像最適匁E*: WebP形式�E使用
+- **キャチE��ュ戦略**: ブラウザキャチE��ュの活用
 
-### バックエンド
-- **データベース**: インデックス最適化
-- **API呼び出し**: 並列処理の実装
-- **メモリ使用量**: PythonAnywhere制限内での動作
+### バックエンチE
+- **チE�Eタベ�Eス**: インチE��クス最適匁E
+- **API呼び出ぁE*: 並列�E琁E�E実裁E
+- **メモリ使用釁E*: PythonAnywhere制限�Eでの動佁E
 
-## デプロイメント設計
+## チE�Eロイメント設訁E
 
-### PythonAnywhere設定
-- **WSGI設定**: `wsgi.py`での適切な設定
-- **静的ファイル**: `/static/`パスの設定
-- **環境変数**: PythonAnywhereコンソールでの設定
+### PythonAnywhere設宁E
+- **WSGI設宁E*: `wsgi.py`での適刁E��設宁E
+- **静的ファイル**: `/static/`パスの設宁E
+- **環墁E��数**: PythonAnywhereコンソールでの設宁E
 
-### 依存関係管理
+### 依存関係管琁E
 ```
 Flask==3.0.0
 requests==2.31.0
@@ -283,5 +283,5 @@ sqlite3 (標準ライブラリ)
 ```
 
 ### 設定ファイル
-- **開発環境**: `config.py`
-- **本番環境**: 環境変数での設定上書き
+- **開発環墁E*: `config.py`
+- **本番環墁E*: 環墁E��数での設定上書�

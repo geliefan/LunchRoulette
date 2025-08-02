@@ -2,255 +2,254 @@
 # -*- coding: utf-8 -*-
 
 """
-DistanceCalculatorの単体テスト
-ハーバーサイン公式を使用した距離計算機能をテスト
+DistanceCalculatorの単体テスチE
+ハ�Eバ�Eサイン公式を使用した距離計算機�EをテスチE
 """
 
 import pytest
-import math
 from unittest.mock import Mock, patch
 from distance_calculator import DistanceCalculator
 from error_handler import ErrorHandler
 
 
 class TestDistanceCalculator:
-    """DistanceCalculatorクラスの単体テスト"""
-    
+    """DistanceCalculatorクラスの単体テスチE""
+
     @pytest.fixture
     def mock_error_handler(self):
-        """モックErrorHandlerインスタンス"""
+        """モチE��ErrorHandlerインスタンス"""
         mock_handler = Mock(spec=ErrorHandler)
         mock_handler.handle_distance_calculation_error.return_value = {
-            'message': 'テストエラー',
+            'message': 'チE��トエラー',
             'fallback_distance': 0.5
         }
         return mock_handler
-    
+
     @pytest.fixture
     def distance_calculator(self, mock_error_handler):
-        """テスト用DistanceCalculatorインスタンス"""
+        """チE��ト用DistanceCalculatorインスタンス"""
         return DistanceCalculator(error_handler=mock_error_handler)
-    
+
     def test_init(self):
-        """初期化テスト"""
+        """初期化テスチE""
         calculator = DistanceCalculator()
         assert calculator.EARTH_RADIUS_KM == 6371.0
         assert calculator.error_handler is not None
-    
+
     def test_calculate_distance_same_point(self, distance_calculator):
-        """同一地点間の距離計算テスト"""
-        # 東京駅の座標
+        """同一地点間�E距離計算テスチE""
+        # 東京駁E�E座樁E
         lat, lon = 35.6812, 139.7671
-        
+
         result = distance_calculator.calculate_distance(lat, lon, lat, lon)
-        
+
         assert result == 0.0
-    
+
     def test_calculate_distance_known_distance(self, distance_calculator):
-        """既知の距離での計算テスト"""
-        # 東京駅から新宿駅までの距離（約7.5km）
+        """既知の距離での計算テスチE""
+        # 東京駁E��ら新宿駁E��での距離�E�紁E.5km�E�E
         tokyo_lat, tokyo_lon = 35.6812, 139.7671
         shinjuku_lat, shinjuku_lon = 35.6896, 139.7006
-        
+
         result = distance_calculator.calculate_distance(
             tokyo_lat, tokyo_lon, shinjuku_lat, shinjuku_lon
         )
-        
-        # 実際の距離は約7.5kmなので、6-9kmの範囲で確認
+
+        # 実際の距離は紁E.5kmなので、E-9kmの篁E��で確誁E
         assert 6.0 <= result <= 9.0
-    
+
     def test_calculate_distance_precision(self, distance_calculator):
-        """距離計算精度テスト"""
-        # 1度の緯度差（約111km）
+        """距離計算精度チE��チE""
+        # 1度の緯度差�E�紁E11km�E�E
         lat1, lon1 = 35.0, 139.0
         lat2, lon2 = 36.0, 139.0
-        
+
         result = distance_calculator.calculate_distance(lat1, lon1, lat2, lon2)
-        
-        # 1度の緯度差は約111kmなので、110-112kmの範囲で確認
+
+        # 1度の緯度差は紁E11kmなので、E10-112kmの篁E��で確誁E
         assert 110.0 <= result <= 112.0
-    
+
     def test_calculate_distance_invalid_latitude(self, distance_calculator):
-        """無効な緯度での距離計算テスト"""
-        with pytest.raises(ValueError, match="緯度は-90から90の範囲である必要があります"):
+        """無効な緯度での距離計算テスチE""
+        with pytest.raises(ValueError, match="緯度は-90から90の篁E��である忁E��がありまぁE):
             distance_calculator.calculate_distance(95.0, 139.0, 35.0, 139.0)
-        
-        with pytest.raises(ValueError, match="緯度は-90から90の範囲である必要があります"):
+
+        with pytest.raises(ValueError, match="緯度は-90から90の篁E��である忁E��がありまぁE):
             distance_calculator.calculate_distance(-95.0, 139.0, 35.0, 139.0)
-    
+
     def test_calculate_distance_invalid_longitude(self, distance_calculator):
-        """無効な経度での距離計算テスト"""
-        with pytest.raises(ValueError, match="経度は-180から180の範囲である必要があります"):
+        """無効な経度での距離計算テスチE""
+        with pytest.raises(ValueError, match="経度は-180から180の篁E��である忁E��がありまぁE):
             distance_calculator.calculate_distance(35.0, 185.0, 35.0, 139.0)
-        
-        with pytest.raises(ValueError, match="経度は-180から180の範囲である必要があります"):
+
+        with pytest.raises(ValueError, match="経度は-180から180の篁E��である忁E��がありまぁE):
             distance_calculator.calculate_distance(35.0, -185.0, 35.0, 139.0)
-    
+
     def test_calculate_distance_invalid_type(self, distance_calculator):
-        """無効な型での距離計算テスト"""
-        with pytest.raises(ValueError, match="緯度・経度は数値である必要があります"):
+        """無効な型での距離計算テスチE""
+        with pytest.raises(ValueError, match="緯度・経度は数値である忁E��がありまぁE):
             distance_calculator.calculate_distance("invalid", 139.0, 35.0, 139.0)
-    
+
     def test_calculate_distance_error_handling(self, distance_calculator, mock_error_handler):
-        """距離計算エラーハンドリングテスト"""
+        """距離計算エラーハンドリングチE��チE""
         # mathモジュールのsin関数でエラーを発生させる
         with patch('math.sin', side_effect=Exception("Math error")):
             result = distance_calculator.calculate_distance(35.0, 139.0, 36.0, 140.0)
-            
-            # エラーハンドラーが呼ばれることを確認
+
+            # エラーハンドラーが呼ばれることを確誁E
             mock_error_handler.handle_distance_calculation_error.assert_called_once()
-            
-            # 概算距離が返されることを確認（_calculate_approximate_distanceの結果）
+
+            # 概算距離が返されることを確認！Ecalculate_approximate_distanceの結果�E�E
             assert isinstance(result, float)
             assert result > 0
-    
+
     def test_calculate_walking_distance_success(self, distance_calculator):
-        """徒歩距離計算成功テスト"""
-        # 東京駅から銀座駅までの距離（約1km）
+        """徒歩距離計算�E功テスチE""
+        # 東京駁E��ら銀座駁E��での距離�E�紁Ekm�E�E
         tokyo_lat, tokyo_lon = 35.6812, 139.7671
         ginza_lat, ginza_lon = 35.6762, 139.7633
-        
+
         result = distance_calculator.calculate_walking_distance(
             tokyo_lat, tokyo_lon, ginza_lat, ginza_lon
         )
-        
-        # 結果の構造確認
+
+        # 結果の構造確誁E
         assert 'distance_km' in result
         assert 'distance_m' in result
         assert 'walking_time_minutes' in result
         assert 'distance_display' in result
         assert 'time_display' in result
-        
-        # 値の妥当性確認
+
+        # 値の妥当性確誁E
         assert result['distance_km'] > 0
         assert result['distance_m'] > 0
         assert result['walking_time_minutes'] > 0
         assert 'm' in result['distance_display'] or 'km' in result['distance_display']
-        assert '徒歩約' in result['time_display']
-        assert '分' in result['time_display']
-    
+        assert '徒歩紁E in result['time_display']
+        assert '刁E in result['time_display']
+
     def test_calculate_walking_distance_short_distance(self, distance_calculator):
-        """短距離の徒歩距離計算テスト"""
+        """短距離の徒歩距離計算テスチE""
         # 非常に近い2点
         lat1, lon1 = 35.6812, 139.7671
-        lat2, lon2 = 35.6815, 139.7675  # 約50m程度
-        
+        lat2, lon2 = 35.6815, 139.7675  # 紁E0m程度
+
         result = distance_calculator.calculate_walking_distance(lat1, lon1, lat2, lon2)
-        
-        # 短距離の場合はメートル表示
+
+        # 短距離の場合�Eメートル表示
         assert 'm' in result['distance_display']
         assert result['distance_m'] < 1000
-        assert result['walking_time_minutes'] >= 1  # 最低1分
-    
+        assert result['walking_time_minutes'] >= 1  # 最佁E刁E
+
     def test_calculate_walking_distance_long_distance(self, distance_calculator):
-        """長距離の徒歩距離計算テスト"""
-        # 東京駅から新宿駅まで
+        """長距離の徒歩距離計算テスチE""
+        # 東京駁E��ら新宿駁E��で
         tokyo_lat, tokyo_lon = 35.6812, 139.7671
         shinjuku_lat, shinjuku_lon = 35.6896, 139.7006
-        
+
         result = distance_calculator.calculate_walking_distance(
             tokyo_lat, tokyo_lon, shinjuku_lat, shinjuku_lon
         )
-        
-        # 長距離の場合はキロメートル表示
+
+        # 長距離の場合�Eキロメートル表示
         assert 'km' in result['distance_display']
         assert result['distance_km'] > 1.0
-        assert result['walking_time_minutes'] > 60  # 1時間以上
-    
+        assert result['walking_time_minutes'] > 60  # 1時間以丁E
+
     def test_calculate_walking_distance_error(self, distance_calculator, mock_error_handler):
-        """徒歩距離計算エラーテスト"""
+        """徒歩距離計算エラーチE��チE""
         # calculate_distanceでエラーを発生させる
         with patch.object(distance_calculator, 'calculate_distance', side_effect=Exception("Distance error")):
             result = distance_calculator.calculate_walking_distance(35.0, 139.0, 36.0, 140.0)
-            
-            # エラー時のデフォルト値が返されることを確認
+
+            # エラー時�EチE��ォルト値が返されることを確誁E
             assert result['distance_km'] == 0.5
             assert result['distance_m'] == 500
             assert result['walking_time_minutes'] == 8
-            assert result['distance_display'] == "約500m"
-            assert result['time_display'] == "徒歩約8分"
+            assert result['distance_display'] == "紁E00m"
+            assert result['time_display'] == "徒歩紁E刁E
             assert 'error_info' in result
-    
+
     def test_validate_coordinates_valid(self, distance_calculator):
-        """座標検証（有効）テスト"""
-        # 有効な座標では例外が発生しない
+        """座標検証�E�有効�E�テスチE""
+        # 有効な座標では例外が発生しなぁE
         distance_calculator._validate_coordinates(35.6812, 139.7671)
         distance_calculator._validate_coordinates(-90.0, -180.0)
         distance_calculator._validate_coordinates(90.0, 180.0)
         distance_calculator._validate_coordinates(0.0, 0.0)
-    
+
     def test_validate_coordinates_invalid_latitude(self, distance_calculator):
-        """座標検証（無効な緯度）テスト"""
-        with pytest.raises(ValueError, match="緯度は-90から90の範囲である必要があります"):
+        """座標検証�E�無効な緯度�E�テスチE""
+        with pytest.raises(ValueError, match="緯度は-90から90の篁E��である忁E��がありまぁE):
             distance_calculator._validate_coordinates(91.0, 139.0)
-        
-        with pytest.raises(ValueError, match="緯度は-90から90の範囲である必要があります"):
+
+        with pytest.raises(ValueError, match="緯度は-90から90の篁E��である忁E��がありまぁE):
             distance_calculator._validate_coordinates(-91.0, 139.0)
-    
+
     def test_validate_coordinates_invalid_longitude(self, distance_calculator):
-        """座標検証（無効な経度）テスト"""
-        with pytest.raises(ValueError, match="経度は-180から180の範囲である必要があります"):
+        """座標検証�E�無効な経度�E�テスチE""
+        with pytest.raises(ValueError, match="経度は-180から180の篁E��である忁E��がありまぁE):
             distance_calculator._validate_coordinates(35.0, 181.0)
-        
-        with pytest.raises(ValueError, match="経度は-180から180の範囲である必要があります"):
+
+        with pytest.raises(ValueError, match="経度は-180から180の篁E��である忁E��がありまぁE):
             distance_calculator._validate_coordinates(35.0, -181.0)
-    
+
     def test_validate_coordinates_invalid_type(self, distance_calculator):
-        """座標検証（無効な型）テスト"""
-        with pytest.raises(ValueError, match="緯度・経度は数値である必要があります"):
+        """座標検証�E�無効な型）テスチE""
+        with pytest.raises(ValueError, match="緯度・経度は数値である忁E��がありまぁE):
             distance_calculator._validate_coordinates("35.0", 139.0)
-        
-        with pytest.raises(ValueError, match="緯度・経度は数値である必要があります"):
+
+        with pytest.raises(ValueError, match="緯度・経度は数値である忁E��がありまぁE):
             distance_calculator._validate_coordinates(35.0, "139.0")
-    
+
     def test_calculate_approximate_distance_success(self, distance_calculator):
-        """概算距離計算成功テスト"""
-        # 東京駅から新宿駅まで
+        """概算距離計算�E功テスチE""
+        # 東京駁E��ら新宿駁E��で
         tokyo_lat, tokyo_lon = 35.6812, 139.7671
         shinjuku_lat, shinjuku_lon = 35.6896, 139.7006
-        
+
         result = distance_calculator._calculate_approximate_distance(
             tokyo_lat, tokyo_lon, shinjuku_lat, shinjuku_lon
         )
-        
-        # 概算距離が妥当な範囲内であることを確認
+
+        # 概算距離が妥当な篁E��冁E��あることを確誁E
         assert isinstance(result, float)
         assert result > 0
-        assert result < 100  # 100km未満（東京都内なので）
-    
+        assert result < 100  # 100km未満�E�東京都冁E��ので�E�E
+
     def test_calculate_approximate_distance_same_point(self, distance_calculator):
-        """概算距離計算（同一地点）テスト"""
+        """概算距離計算（同一地点�E�テスチE""
         lat, lon = 35.6812, 139.7671
-        
+
         result = distance_calculator._calculate_approximate_distance(lat, lon, lat, lon)
-        
+
         assert result == 0.0
-    
+
     def test_calculate_approximate_distance_error_fallback(self, distance_calculator):
-        """概算距離計算エラー時のフォールバックテスト"""
+        """概算距離計算エラー時�EフォールバックチE��チE""
         # mathモジュールのsqrt関数でエラーを発生させる
         with patch('math.sqrt', side_effect=Exception("Math error")):
             result = distance_calculator._calculate_approximate_distance(35.0, 139.0, 36.0, 140.0)
-            
-            # 最終フォールバック値が返されることを確認
+
+            # 最終フォールバック値が返されることを確誁E
             assert result == 0.5
-    
+
     def test_earth_radius_constant(self, distance_calculator):
-        """地球半径定数テスト"""
+        """地琁E��征E��数チE��チE""
         assert distance_calculator.EARTH_RADIUS_KM == 6371.0
-    
+
     def test_walking_speed_calculation(self, distance_calculator):
-        """徒歩速度計算テスト"""
-        # 1kmの距離での徒歩時間計算
+        """徒歩速度計算テスチE""
+        # 1kmの距離での徒歩時間計箁E
         lat1, lon1 = 35.0, 139.0
-        lat2, lon2 = 35.009, 139.0  # 約1km
-        
+        lat2, lon2 = 35.009, 139.0  # 紁Ekm
+
         result = distance_calculator.calculate_walking_distance(lat1, lon1, lat2, lon2)
-        
-        # 1.3km（迂回考慮）を時速4kmで歩くと約20分
-        expected_time = int(1.3 * 15)  # 15分/km
-        
-        # ±5分の誤差を許容
+
+        # 1.3km�E�迂回老E�E�E�を時送Ekmで歩くと紁E0刁E
+        expected_time = int(1.3 * 15)  # 15刁Ekm
+
+        # ±5刁E�E誤差を許容
         assert abs(result['walking_time_minutes'] - expected_time) <= 5
 
 

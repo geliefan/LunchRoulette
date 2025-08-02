@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 """
-RestaurantService - レストラン情報サービスクラス
-Hot Pepper Gourmet APIからレストラン情報を取得する機能を提供
+RestaurantService - レストラン惁E��サービスクラス
+Hot Pepper Gourmet APIからレストラン惁E��を取得する機�Eを提侁E
 
-このクラスは以下の機能を提供します:
-- Hot Pepper Gourmet Web API統合
-- 半径1km以内のレストラン検索機能
-- ランチ予算≤¥1,200のフィルタリング機能
-- キャッシュ機能との統合
+こ�Eクラスは以下�E機�Eを提供しまぁE
+- Hot Pepper Gourmet Web API統吁E
+- 半征Ekm以冁E�Eレストラン検索機�E
+- ランチ予算≤¥1,200のフィルタリング機�E
+- キャチE��ュ機�Eとの統吁E
 """
 
 import requests
@@ -20,86 +20,86 @@ from cache_service import CacheService
 
 class RestaurantService:
     """
-    Hot Pepper Gourmet APIからレストラン情報を取得するサービス
-    
-    指定された座標周辺のレストランを検索し、予算でフィルタリングして
-    ランチに適したレストランを提供する。
+    Hot Pepper Gourmet APIからレストラン惁E��を取得するサービス
+
+    持E��された座標周辺のレストランを検索し、予算でフィルタリングして
+    ランチに適したレストランを提供する、E
     """
-    
-    # 予算コードマッピング（Hot Pepper API仕様）
+
+    # 予算コード�EチE��ング�E�Eot Pepper API仕様！E
     BUDGET_CODES = {
-        'B009': 500,    # ～500円
-        'B010': 1000,   # 501～1000円
-        'B011': 1500,   # 1001～1500円
-        'B001': 2000,   # 1501～2000円
-        'B002': 3000,   # 2001～3000円
-        'B003': 4000,   # 3001～4000円
-        'B008': 5000,   # 4001～5000円
-        'B004': 7000,   # 5001～7000円
-        'B005': 10000,  # 7001～10000円
-        'B006': 15000,  # 10001～15000円
-        'B012': 20000,  # 15001～20000円
-        'B013': 30000,  # 20001～30000円
-        'B014': 30001   # 30001円～
+        'B009': 500,    # �E�E00冁E
+        'B010': 1000,   # 501�E�E000冁E
+        'B011': 1500,   # 1001�E�E500冁E
+        'B001': 2000,   # 1501�E�E000冁E
+        'B002': 3000,   # 2001�E�E000冁E
+        'B003': 4000,   # 3001�E�E000冁E
+        'B008': 5000,   # 4001�E�E000冁E
+        'B004': 7000,   # 5001�E�E000冁E
+        'B005': 10000,  # 7001�E�E0000冁E
+        'B006': 15000,  # 10001�E�E5000冁E
+        'B012': 20000,  # 15001�E�E0000冁E
+        'B013': 30000,  # 20001�E�E0000冁E
+        'B014': 30001   # 30001冁E��E
     }
-    
-    # ランチ予算制限（円）
+
+    # ランチ予算制限（�E�E�E
     LUNCH_BUDGET_LIMIT = 1200
-    
+
     def __init__(self, api_key: Optional[str] = None, cache_service: Optional[CacheService] = None):
         """
-        RestaurantServiceを初期化
-        
+        RestaurantServiceを�E期化
+
         Args:
             api_key (str, optional): Hot Pepper Gourmet APIキー
-            cache_service (CacheService, optional): キャッシュサービス
+            cache_service (CacheService, optional): キャチE��ュサービス
         """
         self.api_key = api_key or os.getenv('HOTPEPPER_API_KEY')
         self.cache_service = cache_service or CacheService()
         self.api_base_url = "https://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
-        self.timeout = 10  # APIリクエストのタイムアウト（秒）
-        
+        self.timeout = 10  # APIリクエスト�Eタイムアウト（秒！E
+
         if not self.api_key:
-            print("警告: Hot Pepper Gourmet APIキーが設定されていません。")
-    
+            print("警呁E Hot Pepper Gourmet APIキーが設定されてぁE��せん、E)
+
     def search_restaurants(self, lat: float, lon: float, radius: int = 1) -> List[Dict]:
         """
-        指定された座標周辺のレストランを検索
-        
+        持E��された座標周辺のレストランを検索
+
         Args:
             lat (float): 緯度
             lon (float): 経度
-            radius (int): 検索半径（km）、デフォルトは1km
-            
+            radius (int): 検索半征E��Em�E�、デフォルト�E1km
+
         Returns:
-            list: レストラン情報のリスト
-            
+            list: レストラン惁E��のリスチE
+
         Example:
             >>> restaurant_service = RestaurantService()
             >>> restaurants = restaurant_service.search_restaurants(35.6812, 139.7671)
             >>> print(f"Found {len(restaurants)} restaurants")
         """
-        # キャッシュキーを生成
+        # キャチE��ュキーを生戁E
         cache_key = self.cache_service.generate_cache_key(
             'restaurants',
             lat=round(lat, 4),
             lon=round(lon, 4),
             radius=radius
         )
-        
-        # キャッシュから取得を試行
+
+        # キャチE��ュから取得を試衁E
         cached_data = self.cache_service.get_cached_data(cache_key)
         if cached_data:
-            print(f"レストラン情報をキャッシュから取得: {len(cached_data)}件")
+            print(f"レストラン惁E��をキャチE��ュから取征E {len(cached_data)}件")
             return cached_data
-        
-        # APIキーが設定されていない場合は空のリストを返す
+
+        # APIキーが設定されてぁE��ぁE��合�E空のリストを返す
         if not self.api_key:
-            print("APIキーが設定されていないため、レストラン検索をスキップ")
+            print("APIキーが設定されてぁE��ぁE��め、レストラン検索をスキチE�E")
             return []
-        
+
         try:
-            # APIパラメータを構築
+            # APIパラメータを構篁E
             params = {
                 'key': self.api_key,
                 'lat': lat,
@@ -108,34 +108,34 @@ class RestaurantService:
                 'count': 100,  # 最大取得件数
                 'format': 'json'
             }
-            
-            print(f"レストラン検索API呼び出し: lat={lat}, lon={lon}, radius={radius}km")
-            
-            # APIリクエストを実行
+
+            print(f"レストラン検索API呼び出ぁE lat={lat}, lon={lon}, radius={radius}km")
+
+            # APIリクエストを実衁E
             response = requests.get(self.api_base_url, params=params, timeout=self.timeout)
             response.raise_for_status()
-            
-            # レスポンスを解析
+
+            # レスポンスを解极E
             data = response.json()
-            
-            # エラーレスポンスをチェック
+
+            # エラーレスポンスをチェチE��
             if 'results' not in data:
-                raise ValueError("APIレスポンスに結果が含まれていません")
-            
-            # レストラン情報を整形
+                raise ValueError("APIレスポンスに結果が含まれてぁE��せん")
+
+            # レストラン惁E��を整形
             restaurants = self._format_restaurant_data(data['results'].get('shop', []))
-            
-            # キャッシュに保存（10分間）
+
+            # キャチE��ュに保存！E0刁E���E�E
             self.cache_service.set_cached_data(cache_key, restaurants, ttl=600)
-            
-            print(f"レストラン検索成功: {len(restaurants)}件取得")
+
+            print(f"レストラン検索成功: {len(restaurants)}件取征E)
             return restaurants
-            
+
         except requests.exceptions.HTTPError as e:
-            # HTTPエラー（レート制限、認証エラーなど）
+            # HTTPエラー�E�レート制限、認証エラーなど�E�E
             if e.response.status_code == 429:
                 print(f"レストラン検索API レート制限エラー: {e}")
-                # レート制限時は古いキャッシュデータを使用を試行
+                # レート制限時は古ぁE��ャチE��ュチE�Eタを使用を試衁E
                 fallback_data = self._get_fallback_cache_data(cache_key)
                 if fallback_data:
                     return fallback_data
@@ -144,82 +144,82 @@ class RestaurantService:
             else:
                 print(f"レストラン検索API HTTPエラー: {e}")
             return []
-            
+
         except requests.exceptions.RequestException as e:
             print(f"レストラン検索API リクエストエラー: {e}")
-            # ネットワークエラー時は古いキャッシュデータを使用を試行
+            # ネットワークエラー時�E古ぁE��ャチE��ュチE�Eタを使用を試衁E
             fallback_data = self._get_fallback_cache_data(cache_key)
             if fallback_data:
                 return fallback_data
             return []
-            
+
         except (ValueError, KeyError) as e:
-            print(f"レストラン検索データ解析エラー: {e}")
+            print(f"レストラン検索チE�Eタ解析エラー: {e}")
             return []
-            
+
         except Exception as e:
-            print(f"レストラン検索で予期しないエラー: {e}")
+            print(f"レストラン検索で予期しなぁE��ラー: {e}")
             return []
-    
+
     def filter_by_budget(self, restaurants: List[Dict], max_budget: int = None) -> List[Dict]:
         """
         予算でレストランをフィルタリング
-        
+
         Args:
-            restaurants (list): レストラン情報のリスト
-            max_budget (int, optional): 最大予算（円）、デフォルトはLUNCH_BUDGET_LIMIT
-            
+            restaurants (list): レストラン惁E��のリスチE
+            max_budget (int, optional): 最大予算（�E�E�、デフォルト�ELUNCH_BUDGET_LIMIT
+
         Returns:
-            list: フィルタリングされたレストラン情報のリスト
+            list: フィルタリングされたレストラン惁E��のリスチE
         """
         if max_budget is None:
             max_budget = self.LUNCH_BUDGET_LIMIT
-        
+
         filtered_restaurants = []
-        
+
         for restaurant in restaurants:
-            # 予算情報が存在しない場合はスキップ
+            # 予算情報が存在しなぁE��合�EスキチE�E
             if 'budget_average' not in restaurant:
                 continue
-            
-            # 予算が制限以下の場合のみ追加
+
+            # 予算が制限以下�E場合�Eみ追加
             if restaurant['budget_average'] <= max_budget:
                 filtered_restaurants.append(restaurant)
-        
-        print(f"予算フィルタリング: {len(restaurants)}件 → {len(filtered_restaurants)}件 (≤¥{max_budget})")
+
+        print(f"予算フィルタリング: {len(restaurants)}件 ↁE{len(filtered_restaurants)}件 (≤¥{max_budget})")
         return filtered_restaurants
-    
+
     def search_lunch_restaurants(self, lat: float, lon: float, radius: int = 1) -> List[Dict]:
         """
-        ランチに適したレストランを検索（予算フィルタリング込み）
-        
+        ランチに適したレストランを検索�E�予算フィルタリング込み�E�E
+
         Args:
             lat (float): 緯度
             lon (float): 経度
-            radius (int): 検索半径（km）
-            
+            radius (int): 検索半征E��Em�E�E
+
         Returns:
-            list: ランチに適したレストラン情報のリスト
+            list: ランチに適したレストラン惁E��のリスチE
         """
         # 全レストランを検索
         all_restaurants = self.search_restaurants(lat, lon, radius)
-        
+
         # 予算でフィルタリング
         lunch_restaurants = self.filter_by_budget(all_restaurants, self.LUNCH_BUDGET_LIMIT)
-        
+
         return lunch_restaurants
-    
+
     def _convert_radius_to_range_code(self, radius_km: int) -> int:
         """
-        半径（km）をHot Pepper APIの範囲コードに変換
-        
+        半征E��Em�E�をHot Pepper APIの篁E��コードに変換
+
         Args:
-            radius_km (int): 半径（km）
-            
+            radius_km (int): 半征E��Em�E�E
+
         Returns:
-            int: Hot Pepper APIの範囲コード
+            int: Hot Pepper APIの篁E��コーチE
         """
-        # Hot Pepper APIの範囲コード
+        # Hot Pepper APIの篁E��コーチE
         # 1: 300m, 2: 500m, 3: 1000m, 4: 2000m, 5: 3000m
         if radius_km <= 0.3:
             return 1
@@ -231,27 +231,27 @@ class RestaurantService:
             return 4
         else:
             return 5
-    
+
     def _format_restaurant_data(self, api_restaurants: List[Dict]) -> List[Dict]:
         """
         APIレスポンスを標準形式に整形
-        
+
         Args:
-            api_restaurants (list): Hot Pepper APIからのレストランデータ
-            
+            api_restaurants (list): Hot Pepper APIからのレストランチE�Eタ
+
         Returns:
-            list: 整形されたレストラン情報のリスト
+            list: 整形されたレストラン惁E��のリスチE
         """
         formatted_restaurants = []
-        
+
         for restaurant in api_restaurants:
             try:
-                # 予算情報を解析
+                # 予算情報を解极E
                 budget_average = self._parse_budget_info(restaurant.get('budget', {}))
-                
+
                 formatted_restaurant = {
                     'id': restaurant.get('id', ''),
-                    'name': restaurant.get('name', '不明なレストラン'),
+                    'name': restaurant.get('name', '不�Eなレストラン'),
                     'name_kana': restaurant.get('name_kana', ''),
                     'address': restaurant.get('address', ''),
                     'lat': float(restaurant.get('lat', 0)),
@@ -301,35 +301,35 @@ class RestaurantService:
                     'shop_detail_memo': restaurant.get('shop_detail_memo', ''),
                     'source': 'hotpepper'
                 }
-                
+
                 formatted_restaurants.append(formatted_restaurant)
-                
+
             except (ValueError, TypeError, KeyError) as e:
-                print(f"レストランデータ整形エラー (ID: {restaurant.get('id', 'unknown')}): {e}")
+                print(f"レストランチE�Eタ整形エラー (ID: {restaurant.get('id', 'unknown')}): {e}")
                 continue
-        
+
         return formatted_restaurants
-    
+
     def _parse_budget_info(self, budget_data: Dict) -> int:
         """
-        予算情報を解析して平均予算を算出
-        
+        予算情報を解析して平坁E��算を算�E
+
         Args:
             budget_data (dict): Hot Pepper APIの予算データ
-            
+
         Returns:
-            int: 平均予算（円）
+            int: 平坁E��算（�E�E�E
         """
         try:
             budget_code = budget_data.get('code', '')
-            
-            # 予算コードから金額を取得
+
+            # 予算コードから��額を取征E
             if budget_code in self.BUDGET_CODES:
                 return self.BUDGET_CODES[budget_code]
-            
-            # 予算名から推定（フォールバック）
+
+            # 予算名から推定（フォールバック�E�E
             budget_name = budget_data.get('name', '').lower()
-            
+
             if '500' in budget_name:
                 return 500
             elif '1000' in budget_name or '1,000' in budget_name:
@@ -341,24 +341,24 @@ class RestaurantService:
             elif '3000' in budget_name or '3,000' in budget_name:
                 return 3000
             else:
-                # デフォルト値（ランチ予算制限を超える値）
+                # チE��ォルト値�E�ランチ予算制限を趁E��る値�E�E
                 return 2000
-                
+
         except Exception:
-            return 2000  # デフォルト値
-    
+            return 2000  # チE��ォルト値
+
     def _get_restaurant_photo(self, photo_data: Dict) -> str:
         """
-        レストランの写真URLを取得
-        
+        レストランの写真URLを取征E
+
         Args:
-            photo_data (dict): Hot Pepper APIの写真データ
-            
+            photo_data (dict): Hot Pepper APIの写真チE�Eタ
+
         Returns:
-            str: 写真URL（存在しない場合は空文字列）
+            str: 写真URL�E�存在しなぁE��合�E空斁E���E�E�E
         """
         try:
-            # PCサイズの写真を優先
+            # PCサイズの写真を優允E
             if 'pc' in photo_data:
                 pc_photos = photo_data['pc']
                 if 'l' in pc_photos:  # 大サイズ
@@ -367,7 +367,7 @@ class RestaurantService:
                     return pc_photos['m']
                 elif 's' in pc_photos:  # 小サイズ
                     return pc_photos['s']
-            
+
             # モバイルサイズの写真をフォールバック
             if 'mobile' in photo_data:
                 mobile_photos = photo_data['mobile']
@@ -375,160 +375,160 @@ class RestaurantService:
                     return mobile_photos['l']
                 elif 's' in mobile_photos:
                     return mobile_photos['s']
-            
+
             return ''
-            
+
         except Exception:
             return ''
-    
+
     def get_restaurant_by_id(self, restaurant_id: str) -> Optional[Dict]:
         """
-        レストランIDから詳細情報を取得
-        
+        レストランIDから詳細惁E��を取征E
+
         Args:
             restaurant_id (str): レストランID
-            
+
         Returns:
-            dict: レストラン詳細情報、見つからない場合はNone
+            dict: レストラン詳細惁E��、見つからなぁE��合�ENone
         """
-        # APIキーが設定されていない場合はNoneを返す
+        # APIキーが設定されてぁE��ぁE��合�ENoneを返す
         if not self.api_key:
             return None
-        
+
         try:
             params = {
                 'key': self.api_key,
                 'id': restaurant_id,
                 'format': 'json'
             }
-            
+
             response = requests.get(self.api_base_url, params=params, timeout=self.timeout)
             response.raise_for_status()
-            
+
             data = response.json()
-            
+
             if 'results' in data and 'shop' in data['results']:
                 shops = data['results']['shop']
                 if shops:
                     return self._format_restaurant_data([shops[0]])[0]
-            
+
             return None
-            
+
         except Exception as e:
             print(f"レストラン詳細取得エラー (ID: {restaurant_id}): {e}")
             return None
-    
+
     def _get_fallback_cache_data(self, cache_key: str) -> List[Dict]:
         """
-        期限切れでも利用可能なキャッシュデータを取得（フォールバック用）
-        
+        期限刁E��でも利用可能なキャチE��ュチE�Eタを取得（フォールバック用�E�E
+
         Args:
-            cache_key (str): キャッシュキー
-            
+            cache_key (str): キャチE��ュキー
+
         Returns:
-            list: キャッシュされたレストラン情報、存在しない場合は空リスト
+            list: キャチE��ュされたレストラン惁E��、存在しなぁE��合�E空リスチE
         """
         try:
             from database import get_db_connection
-            
+
             with get_db_connection(self.cache_service.db_path) as conn:
                 cursor = conn.execute('''
-                    SELECT data FROM cache 
+                    SELECT data FROM cache
                     WHERE cache_key = ?
                     ORDER BY created_at DESC
                     LIMIT 1
                 ''', (cache_key,))
-                
+
                 row = cursor.fetchone()
-                
+
                 if row is None:
                     return []
-                
-                # 期限切れでもデータを返す（フォールバック用）
+
+                # 期限刁E��でもデータを返す�E�フォールバック用�E�E
                 fallback_data = self.cache_service.deserialize_data(row['data'])
-                
-                # ソース情報を更新
+
+                # ソース惁E��を更新
                 for restaurant in fallback_data:
                     restaurant['source'] = 'fallback_cache'
-                
-                print(f"フォールバック用キャッシュデータを使用（期限切れ）: {len(fallback_data)}件")
+
+                print(f"フォールバック用キャチE��ュチE�Eタを使用�E�期限�Eれ！E {len(fallback_data)}件")
                 return fallback_data
-                
+
         except Exception as e:
-            print(f"フォールバックキャッシュ取得エラー: {e}")
+            print(f"フォールバックキャチE��ュ取得エラー: {e}")
             return []
-    
+
     def validate_restaurant_data(self, restaurant_data: Dict) -> bool:
         """
-        レストラン情報データの妥当性を検証
-        
+        レストラン惁E��チE�Eタの妥当性を検証
+
         Args:
-            restaurant_data (dict): レストラン情報
-            
+            restaurant_data (dict): レストラン惁E��
+
         Returns:
-            bool: 妥当な場合True
+            bool: 妥当な場吁Erue
         """
         try:
-            # 必須フィールドの存在確認
+            # 忁E��フィールド�E存在確誁E
             required_fields = ['id', 'name', 'lat', 'lng']
             for field in required_fields:
                 if field not in restaurant_data or not restaurant_data[field]:
                     return False
-            
-            # 座標の範囲確認
+
+            # 座標�E篁E��確誁E
             lat = float(restaurant_data['lat'])
             lng = float(restaurant_data['lng'])
-            
+
             if not (-90 <= lat <= 90):
                 return False
             if not (-180 <= lng <= 180):
                 return False
-            
+
             return True
-            
+
         except (ValueError, TypeError):
             return False
 
 
-# 使用例とテスト用コード
+# 使用例とチE��ト用コーチE
 if __name__ == '__main__':
     """
-    RestaurantServiceのテスト実行
+    RestaurantServiceのチE��ト実衁E
     """
-    print("RestaurantService テスト実行")
+    print("RestaurantService チE��ト実衁E)
     print("=" * 40)
-    
-    # RestaurantServiceインスタンス作成
+
+    # RestaurantServiceインスタンス作�E
     restaurant_service = RestaurantService()
-    
-    # 東京駅の座標
+
+    # 東京駁E�E座樁E
     tokyo_lat, tokyo_lon = 35.6812, 139.7671
-    
-    # レストラン検索テスト
+
+    # レストラン検索チE��チE
     print("1. レストラン検索:")
     restaurants = restaurant_service.search_restaurants(tokyo_lat, tokyo_lon, radius=1)
     print(f"   検索結果: {len(restaurants)}件")
-    
+
     if restaurants:
-        # 最初のレストラン情報を表示
+        # 最初�Eレストラン惁E��を表示
         first_restaurant = restaurants[0]
-        print(f"   例: {first_restaurant['name']}")
+        print(f"   侁E {first_restaurant['name']}")
         print(f"       ジャンル: {first_restaurant['genre']}")
-        print(f"       予算: ¥{first_restaurant['budget_average']}")
+        print(f"       予箁E ¥{first_restaurant['budget_average']}")
         print(f"       住所: {first_restaurant['address']}")
-    
-    # 予算フィルタリングテスト
+
+    # 予算フィルタリングチE��チE
     print("\n2. 予算フィルタリング:")
     lunch_restaurants = restaurant_service.filter_by_budget(restaurants, 1200)
-    print(f"   フィルタリング後: {len(lunch_restaurants)}件")
-    
-    # ランチレストラン検索テスト
+    print(f"   フィルタリング征E {len(lunch_restaurants)}件")
+
+    # ランチレストラン検索チE��チE
     print("\n3. ランチレストラン検索:")
     lunch_only = restaurant_service.search_lunch_restaurants(tokyo_lat, tokyo_lon)
-    print(f"   ランチ適合: {len(lunch_only)}件")
-    
-    # データ妥当性検証テスト
+    print(f"   ランチE��吁E {len(lunch_only)}件")
+
+    # チE�Eタ妥当性検証チE��チE
     if restaurants:
-        print(f"\n4. データ妥当性検証: {restaurant_service.validate_restaurant_data(restaurants[0])}")
-    
-    print("\nテスト完了")
+        print(f"\n4. チE�Eタ妥当性検証: {restaurant_service.validate_restaurant_data(restaurants[0])}")
+
+    print("\nチE��ト完亁E)
