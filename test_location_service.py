@@ -305,7 +305,7 @@ class TestLocationService:
         # 経度が範囲外
         invalid_lon_data = {
             'latitude': 35.6762,
-            'longitude': 185.0,  # 180度を超えない
+            'longitude': 185.0,  # 180度を超える
             'city': '東京',
             'region': '東京都',
             'country': '日本'
