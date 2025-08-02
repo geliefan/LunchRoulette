@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-LocationService - 位置惁E��サービスクラス
-IPアドレスから位置惁E��を取得する機�Eを提侁E
+LocationService - 位置情報サービスクラス
+IPアドレスから位置情報を取得する機能を提供
 
-こ�Eクラスは以下�E機�Eを提供しまぁE
-- IPアドレスから位置惁E��の取征E
-- エラーハンドリングとチE��ォルト位置�E�東京駁E��設宁E
-- キャチE��ュ機�Eとの統吁E
+このクラスは以下の機能を提供します:
+- IPアドレスから位置情報の取得
+- エラーハンドリングとデフォルト位置（東京）の設定
+- キャッシュ機能との統合
 """
 
 import requests
@@ -18,13 +18,13 @@ from cache_service import CacheService
 
 class LocationService:
     """
-    IPアドレスから位置惁E��を取得するサービス
+    IPアドレスから位置情報を取得するサービス
 
-    ipapi.co APIを使用してIPアドレスから位置惁E��を取得し、E
-    エラー時には東京駁E��チE��ォルト位置として使用する、E
+    ipapi.co APIを使用してIPアドレスから位置情報を取得し、
+    エラー時には東京をデフォルト位置として使用する。
     """
 
-    # チE��ォルト位置�E�東京駁E��E
+    # デフォルト位置（東京）
     DEFAULT_LOCATION = {
         'latitude': 35.6812,
         'longitude': 139.7671,
@@ -36,97 +36,97 @@ class LocationService:
 
     def __init__(self, cache_service: Optional[CacheService] = None):
         """
-        LocationServiceを�E期化
+        LocationServiceを初期化
 
         Args:
-            cache_service (CacheService, optional): キャチE��ュサービス
+            cache_service (CacheService, optional): キャッシュサービス
         """
         self.cache_service = cache_service or CacheService()
         self.api_base_url = "https://ipapi.co"
-        self.timeout = 10  # APIリクエスト�Eタイムアウト（秒！E
+        self.timeout = 10  # APIリクエストのタイムアウト（秒）
 
     def get_location_from_ip(self, ip_address: Optional[str] = None) -> Dict[str, any]:
         """
-        IPアドレスから位置惁E��を取征E
+        IPアドレスから位置情報を取得
 
         Args:
-            ip_address (str, optional): IPアドレス、Eoneの場合�E自動検�E
+            ip_address (str, optional): IPアドレス。Noneの場合は自動検出。
 
         Returns:
-            dict: 位置惁E���E�緯度、経度、E�E市名など�E�E
+            dict: 位置情報（緯度、経度、市名など）
 
         Example:
             >>> location_service = LocationService()
             >>> location = location_service.get_location_from_ip()
             >>> print(f"Location: {location['city']}, {location['region']}")
         """
-        # キャチE��ュキーを生戁E
+        # キャッシュキーを生成
         cache_key = self.cache_service.generate_cache_key(
             'location',
             ip=ip_address or 'auto'
         )
 
-        # キャチE��ュから取得を試衁E
+        # キャッシュから取得を試行
         cached_data = self.cache_service.get_cached_data(cache_key)
         if cached_data:
-            print(f"位置惁E��をキャチE��ュから取征E {cached_data['city']}")
+            print(f"位置情報をキャッシュから取得: {cached_data['city']}")
             return cached_data
 
         try:
-            # API URLを構篁E
+            # API URLを構築
             if ip_address:
                 url = f"{self.api_base_url}/{ip_address}/json/"
             else:
                 url = f"{self.api_base_url}/json/"
 
-            print(f"位置惁E��API呼び出ぁE {url}")
+            print(f"位置情報API呼び出し: {url}")
 
-            # APIリクエストを実衁E
+            # APIリクエストを実行
             response = requests.get(url, timeout=self.timeout)
             response.raise_for_status()
 
-            # レスポンスを解极E
+            # レスポンスを解析
             data = response.json()
 
-            # エラーレスポンスをチェチE��
+            # エラーレスポンスをチェック
             if 'error' in data and data['error']:
                 raise ValueError(f"API エラー: {data.get('reason', 'Unknown error')}")
 
-            # 位置惁E��を整形
+            # 位置情報を整形
             location_data = self._format_location_data(data)
 
-            # キャチE��ュに保存！E0刁E���E�E
+            # キャッシュに保存（10分間）
             self.cache_service.set_cached_data(cache_key, location_data, ttl=600)
 
-            print(f"位置惁E��取得�E劁E {location_data['city']}, {location_data['region']}")
+            print(f"位置情報取得成功: {location_data['city']}, {location_data['region']}")
             return location_data
 
         except requests.exceptions.HTTPError as e:
-            # HTTPエラー�E�レート制限、認証エラーなど�E�E
+            # HTTPエラー（レート制限、認証エラーなど）
             if e.response.status_code == 429:
-                print(f"位置惁E��API レート制限エラー: {e}")
-                # レート制限時は古ぁE��ャチE��ュチE�Eタを使用を試衁E
+                print(f"位置情報API レート制限エラー: {e}")
+                # レート制限時は古いキャッシュデータを使用を試行
                 fallback_data = self._get_fallback_cache_data(cache_key)
                 if fallback_data:
                     return fallback_data
             else:
-                print(f"位置惁E��API HTTPエラー: {e}")
+                print(f"位置情報API HTTPエラー: {e}")
             return self._get_default_location()
 
         except requests.exceptions.RequestException as e:
-            print(f"位置惁E��API リクエストエラー: {e}")
-            # ネットワークエラー時�E古ぁE��ャチE��ュチE�Eタを使用を試衁E
+            print(f"位置情報API リクエストエラー: {e}")
+            # ネットワークエラー時は古いキャッシュデータを使用を試行
             fallback_data = self._get_fallback_cache_data(cache_key)
             if fallback_data:
                 return fallback_data
             return self._get_default_location()
 
         except (ValueError, KeyError) as e:
-            print(f"位置惁E��チE�Eタ解析エラー: {e}")
+            print(f"位置情報データ解析エラー: {e}")
             return self._get_default_location()
 
         except Exception as e:
-            print(f"位置惁E��取得で予期しなぁE��ラー: {e}")
+            print(f"位置情報取得で予期しないエラー: {e}")
             return self._get_default_location()
 
     def _format_location_data(self, api_data: Dict) -> Dict[str, any]:
@@ -137,35 +137,35 @@ class LocationService:
             api_data (dict): ipapi.co APIからのレスポンス
 
         Returns:
-            dict: 整形された位置惁E��
+            dict: 整形された位置情報
 
         Raises:
-            KeyError: 忁E��なフィールドが不足してぁE��場吁E
+            KeyError: 必須なフィールドが不足している場合
         """
         try:
             return {
                 'latitude': float(api_data['latitude']),
                 'longitude': float(api_data['longitude']),
-                'city': api_data.get('city', '不�E'),
-                'region': api_data.get('region', '不�E'),
-                'country': api_data.get('country_name', '不�E'),
+                'city': api_data.get('city', '不明'),
+                'region': api_data.get('region', '不明'),
+                'country': api_data.get('country_name', '不明'),
                 'country_code': api_data.get('country_code', 'XX'),
                 'postal': api_data.get('postal', ''),
                 'timezone': api_data.get('timezone', 'Asia/Tokyo'),
                 'source': 'ipapi.co'
             }
         except (KeyError, ValueError, TypeError) as e:
-            raise KeyError(f"位置惁E��チE�Eタの忁E��フィールドが不足: {e}")
+            raise KeyError(f"位置情報データの必須フィールドが不足: {e}")
 
     def _get_fallback_cache_data(self, cache_key: str) -> Optional[Dict[str, any]]:
         """
-        期限刁E��でも利用可能なキャチE��ュチE�Eタを取得（フォールバック用�E�E
+        期限切れでも利用可能なキャッシュデータを取得（フォールバック用）
 
         Args:
-            cache_key (str): キャチE��ュキー
+            cache_key (str): キャッシュキー
 
         Returns:
-            dict: キャチE��ュされた位置惁E��、存在しなぁE��合�ENone
+            dict: キャッシュされた位置情報、存在しない場合はNone
         """
         try:
             from database import get_db_connection
@@ -183,33 +183,33 @@ class LocationService:
                 if row is None:
                     return None
 
-                # 期限刁E��でもデータを返す�E�フォールバック用�E�E
+                # 期限切れでもデータを返す（フォールバック用）
                 fallback_data = self.cache_service.deserialize_data(row['data'])
                 fallback_data['source'] = 'fallback_cache'
 
-                print("フォールバック用キャチE��ュチE�Eタを使用�E�期限�Eれ！E)
+                print("フォールバック用キャッシュデータを使用（期限切れ）")
                 return fallback_data
 
         except Exception as e:
-            print(f"フォールバックキャチE��ュ取得エラー: {e}")
+            print(f"フォールバックキャッシュ取得エラー: {e}")
             return None
 
     def _get_default_location(self) -> Dict[str, any]:
         """
-        チE��ォルト位置�E�東京駁E��を返す
+        デフォルト位置（東京）を返す
 
         Returns:
-            dict: チE��ォルト位置惁E��
+            dict: デフォルト位置情報
         """
         default_location = self.DEFAULT_LOCATION.copy()
         default_location['source'] = 'default'
 
-        print("チE��ォルト位置�E�東京駁E��を使用")
+        print("デフォルト位置（東京）を使用")
         return default_location
 
     def get_coordinates(self, ip_address: Optional[str] = None) -> Tuple[float, float]:
         """
-        IPアドレスから緯度・経度のタプルを取征E
+        IPアドレスから緯度・経度のタプルを取得
 
         Args:
             ip_address (str, optional): IPアドレス
@@ -227,34 +227,34 @@ class LocationService:
 
     def is_default_location(self, location_data: Dict) -> bool:
         """
-        位置惁E��がデフォルト位置かどぁE��を判宁E
+        位置情報がデフォルト位置かどうかを判定
 
         Args:
-            location_data (dict): 位置惁E��
+            location_data (dict): 位置情報
 
         Returns:
-            bool: チE��ォルト位置の場吁Erue
+            bool: デフォルト位置の場合はTrue
         """
         return location_data.get('source') == 'default'
 
     def validate_location_data(self, location_data: Dict) -> bool:
         """
-        位置惁E��チE�Eタの妥当性を検証
+        位置情報データの妥当性を検証
 
         Args:
-            location_data (dict): 位置惁E��
+            location_data (dict): 位置情報
 
         Returns:
-            bool: 妥当な場吁Erue
+            bool: 妥当な場合はTrue
         """
         try:
-            # 忁E��フィールド�E存在確誁E
+            # 必須フィールドの存在確認
             required_fields = ['latitude', 'longitude', 'city', 'region', 'country']
             for field in required_fields:
                 if field not in location_data:
                     return False
 
-            # 緯度・経度の篁E��確誁E
+            # 緯度・経度の範囲確認
             lat = float(location_data['latitude'])
             lon = float(location_data['longitude'])
 
@@ -269,39 +269,39 @@ class LocationService:
             return False
 
 
-# 使用例とチE��ト用コーチE
+# 使用例とテスト用コード
 if __name__ == '__main__':
     """
-    LocationServiceのチE��ト実衁E
+    LocationServiceのテスト実行
     """
-    print("LocationService チE��ト実衁E)
+    print("LocationService テスト実行")
     print("=" * 40)
 
-    # LocationServiceインスタンス作�E
+    # LocationServiceインスタンス作成
     location_service = LocationService()
 
-    # 位置惁E��取得テスチE
-    print("1. 自動IP検�Eによる位置惁E��取征E")
+    # 位置情報取得テスト
+    print("1. 自動IP検出による位置情報取得")
     location = location_service.get_location_from_ip()
     print(f"   位置: {location['city']}, {location['region']}")
-    print(f"   座樁E {location['latitude']}, {location['longitude']}")
+    print(f"   座標: {location['latitude']}, {location['longitude']}")
     print(f"   ソース: {location['source']}")
 
-    # 座標取得テスチE
-    print("\n2. 座標�Eみ取征E")
+    # 座標取得テスト
+    print("\n2. 座標のみ取得")
     lat, lon = location_service.get_coordinates()
     print(f"   緯度: {lat}, 経度: {lon}")
 
-    # チE��ォルト位置判定テスチE
-    print(f"\n3. チE��ォルト位置判宁E {location_service.is_default_location(location)}")
+    # デフォルト位置判定テスト
+    print(f"\n3. デフォルト位置判定: {location_service.is_default_location(location)}")
 
-    # チE�Eタ妥当性検証チE��チE
-    print(f"4. チE�Eタ妥当性検証: {location_service.validate_location_data(location)}")
+    # データ妥当性検証テスト
+    print(f"4. データ妥当性検証: {location_service.validate_location_data(location)}")
 
-    # 無効なIPアドレスチE��チE
-    print("\n5. 無効なIPアドレスチE��チE")
+    # 無効なIPアドレステスト
+    print("\n5. 無効なIPアドレステスト")
     invalid_location = location_service.get_location_from_ip("invalid.ip")
     print(f"   位置: {invalid_location['city']}, {invalid_location['region']}")
-    print(f"   チE��ォルト位置: {location_service.is_default_location(invalid_location)}")
+    print(f"   デフォルト位置: {location_service.is_default_location(invalid_location)}")
 
-    print("\nチE��ト完亁E)
+    print("\nテスト完了")

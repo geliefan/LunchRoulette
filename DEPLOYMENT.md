@@ -1,90 +1,95 @@
-# PythonAnywhere チE�Eロイメント手頁E
+# PythonAnywhere デプロイメント手順
 
-## 概要E
+## 概要
 
-こ�Eドキュメント�E、Lunch RouletteアプリケーションをPythonAnywhere無料�EランにチE�Eロイするための詳細な手頁E��説明します、E
+このドキュメントは、Lunch RouletteアプリケーションをPythonAnywhere無料プランにデプロイするための詳細な手順を説明します。
 
 ## 前提条件
 
-- PythonAnywhereアカウント（無料�Eラン�E�E
+- PythonAnywhereアカウント（無料プラン）
 - OpenWeatherMap APIキー
 - Hot Pepper Gourmet APIキー
-- Gitリポジトリ�E�EitHub、GitLab等！E
+- Gitリポジトリ（GitHub、GitLab等）
 
-## 1. PythonAnywhereでのプロジェクトセチE��アチE�E
+## 1. PythonAnywhereでのプロジェクトセットアップ
 
-### 1.1 ファイルのアチE�EローチE
+### 1.1 ファイルのアップロード
 
 1. PythonAnywhereのDashboardにログイン
 2. "Files" タブを開く
-3. 以下�EぁE��れかの方法でプロジェクトをアチE�Eロード！E
+3. 以下のいずれかの方法でプロジェクトをアップロード
 
-**方法A: Gitクローン�E�推奨�E�E*
+#### 方法A: Gitクローン（推奨）
+
 ```bash
-# Bashコンソールで実衁E
+# Bashコンソールで実行
 cd ~
 git clone https://github.com/yourusername/lunch-roulette.git
 cd lunch-roulette
 ```
 
-**方法B: ファイル直接アチE�EローチE*
-- プロジェクトファイルを手動でアチE�EローチE
-- チE��レクトリ構造を維持E
+#### 方法B: ファイル直接アップロード
 
-### 1.2 仮想環墁E�E作�E
+- プロジェクトファイルを手動でアップロード
+- ディレクトリ構造を維持
+
+### 1.2 仮想環境の作成
 
 ```bash
-# Bashコンソールで実衁E
+# Bashコンソールで実行
 cd ~/lunch-roulette
 python3.11 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 2. 環墁E��数の設宁E
+## 2. 環境変数の設定
 
-### 2.1 忁E��環墁E��数
+### 2.1 必須環境変数
 
-PythonAnywhereのWebタブで以下�E環墁E��数を設定してください�E�E
+PythonAnywhereのWebタブで以下の環境変数を設定してください。
 
-| 変数吁E| 説昁E| 侁E|
+| 変数名 | 説明 | 値 |
 |--------|------|-----|
-| `SECRET_KEY` | FlaskセチE��ョン暗号化キー | `your-secret-key-here-change-in-production` |
+| `SECRET_KEY` | Flaskセッション暗号化キー | `your-secret-key-here-change-in-production` |
 | `OPENWEATHER_API_KEY` | OpenWeatherMap APIキー | `abcd1234efgh5678ijkl9012mnop3456` |
 | `HOTPEPPER_API_KEY` | Hot Pepper Gourmet APIキー | `1234567890abcdef1234567890abcdef` |
-| `FLASK_DEBUG` | チE��チE��モード（本番では`False`�E�E| `False` |
+| `FLASK_DEBUG` | デバッグモード（本番では`False`推奨） | `False` |
 
-### 2.2 環墁E��数設定手頁E
+### 2.2 環境変数設定手順
 
 1. PythonAnywhereのWebタブを開く
 2. "Environment variables" セクションを見つける
-3. 吁E��墁E��数を追加�E�E
-   - Name: 変数名を入劁E
-   - Value: 対応する値を�E劁E
-   - "Set" ボタンをクリチE��
+3. 環境変数を追加
 
-### 2.3 APIキーの取得方況E
+   - Name: 変数名を入力
+   - Value: 対応する値を入力
+   - "Set" ボタンをクリック
+
+### 2.3 APIキーの取得方法
 
 **OpenWeatherMap APIキー:**
-1. https://openweathermap.org/ にアクセス
-2. アカウント作�E・ログイン
-3. API Keys セクションでキーを生戁E
-4. One Call API 3.0の利用を確誁E
+
+1. [OpenWeatherMap](https://openweathermap.org/) にアクセス
+2. アカウント作成・ログイン
+3. API Keys セクションでキーを生成
+4. One Call API 3.0の利用を確認
 
 **Hot Pepper Gourmet APIキー:**
-1. https://webservice.recruit.co.jp/ にアクセス
-2. アカウント作�E・ログイン
-3. Hot Pepper Gourmet API v1のキーを取征E
 
-## 3. Webアプリケーションの設宁E
+1. [Hot Pepper Gourmet API](https://webservice.recruit.co.jp/) にアクセス
+2. アカウント作成・ログイン
+3. Hot Pepper Gourmet API v1のキーを取得
 
-### 3.1 基本設宁E
+## 3. Webアプリケーションの設定
+
+### 3.1 基本設定
 
 1. PythonAnywhereのWebタブを開く
-2. "Add a new web app" をクリチE��
-3. 以下�E設定を行う�E�E
+2. "Add a new web app" をクリック
+3. 以下の設定を行う
 
-| 頁E�� | 設定値 |
+| 項目 | 設定値 |
 |------|--------|
 | Python version | Python 3.11 |
 | Framework | Manual configuration |
@@ -92,145 +97,154 @@ PythonAnywhereのWebタブで以下�E環墁E��数を設定してください�E�
 | Working directory | `/home/yourusername/lunch-roulette` |
 | WSGI configuration file | `/home/yourusername/lunch-roulette/wsgi.py` |
 
-### 3.2 wsgi.pyの編雁E
+### 3.2 wsgi.pyの編集
 
-`wsgi.py`ファイル冁E�E以下�E行を編雁E��E
+`wsgi.py`ファイル内の以下の行を編集
 
 ```python
-# 変更剁E
+# 変更前
 project_home = '/home/yourusername/lunch-roulette'
 
-# 変更後（実際のユーザー名に置換！E
+# 変更後（実際のユーザー名に置換）
 project_home = '/home/actual_username/lunch-roulette'
 ```
 
-### 3.3 静的ファイルの設宁E
+### 3.3 静的ファイルの設定
 
-Webタブ�E "Static files" セクションで以下を設定！E
+Webタブの "Static files" セクションで以下を設定
 
 | URL | Directory |
 |-----|-----------|
 | `/static/` | `/home/yourusername/lunch-roulette/static/` |
 
-## 4. チE�Eタベ�Eスの初期匁E
+## 4. データベースの初期化
 
-### 4.1 自動�E期化
+### 4.1 自動初期化
 
-`wsgi.py`ファイルにチE�Eタベ�Eス初期化コードが含まれてぁE��ため、�E回アクセス時に自動的に作�Eされます、E
+`wsgi.py`ファイルにデータベース初期化コードが含まれているため、初回アクセス時に自動的に作成されます。
 
-### 4.2 手動初期化（忁E��に応じて�E�E
+### 4.2 手動初期化（必要に応じて）
 
 ```bash
-# Bashコンソールで実衁E
+# Bashコンソールで実行
 cd ~/lunch-roulette
 source venv/bin/activate
 python3 -c "from database import init_database; init_database('cache.db')"
 ```
 
-## 5. チE�Eロイメント確誁E
+## 5. デプロイメント確認
 
-### 5.1 設定確認チェチE��リスチE
+### 5.1 設定確認チェックリスト
 
-- [ ] プロジェクトファイルがアチE�Eロード済み
-- [ ] 仮想環墁E��作�Eされ、依存関係がインスト�Eル済み
-- [ ] 全ての環墁E��数が設定済み
+- [ ] プロジェクトファイルがアップロード済み
+- [ ] 仮想環境が作成され、依存関係がインストール済み
+- [ ] 全ての環境変数が設定済み
 - [ ] wsgi.pyのパスが正しく設定済み
 - [ ] 静的ファイルのマッピングが設定済み
 - [ ] Webアプリケーションが有効化済み
 
-### 5.2 動作確誁E
+### 5.2 動作確認
 
-1. PythonAnywhereのWebタブで "Reload" ボタンをクリチE��
+1. PythonAnywhereのWebタブで "Reload" ボタンをクリック
 2. アプリケーションURLにアクセス
-3. 以下�E機�Eを確認！E
-   - [ ] ペ�Eジが正常に表示されめE
-   - [ ] 位置惁E��が表示されめE
-   - [ ] 天気情報が表示されめE
-   - [ ] ルーレチE��ボタンが動作すめE
-   - [ ] レストラン惁E��が表示されめE
+3. 以下の機能を確認
 
-### 5.3 ログの確誁E
+   - [ ] ページが正常に表示される
+   - [ ] 位置情報が表示される
+   - [ ] 天気情報が表示される
+   - [ ] ルーレットボタンが動作する
+   - [ ] レストラン情報が表示される
 
-エラーが発生した場合�E、以下�Eログを確認！E
+### 5.3 ログの確認
 
-1. PythonAnywhereのWebタチEↁE"Log files"
+エラーが発生した場合は、以下のログを確認
+
+1. PythonAnywhereのWebタブで "Log files"
 2. Error log: `/var/log/yourusername.pythonanywhere.com.error.log`
 3. Server log: `/var/log/yourusername.pythonanywhere.com.server.log`
 
-## 6. トラブルシューチE��ング
+## 6. トラブルシューティング
 
-### 6.1 よくある問題と解決方況E
+### 6.1 よくある問題と解決方法
 
-**問顁E "ImportError: No module named 'app'"**
-- 解決: wsgi.pyのproject_homeパスを確誁E
-- Working directoryが正しく設定されてぁE��か確誁E
+#### 問題 "ImportError: No module named 'app'"
 
-**問顁E "API key not found"**
-- 解決: 環墁E��数が正しく設定されてぁE��か確誁E
-- 変数名�EスペルミスがなぁE��確誁E
+- 解決: wsgi.pyのproject_homeパスを確認
+- Working directoryが正しく設定されているか確認
 
-**問顁E "Database is locked"**
-- 解決: Bashコンソールでアプリケーションプロセスを確誁E
-- 忁E��に応じてWebアプリケーションをリローチE
+#### 問題 "API key not found"
 
-**問顁E 静的ファイル�E�ESS/JS�E�が読み込まれなぁE*
-- 解決: Static filesの設定を確誁E
-- ファイルパスが正しいか確誁E
+- 解決: 環境変数が正しく設定されているか確認
+- 変数名にスペルミスがないか確認
 
-### 6.2 パフォーマンス最適匁E
+#### 問題 "Database is locked"
 
-**無料�Eランの制限�Eでの運用:**
-- APIキャチE��ュ機�Eにより外部API呼び出しを最小化
-- 1時間あためE0回未満のAPI呼び出し制限を遵宁E
-- SQLiteキャチE��ュによる高速レスポンス
+- 解決: Bashコンソールでアプリケーションプロセスを確認
+- 必要に応じてWebアプリケーションをリロード
 
-**メモリ使用量�E最適匁E**
-- 不要なライブラリのインポ�Eトを避ける
-- キャチE��ュサイズを適刁E��管琁E
-- 定期皁E��キャチE��ュクリーンアチE�E
+#### 問題 静的ファイル（CSS/JS）が読み込まれない
 
-## 7. メンチE��ンス
+- 解決: Static filesの設定を確認
+- ファイルパスが正しいか確認
 
-### 7.1 定期皁E��作業
+### 6.2 パフォーマンス最適化
+
+#### 無料プランの制限下での運用
+
+- APIキャッシュ機能により外部API呼び出しを最小化
+- 1時間あたり50回未満のAPI呼び出し制限を遵守
+- SQLiteキャッシュによる高速レスポンス
+
+#### メモリ使用量の最適化
+
+- 不要なライブラリのインポートを避ける
+- キャッシュサイズを適切に管理
+- 定期的にキャッシュクリーンアップ
+
+## 7. メンテナンス
+
+### 7.1 定期的な作業
 
 **月次:**
-- [ ] APIキーの有効期限確誁E
-- [ ] ログファイルのサイズ確誁E
-- [ ] キャチE��ュチE�Eタベ�Eスのサイズ確誁E
 
-**忁E��に応じて:**
-- [ ] 依存関係�EアチE�EチE�EチE
-- [ ] セキュリチE��パッチ�E適用
-- [ ] キャチE��ュチE�Eタベ�Eスの最適匁E
+- [ ] APIキーの有効期限確認
+- [ ] ログファイルのサイズ確認
+- [ ] キャッシュデータベースのサイズ確認
 
-### 7.2 アチE�EチE�Eト手頁E
+**必要に応じて:**
+
+- [ ] 依存関係のアップデート
+- [ ] セキュリティパッチの適用
+- [ ] キャッシュデータベースの最適化
+
+### 7.2 アップデート手順
 
 ```bash
-# Bashコンソールで実衁E
+# Bashコンソールで実行
 cd ~/lunch-roulette
 git pull origin main
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-そ�E後、WebタブでReloadを実行、E
+その後、WebタブでReloadを実行。
 
-## 8. セキュリチE��老E�E事頁E
+## 8. セキュリティ考慮事項
 
-### 8.1 本番環墁E��の注意点
+### 8.1 本番環境の注意点
 
 - [ ] `SECRET_KEY`を本番用の強力なキーに変更
-- [ ] `FLASK_DEBUG`を`False`に設宁E
-- [ ] APIキーを環墁E��数で管琁E��コードに直接記述しなぁE��E
-- [ ] 定期皁E��セキュリチE��アチE�EチE�EチE
+- [ ] `FLASK_DEBUG`を`False`に設定
+- [ ] APIキーを環境変数で管理し、コードに直接記述しない
+- [ ] 定期的にセキュリティアップデートを適用
 
-### 8.2 チE�Eタ保護
+### 8.2 データ保護
 
-- 位置惁E��はIPベ�Eスのみ�E�EPS不使用�E�E
-- 個人識別惁E��はログに記録しなぁE
-- キャチE��ュチE�Eタに個人惁E��を含めなぁE
+- 位置情報はIPベースのみ（HTTPS不使用）
+- 個人識別情報はログに記録しない
+- キャッシュデータに個人情報を含めない
 
-## 9. サポ�Eト情報
+## 9. サポート情報
 
 ### 9.1 関連リンク
 
@@ -241,6 +255,6 @@ pip install -r requirements.txt
 
 ### 9.2 プロジェクト情報
 
-- GitHub: [プロジェクチERL]
-- 技術スタチE��: Python 3.11, Flask 3.0, SQLite
-- 対応�EラチE��フォーム: PythonAnywhere無料�Eラン
+- GitHub: [プロジェクトURL]
+- 技術スタック: Python 3.11, Flask 3.0, SQLite
+- 対応プラットフォーム: PythonAnywhere無料プラン

@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 """
-ErrorHandler - エラーハンドリングとメチE��ージ管琁E��ラス
-アプリケーション全体�Eエラー処琁E��ユーザーフレンドリーなメチE��ージ表示を提侁E
+ErrorHandler - エラーハンドリングとメッセージ管理クラス
+アプリケーション全体のエラー処理とユーザーフレンドリーなメッセージ表示を提供
 
-こ�Eクラスは以下�E機�Eを提供しまぁE
-- API エラーの刁E��と適刁E��メチE��ージ生�E
-- フォールバック機�Eの管琁E
+このクラスは以下の機能を提供します:
+- API エラーの分類と適切なメッセージ生成
+- フォールバック機能の管理
 - エラーログの記録
-- ユーザー向けエラーメチE��ージの国際化対忁E
+- ユーザー向けエラーメッセージの国際化対応
 """
 
 import logging
@@ -19,7 +19,7 @@ from datetime import datetime
 
 
 class ErrorType(Enum):
-    """エラータイプ�E定義"""
+    """エラータイプの定義"""
     API_RATE_LIMIT = "api_rate_limit"
     API_AUTH_ERROR = "api_auth_error"
     API_NETWORK_ERROR = "api_network_error"
@@ -34,72 +34,72 @@ class ErrorType(Enum):
 
 class ErrorHandler:
     """
-    アプリケーション全体�Eエラーハンドリングを管琁E��るクラス
+    アプリケーション全体のエラーハンドリングを管理するクラス
 
-    エラーの刁E��、ログ記録、ユーザーフレンドリーなメチE��ージ生�E、E
-    フォールバック機�Eの提供を行う、E
+    エラーの分類、ログ記録、ユーザーフレンドリーなメッセージ生成、
+    フォールバック機能の提供を行う。
     """
 
-    # エラーメチE��ージのマッピング
+    # エラーメッセージのマッピング
     ERROR_MESSAGES = {
         ErrorType.API_RATE_LIMIT: {
-            'user_message': 'APIの利用制限に達しました。キャチE��ュされたデータを使用します、E,
-            'suggestion': 'し�Eらく時間を置ぁE��から再度お試しください、E,
+            'user_message': 'APIの利用制限に達しました。キャッシュされたデータを使用します。',
+            'suggestion': 'しばらく時間を置いてから再度お試しください。',
             'severity': 'warning'
         },
         ErrorType.API_AUTH_ERROR: {
-            'user_message': 'API認証エラーが発生しました、E,
-            'suggestion': 'シスチE��管琁E��E��お問ぁE��わせください、E,
+            'user_message': 'API認証エラーが発生しました。',
+            'suggestion': 'システム管理者にお問い合わせください。',
             'severity': 'error'
         },
         ErrorType.API_NETWORK_ERROR: {
-            'user_message': 'ネットワーク接続エラーが発生しました、E,
-            'suggestion': 'インターネット接続を確認してください、E,
+            'user_message': 'ネットワーク接続エラーが発生しました。',
+            'suggestion': 'インターネット接続を確認してください。',
             'severity': 'warning'
         },
         ErrorType.API_TIMEOUT: {
-            'user_message': 'APIの応答がタイムアウトしました、E,
-            'suggestion': 'し�Eらく時間を置ぁE��から再度お試しください、E,
+            'user_message': 'APIの応答がタイムアウトしました。',
+            'suggestion': 'しばらく時間を置いてから再度お試しください。',
             'severity': 'warning'
         },
         ErrorType.DATA_PARSING_ERROR: {
-            'user_message': 'チE�Eタの処琁E��にエラーが発生しました、E,
-            'suggestion': 'チE��ォルトデータを使用します、E,
+            'user_message': 'データの処理中にエラーが発生しました。',
+            'suggestion': 'デフォルトデータを使用します。',
             'severity': 'warning'
         },
         ErrorType.LOCATION_NOT_FOUND: {
-            'user_message': '位置惁E��を取得できませんでした、E,
-            'suggestion': '東京駁E��基準に検索します、E,
+            'user_message': '位置情報を取得できませんでした。',
+            'suggestion': '東京を基準に検索します。',
             'severity': 'info'
         },
         ErrorType.RESTAURANT_NOT_FOUND: {
-            'user_message': '近くにレストランが見つかりませんでした、E,
-            'suggestion': '検索篁E��を庁E��るか、条件を変更してお試しください、E,
+            'user_message': '近くにレストランが見つかりませんでした。',
+            'suggestion': '検索範囲を広げるか、条件を変更してお試しください。',
             'severity': 'info'
         },
         ErrorType.DISTANCE_CALCULATION_ERROR: {
-            'user_message': '距離の計算中にエラーが発生しました、E,
-            'suggestion': '概算距離を表示します、E,
+            'user_message': '距離の計算中にエラーが発生しました。',
+            'suggestion': '概算距離を表示します。',
             'severity': 'warning'
         },
         ErrorType.CACHE_ERROR: {
-            'user_message': 'キャチE��ュシスチE��でエラーが発生しました、E,
-            'suggestion': 'チE�Eタの取得に時間がかかる場合があります、E,
+            'user_message': 'キャッシュシステムでエラーが発生しました。',
+            'suggestion': 'データの取得に時間がかかる場合があります。',
             'severity': 'warning'
         },
         ErrorType.UNKNOWN_ERROR: {
-            'user_message': '予期しなぁE��ラーが発生しました、E,
-            'suggestion': 'し�Eらく時間を置ぁE��から再度お試しください、E,
+            'user_message': '予期しないエラーが発生しました。',
+            'suggestion': 'しばらく時間を置いてから再度お試しください。',
             'severity': 'error'
         }
     }
 
     def __init__(self, logger_name: str = 'lunch_roulette'):
         """
-        ErrorHandlerを�E期化
+        ErrorHandlerを初期化
 
         Args:
-            logger_name (str): ロガー吁E
+            logger_name (str): ロガー名
         """
         self.logger = logging.getLogger(logger_name)
         self.error_count = {}  # エラー発生回数の記録
@@ -107,15 +107,15 @@ class ErrorHandler:
     def handle_api_error(self, service_name: str, error: Exception,
                          fallback_available: bool = False) -> Tuple[ErrorType, Dict[str, Any]]:
         """
-        API エラーを�E琁E��、E��刁E��エラータイプとメチE��ージを返す
+        API エラーを処理し、エラータイプとメッセージを返す
 
         Args:
-            service_name (str): サービス名（侁E "weather", "restaurant", "location"�E�E
+            service_name (str): サービス名（例: "weather", "restaurant", "location"など）
             error (Exception): 発生したエラー
-            fallback_available (bool): フォールバックチE�Eタが利用可能かどぁE��
+            fallback_available (bool): フォールバックデータが利用可能かどうか
 
         Returns:
-            tuple: (エラータイチE エラー惁E��辞書)
+            tuple: (エラータイプ, エラー情報辞書)
         """
         error_type = self._classify_error(error)
         error_info = self._create_error_info(service_name, error_type, error, fallback_available)
@@ -130,13 +130,13 @@ class ErrorHandler:
 
     def _classify_error(self, error: Exception) -> ErrorType:
         """
-        エラーを�E類してErrorTypeを返す
+        エラーを分類してErrorTypeを返す
 
         Args:
             error (Exception): 発生したエラー
 
         Returns:
-            ErrorType: 刁E��されたエラータイチE
+            ErrorType: 分類されたエラータイプ
         """
         import requests
 
@@ -159,16 +159,16 @@ class ErrorHandler:
     def _create_error_info(self, service_name: str, error_type: ErrorType,
                            error: Exception, fallback_available: bool) -> Dict[str, Any]:
         """
-        エラー惁E��辞書を作�E
+        エラー情報辞書を作成
 
         Args:
-            service_name (str): サービス吁E
-            error_type (ErrorType): エラータイチE
+            service_name (str): サービス名
+            error_type (ErrorType): エラータイプ
             error (Exception): 発生したエラー
-            fallback_available (bool): フォールバックチE�Eタが利用可能かどぁE��
+            fallback_available (bool): フォールバックデータが利用可能かどうか
 
         Returns:
-            dict: エラー惁E��辞書
+            dict: エラー情報辞書
         """
         error_config = self.ERROR_MESSAGES.get(error_type, self.ERROR_MESSAGES[ErrorType.UNKNOWN_ERROR])
 
@@ -189,10 +189,10 @@ class ErrorHandler:
         エラーログを記録
 
         Args:
-            service_name (str): サービス吁E
-            error_type (ErrorType): エラータイチE
+            service_name (str): サービス名
+            error_type (ErrorType): エラータイプ
             error (Exception): 発生したエラー
-            fallback_available (bool): フォールバックチE�Eタが利用可能かどぁE��
+            fallback_available (bool): フォールバックデータが利用可能かどうか
         """
         log_message = (
             f"[{service_name}] {error_type.value}: {str(error)} "
@@ -209,10 +209,10 @@ class ErrorHandler:
 
     def _increment_error_count(self, error_type: ErrorType) -> None:
         """
-        エラー発生回数をカウンチE
+        エラー発生回数をカウント
 
         Args:
-            error_type (ErrorType): エラータイチE
+            error_type (ErrorType): エラータイプ
         """
         if error_type not in self.error_count:
             self.error_count[error_type] = 0
@@ -220,7 +220,7 @@ class ErrorHandler:
 
     def get_error_statistics(self) -> Dict[str, int]:
         """
-        エラー統計情報を取征E
+        エラー統計情報を取得
 
         Returns:
             dict: エラータイプ別の発生回数
@@ -229,13 +229,13 @@ class ErrorHandler:
 
     def create_user_friendly_message(self, error_info: Dict[str, Any]) -> Dict[str, Any]:
         """
-        ユーザーフレンドリーなエラーメチE��ージを作�E
+        ユーザーフレンドリーなエラーメッセージを作成
 
         Args:
-            error_info (dict): エラー惁E��辞書
+            error_info (dict): エラー情報辞書
 
         Returns:
-            dict: ユーザー向けメチE��ージ
+            dict: ユーザー向けメッセージ
         """
         return {
             'message': error_info['user_message'],
@@ -247,79 +247,79 @@ class ErrorHandler:
 
     def handle_location_error(self, error: Exception, fallback_available: bool = True) -> Dict[str, Any]:
         """
-        位置惁E��エラーを�E琁E
+        位置情報エラーを処理
 
         Args:
             error (Exception): 発生したエラー
-            fallback_available (bool): フォールバックチE�Eタが利用可能かどぁE��
+            fallback_available (bool): フォールバックデータが利用可能かどうか
 
         Returns:
-            dict: エラー処琁E��果
+            dict: エラー処理結果
         """
         error_type, error_info = self.handle_api_error('location', error, fallback_available)
 
-        # 位置惁E��特有�E処琁E
+        # 位置情報特有の処理
         if not fallback_available:
-            error_info['user_message'] = '位置惁E��を取得できませんでした。東京駁E��基準に検索します、E
-            error_info['suggestion'] = 'より正確な結果を得るには、位置惁E��の許可を有効にしてください、E
+            error_info['user_message'] = '位置情報を取得できませんでした。東京を基準に検索します。'
+            error_info['suggestion'] = 'より正確な結果を得るには、位置情報の許可を有効にしてください。'
 
         return self.create_user_friendly_message(error_info)
 
     def handle_restaurant_error(self, error: Exception, fallback_available: bool = False) -> Dict[str, Any]:
         """
-        レストラン検索エラーを�E琁E
+        レストラン検索エラーを処理
 
         Args:
             error (Exception): 発生したエラー
-            fallback_available (bool): フォールバックチE�Eタが利用可能かどぁE��
+            fallback_available (bool): フォールバックデータが利用可能かどうか
 
         Returns:
-            dict: エラー処琁E��果
+            dict: エラー処理結果
         """
         error_type, error_info = self.handle_api_error('restaurant', error, fallback_available)
 
-        # レストラン検索特有�E処琁E
+        # レストラン検索特有の処理
         if error_type == ErrorType.API_RATE_LIMIT and fallback_available:
-            error_info['user_message'] = 'API制限�Eため、以前�E検索結果を表示してぁE��す、E
-            error_info['suggestion'] = '最新の惁E��を取得するには、しばらく時間を置ぁE��ください、E
+            error_info['user_message'] = 'API制限のため、以前の検索結果を表示しています。'
+            error_info['suggestion'] = '最新の情報を取得するには、しばらく時間を置いてください。'
 
         return self.create_user_friendly_message(error_info)
 
     def handle_weather_error(self, error: Exception, fallback_available: bool = True) -> Dict[str, Any]:
         """
-        天気情報エラーを�E琁E
+        天気情報エラーを処理
 
         Args:
             error (Exception): 発生したエラー
-            fallback_available (bool): フォールバックチE�Eタが利用可能かどぁE��
+            fallback_available (bool): フォールバックデータが利用可能かどうか
 
         Returns:
-            dict: エラー処琁E��果
+            dict: エラー処理結果
         """
         error_type, error_info = self.handle_api_error('weather', error, fallback_available)
 
-        # 天気情報特有�E処琁E
+        # 天気情報特有の処理
         if not fallback_available:
-            error_info['user_message'] = '天気情報を取得できませんでした。標準的な天気情報を表示します、E
-            error_info['suggestion'] = '実際の天気�E異なる場合があります、E
+            error_info['user_message'] = '天気情報を取得できませんでした。標準的な天気情報を表示します。'
+            error_info['suggestion'] = '実際の天気と異なる場合があります。'
 
         return self.create_user_friendly_message(error_info)
 
     def handle_distance_calculation_error(self, error: Exception) -> Dict[str, Any]:
         """
-        距離計算エラーを�E琁E
+        距離計算エラーを処理
 
         Args:
             error (Exception): 発生したエラー
 
         Returns:
-            dict: エラー処琁E��果
+            dict: エラー処理結果
         """
         error_info = {
             'error_type': ErrorType.DISTANCE_CALCULATION_ERROR.value,
             'service_name': 'distance_calculator',
-            'user_message': '距離の計算中にエラーが発生しました、E,
-            'suggestion': '概算距離を表示します、E,
+            'user_message': '距離の計算中にエラーが発生しました。',
+            'suggestion': '概算距離を表示します。',
             'severity': 'warning',
             'fallback_available': True,
             'timestamp': datetime.now().isoformat(),
@@ -333,40 +333,40 @@ class ErrorHandler:
 
     def is_critical_error(self, error_type: ErrorType) -> bool:
         """
-        クリチE��カルエラーかどぁE��を判宁E
+        クリティカルエラーかどうかを判定
 
         Args:
-            error_type (ErrorType): エラータイチE
+            error_type (ErrorType): エラータイプ
 
         Returns:
-            bool: クリチE��カルエラーの場吁Erue
+            bool: クリティカルエラーの場合はTrue
         """
         critical_errors = [ErrorType.API_AUTH_ERROR, ErrorType.UNKNOWN_ERROR]
         return error_type in critical_errors
 
     def should_retry(self, error_type: ErrorType) -> bool:
         """
-        リトライすべきエラーかどぁE��を判宁E
+        リトライすべきエラーかどうかを判定
 
         Args:
-            error_type (ErrorType): エラータイチE
+            error_type (ErrorType): エラータイプ
 
         Returns:
-            bool: リトライすべき場吁Erue
+            bool: リトライすべき場合はTrue
         """
         retry_errors = [ErrorType.API_NETWORK_ERROR, ErrorType.API_TIMEOUT]
         return error_type in retry_errors
 
     def get_retry_delay(self, error_type: ErrorType, attempt_count: int) -> int:
         """
-        リトライ遁E��時間を取征E
+        リトライ遅延時間を取得
 
         Args:
-            error_type (ErrorType): エラータイチE
+            error_type (ErrorType): エラータイプ
             attempt_count (int): 試行回数
 
         Returns:
-            int: 遁E��時間�E�秒！E
+            int: 遅延時間（秒）
         """
         base_delays = {
             ErrorType.API_NETWORK_ERROR: 5,
@@ -375,47 +375,47 @@ class ErrorHandler:
         }
 
         base_delay = base_delays.get(error_type, 5)
-        # 持E��バックオチE
-        return min(base_delay * (2 ** (attempt_count - 1)), 300)  # 最大5刁E
+        # エクスポネンシャルバックオフ
+        return min(base_delay * (2 ** (attempt_count - 1)), 300)  # 最大5分
 
 
-# 使用例とチE��ト用コーチE
+# 使用例とテスト用コード
 if __name__ == '__main__':
     """
-    ErrorHandlerのチE��ト実衁E
+    ErrorHandlerのテスト実行
     """
-    print("ErrorHandler チE��ト実衁E)
+    print("ErrorHandler テスト実行")
     print("=" * 40)
 
-    # ErrorHandlerインスタンス作�E
+    # ErrorHandlerインスタンス作成
     error_handler = ErrorHandler()
 
-    # チE��ト用エラー
+    # テスト用エラー
     import requests
 
-    # レート制限エラーのチE��チE
-    print("1. レート制限エラーチE��チE")
+    # レート制限エラーのテスト
+    print("1. レート制限エラーテスト")
     rate_limit_error = requests.exceptions.HTTPError()
     rate_limit_error.response = type('Response', (), {'status_code': 429})()
 
     error_type, error_info = error_handler.handle_api_error('weather', rate_limit_error, True)
     user_message = error_handler.create_user_friendly_message(error_info)
-    print(f"   エラータイチE {error_type.value}")
-    print(f"   ユーザーメチE��ージ: {user_message['message']}")
-    print(f"   提桁E {user_message['suggestion']}")
+    print(f"   エラータイプ: {error_type.value}")
+    print(f"   ユーザーメッセージ: {user_message['message']}")
+    print(f"   提案: {user_message['suggestion']}")
 
-    # ネットワークエラーのチE��チE
-    print("\n2. ネットワークエラーチE��チE")
+    # ネットワークエラーのテスト
+    print("\n2. ネットワークエラーテスト")
     network_error = requests.exceptions.ConnectionError("Connection failed")
 
     location_error = error_handler.handle_location_error(network_error, False)
-    print(f"   メチE��ージ: {location_error['message']}")
-    print(f"   提桁E {location_error['suggestion']}")
+    print(f"   メッセージ: {location_error['message']}")
+    print(f"   提案: {location_error['suggestion']}")
 
-    # エラー統計�E表示
-    print("\n3. エラー統訁E")
+    # エラー統計情報表示
+    print("\n3. エラー統計")
     stats = error_handler.get_error_statistics()
     for error_type, count in stats.items():
-        print(f"   {error_type}: {count}囁E)
+        print(f"   {error_type}: {count}回")
 
-    print("\nチE��ト完亁E)
+    print("\nテスト完了")

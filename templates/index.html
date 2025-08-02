@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="東京エリアのランチスポット発見サービス - 天気情報と位置惁E��を活用したレストラン推薦">
-    <meta name="keywords" content="ランチEレストラン,東京,天氁Eグルメ">
-    <title>Lunch Roulette - 今日のランチ�Eここで決まり！E/title>
-    
+    <meta name="description" content="東京エリアのランチスポット発見サービス - 天気情報と位置情報を活用したレストラン推薦">
+    <meta name="keywords" content="ランチ,レストラン,東京,天気,グルメ">
+    <title>Lunch Roulette - 今日のランチはここで決まり！</title>
+
     <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
@@ -14,13 +14,13 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Lunch Roulette - 今日のランチ�Eここで決まり！E>
+    <meta property="og:title" content="Lunch Roulette - 今日のランチはここで決まり！">
     <meta property="og:description" content="東京エリアのランチスポット発見サービス">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request.url }}">
 </head>
 <body>
-    <!-- メインコンチE�� -->
+    <!-- メインランチセクション -->
     <div class="container">
         <!-- ヘッダーセクション -->
         <header class="header">
@@ -28,18 +28,18 @@
                 <span class="title-icon">🎯</span>
                 Lunch Roulette
             </h1>
-            <p class="app-subtitle">今日のランチ�Eここで決まり！E/p>
+            <p class="app-subtitle">今日のランチはここで決まり！</p>
         </header>
 
-        <!-- 位置惁E��・天気情報セクション -->
+        <!-- 位置情報・天気情報セクション -->
         <section class="info-section">
-            <!-- 位置惁E��カーチE-->
+            <!-- 位置情報カード -->
             <div class="info-card location-card">
                 <div class="card-header">
                     <span class="card-icon">📍</span>
                     <h2 class="card-title">現在地</h2>
                     {% if is_default_location %}
-                    <span class="default-badge">チE��ォルチE/span>
+                    <span class="default-badge">デフォルト</span>
                     {% endif %}
                 </div>
                 <div class="card-content">
@@ -56,10 +56,10 @@
             <!-- 天気情報カーチE-->
             <div class="info-card weather-card">
                 <div class="card-header">
-                    <span class="card-icon">🌤�E�E/span>
-                    <h2 class="card-title">今日の天氁E/h2>
+                    <span class="card-icon">🌤️</span>
+                    <h2 class="card-title">今日の天気</h2>
                     {% if is_default_weather %}
-                    <span class="default-badge">チE��ォルチE/span>
+                    <span class="default-badge">デフォルト</span>
                     {% endif %}
                 </div>
                 <div class="card-content">
@@ -72,14 +72,14 @@
                     </div>
                     <div class="weather-details">
                         <div class="weather-detail">
-                            <span class="detail-label">UV持E��</span>
+                            <span class="detail-label">UV指数</span>
                             <span class="detail-value">{{ weather.uv_index|round(1) }}</span>
                         </div>
                         <div class="weather-status">
                             {% if is_good_walking_weather %}
-                            <span class="status-good">🚶‍♂�E�E散歩日咁E/span>
+                            <span class="status-good">🚶‍♂️ 散歩日和</span>
                             {% else %}
-                            <span class="status-caution">⚠�E�E天気注愁E/span>
+                            <span class="status-caution">⚠️ 天気注意</span>
                             {% endif %}
                         </div>
                     </div>
@@ -87,27 +87,27 @@
             </div>
         </section>
 
-        <!-- ルーレチE��セクション -->
+        <!-- ルーレットセクション -->
         <section class="roulette-section">
             <div class="roulette-container">
-                <h2 class="section-title">ランチルーレチE��</h2>
+                <h2 class="section-title">ランチルーレット</h2>
                 <p class="section-description">
-                    半征Ekm以冁E��予箁E,200冁E��下�Eランチスポットをランダムに選びまぁE
+                    半径200m以内のランチスポットをランダムに選びます
                 </p>
-                
-                <!-- ルーレチE��ボタン -->
+
+                <!-- ルーレットボタン -->
                 <button id="roulette-btn" class="roulette-btn" type="button">
                     <span class="btn-icon">🎲</span>
-                    <span class="btn-text">ルーレチE��を回ぁE/span>
+                    <span class="btn-text">ルーレットを回す</span>
                     <span class="btn-loading" style="display: none;">
                         <span class="spinner"></span>
                         検索中...
                     </span>
                 </button>
-                
-                <!-- エラーメチE��ージ表示エリア -->
+
+                <!-- エラーメッセージ表示エリア -->
                 <div id="error-message" class="error-message" style="display: none;">
-                    <span class="error-icon">⚠�E�E/span>
+                    <span class="error-icon">⚠️</span>
                     <span class="error-text"></span>
                 </div>
             </div>
@@ -116,14 +116,14 @@
         <!-- レストランカード表示エリア -->
         <section class="restaurant-section" id="restaurant-section" style="display: none;">
             <div class="restaurant-card" id="restaurant-card">
-                <!-- レストラン惁E��がJavaScriptで動的に挿入されめE-->
+                <!-- レストラン情報がJavaScriptで動的に挿入されます -->
                 <div class="card-header">
                     <h3 class="restaurant-name" id="restaurant-name"></h3>
                     <span class="restaurant-genre" id="restaurant-genre"></span>
                 </div>
                 
                 <div class="card-image">
-                    <img id="restaurant-image" src="" alt="レストラン画僁E class="restaurant-photo">
+                    <img id="restaurant-image" src="" alt="レストラン画像" class="restaurant-photo">
                     <div class="image-overlay">
                         <span class="distance-badge" id="distance-badge"></span>
                     </div>
@@ -136,11 +136,11 @@
                             <span class="info-value" id="restaurant-address"></span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">💰 予箁E/span>
+                            <span class="info-label">💰 予算</span>
                             <span class="info-value" id="restaurant-budget"></span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">🚶‍♂�E�E徒歩</span>
+                            <span class="info-label">🚶‍♂️ 徒歩</span>
                             <span class="info-value" id="walking-time"></span>
                         </div>
                         <div class="info-row">
@@ -155,7 +155,7 @@
                     
                     <div class="action-buttons">
                         <a id="map-link" href="#" target="_blank" class="btn btn-primary">
-                            <span class="btn-icon">🗺�E�E/span>
+                            <span class="btn-icon">🗺️</span>
                             地図で見る
                         </a>
                         <a id="hotpepper-link" href="#" target="_blank" class="btn btn-secondary">
@@ -166,7 +166,7 @@
                 </div>
             </div>
             
-            <!-- 再ルーレチE��ボタン -->
+            <!-- 再ルーレットボタン -->
             <div class="retry-section">
                 <button id="retry-btn" class="retry-btn" type="button">
                     <span class="btn-icon">🔄</span>
@@ -185,7 +185,7 @@
                     <a href="https://openweathermap.org/" target="_blank" rel="noopener">OpenWeatherMap API</a>
                 </p>
                 <p class="footer-note">
-                    ※ 位置惁E��はIPアドレスから推定されます。実際の位置と異なる場合があります、E
+                    ※ 位置情報はIPアドレスから推定されます。実際の位置と異なる場合があります。
                 </p>
             </div>
         </footer>
