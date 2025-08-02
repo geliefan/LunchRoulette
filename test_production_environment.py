@@ -606,7 +606,7 @@ def run_production_tests():
         return True
     else:
         print("\n❌ 一部のテストが失敗しました")
-        print("⚠ 本番環境にプロイ前に問題を修正してください")
+        print("⚠ 本番環境にデプロイ前に問題を修正してください")
         return False
 
 
