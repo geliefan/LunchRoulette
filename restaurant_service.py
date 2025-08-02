@@ -56,7 +56,7 @@ class RestaurantService:
         """
         self.api_key = api_key or os.getenv('HOTPEPPER_API_KEY')
         self.cache_service = cache_service or CacheService()
-        self.api_base_url = "https://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
+        self.api_base_url = "http://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
         self.timeout = 10  # APIリクエストのタイムアウト（秒）
 
         if not self.api_key:
