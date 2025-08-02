@@ -1,0 +1,14 @@
+# Lunch Roulette - 開発環墁E��依存関俁E
+# 本番環墁E�E依存関係を含む
+-r requirements.txt
+
+# チE��トフレームワーク
+pytest==7.4.3
+pytest-mock==3.12.0
+
+# コード品質
+flake8==6.1.0
+
+# 開発用チE�Eル�E�オプション�E�E
+# black==23.12.1  # コードフォーマッター
+# mypy==1.8.0     # 型チェチE��ー

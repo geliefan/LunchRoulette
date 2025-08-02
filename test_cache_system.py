@@ -2,77 +2,79 @@
 # -*- coding: utf-8 -*-
 
 """
-キャッシュシステム総合テスト
-データベースとCacheServiceの動作を検証
+キャチE��ュシスチE��総合チE��チE
+チE�Eタベ�EスとCacheServiceの動作を検証
 """
 
 from database import init_database, get_cache_stats
 from cache_service import CacheService
 
+
 def main():
-    print('=== キャッシュシステム総合テスト ===')
-    
-    # データベース初期化テスト
-    print('1. データベース初期化テスト')
+    print('=== キャチE��ュシスチE��総合チE��チE===')
+
+    # チE�Eタベ�Eス初期化テスチE
+    print('1. チE�Eタベ�Eス初期化テスチE)
     if init_database():
-        print('   ✓ データベース初期化成功')
+        print('   ✁EチE�Eタベ�Eス初期化�E劁E)
     else:
-        print('   ✗ データベース初期化失敗')
+        print('   ✁EチE�Eタベ�Eス初期化失敁E)
         return
-    
-    # CacheServiceテスト
-    print('2. CacheServiceテスト')
+
+    # CacheServiceチE��チE
+    print('2. CacheServiceチE��チE)
     cache = CacheService()
-    
-    # キャッシュキー生成テスト
+
+    # キャチE��ュキー生�EチE��チE
     key = cache.generate_cache_key('test', param1='value1', param2=123)
-    print(f'   ✓ キャッシュキー生成: {key}')
-    
-    # データ保存・取得テスト
+    print(f'   ✁EキャチE��ュキー生�E: {key}')
+
+    # チE�Eタ保存�E取得テスチE
     test_data = {'message': 'Hello Cache', 'number': 42, 'list': [1, 2, 3]}
     if cache.set_cached_data(key, test_data, ttl=300):
-        print('   ✓ データ保存成功')
-        
+        print('   ✁EチE�Eタ保存�E劁E)
+
         retrieved_data = cache.get_cached_data(key)
         if retrieved_data and retrieved_data['message'] == 'Hello Cache':
-            print('   ✓ データ取得成功')
+            print('   ✁EチE�Eタ取得�E劁E)
             print(f'     取得データ: {retrieved_data}')
         else:
-            print('   ✗ データ取得失敗')
+            print('   ✁EチE�Eタ取得失敁E)
     else:
-        print('   ✗ データ保存失敗')
-    
-    # キャッシュ情報取得テスト
+        print('   ✁EチE�Eタ保存失敁E)
+
+    # キャチE��ュ惁E��取得テスチE
     cache_info = cache.get_cache_info(key)
     if cache_info:
         ttl_remaining = cache_info['ttl_remaining']
-        print(f'   ✓ キャッシュ情報取得成功 (TTL残り: {ttl_remaining:.1f}秒)')
-        print(f'     データサイズ: {cache_info["data_size"]} bytes')
-    
-    # 複数キーテスト
-    print('3. 複数キーテスト')
+        print(f'   ✁EキャチE��ュ惁E��取得�E劁E(TTL残り: {ttl_remaining:.1f}私E')
+        print(f'     チE�Eタサイズ: {cache_info["data_size"]} bytes')
+
+    # 褁E��キーチE��チE
+    print('3. 褁E��キーチE��チE)
     keys = []
     for i in range(3):
         test_key = cache.generate_cache_key('multi_test', index=i)
         test_value = {'index': i, 'value': f'test_{i}'}
         cache.set_cached_data(test_key, test_value, ttl=60)
         keys.append(test_key)
-        print(f'   ✓ キー{i+1}保存: {test_key}')
-    
-    # 統計情報テスト
-    print('4. データベース統計情報')
+        print(f'   ✁Eキー{i + 1}保孁E {test_key}')
+
+    # 統計情報チE��チE
+    print('4. チE�Eタベ�Eス統計情報')
     stats = get_cache_stats()
     print(f'   - 総レコード数: {stats["total_records"]}')
     print(f'   - 有効レコード数: {stats["valid_records"]}')
-    print(f'   - 期限切れレコード数: {stats["expired_records"]}')
-    print(f'   - データベースサイズ: {stats["database_size"]} bytes')
-    
-    # クリーンアップテスト
-    print('5. クリーンアップテスト')
+    print(f'   - 期限刁E��レコード数: {stats["expired_records"]}')
+    print(f'   - チE�Eタベ�Eスサイズ: {stats["database_size"]} bytes')
+
+    # クリーンアチE�EチE��チE
+    print('5. クリーンアチE�EチE��チE)
     expired_count = cache.clear_expired_cache()
-    print(f'   ✓ 期限切れキャッシュクリーンアップ: {expired_count}件削除')
-    
-    print('=== テスト完了 ===')
+    print(f'   ✁E期限刁E��キャチE��ュクリーンアチE�E: {expired_count}件削除')
+
+    print('=== チE��ト完亁E===')
+
 
 if __name__ == '__main__':
     main()

@@ -2,171 +2,171 @@
 # -*- coding: utf-8 -*-
 
 """
-CacheService - キャッシュサービスクラス
-SQLiteを使用したキャッシング機能を提供
+CacheService - キャチE��ュサービスクラス
+SQLiteを使用したキャチE��ング機�Eを提侁E
 
-このクラスは以下の機能を提供します:
-- キャッシュデータの保存・取得
-- TTL（Time To Live）ベースの有効期限チェック
-- キャッシュキーの生成とデータシリアライゼーション
-- 自動的な期限切れデータクリーンアップ
+こ�Eクラスは以下�E機�Eを提供しまぁE
+- キャチE��ュチE�Eタの保存�E取征E
+- TTL�E�Eime To Live�E��Eースの有効期限チェチE��
+- キャチE��ュキーの生�EとチE�Eタシリアライゼーション
+- 自動的な期限刁E��チE�EタクリーンアチE�E
 """
 
 import json
 import hashlib
 from datetime import datetime, timedelta
-from typing import Any, Optional, Dict, Union
+from typing import Any, Optional, Dict
 from database import get_db_connection, cleanup_expired_cache
 
 
 class CacheService:
     """
-    SQLiteを使用したキャッシングサービス
-    
-    外部API呼び出しの結果をキャッシュし、レート制限対策と
-    パフォーマンス向上を実現する。
+    SQLiteを使用したキャチE��ングサービス
+
+    外部API呼び出し�E結果をキャチE��ュし、レート制限対策と
+    パフォーマンス向上を実現する、E
     """
-    
+
     def __init__(self, db_path: str = 'cache.db', default_ttl: int = 600):
         """
-        CacheServiceを初期化
-        
+        CacheServiceを�E期化
+
         Args:
-            db_path (str): SQLiteデータベースファイルのパス
-            default_ttl (int): デフォルトTTL（秒）、デフォルトは10分
+            db_path (str): SQLiteチE�Eタベ�Eスファイルのパス
+            default_ttl (int): チE��ォルチETL�E�秒）、デフォルト�E10刁E
         """
         self.db_path = db_path
         self.default_ttl = default_ttl
-    
+
     def generate_cache_key(self, prefix: str, **kwargs) -> str:
         """
-        キャッシュキーを生成
-        
-        プレフィックスとキーワード引数からユニークなキャッシュキーを生成する。
-        同じパラメータに対しては常に同じキーが生成される。
-        
+        キャチE��ュキーを生戁E
+
+        プレフィチE��スとキーワード引数からユニ�EクなキャチE��ュキーを生成する、E
+        同じパラメータに対しては常に同じキーが生成される、E
+
         Args:
-            prefix (str): キャッシュキーのプレフィックス（例: "weather", "restaurant"）
-            **kwargs: キャッシュキー生成に使用するパラメータ
-            
+            prefix (str): キャチE��ュキーのプレフィチE��ス�E�侁E "weather", "restaurant"�E�E
+            **kwargs: キャチE��ュキー生�Eに使用するパラメータ
+
         Returns:
-            str: 生成されたキャッシュキー
-            
+            str: 生�EされたキャチE��ュキー
+
         Example:
             >>> cache = CacheService()
             >>> key = cache.generate_cache_key("weather", lat=35.6762, lon=139.6503)
             >>> print(key)  # "weather_a1b2c3d4e5f6..."
         """
-        # パラメータを文字列に変換してソート（一貫性のため）
+        # パラメータを文字�Eに変換してソート（一貫性のため�E�E
         params_str = json.dumps(kwargs, sort_keys=True, ensure_ascii=False)
-        
-        # SHA256ハッシュを生成
+
+        # SHA256ハッシュを生戁E
         hash_object = hashlib.sha256(params_str.encode('utf-8'))
-        hash_hex = hash_object.hexdigest()[:16]  # 16文字に短縮
-        
+        hash_hex = hash_object.hexdigest()[:16]  # 16斁E��に短縮
+
         return f"{prefix}_{hash_hex}"
-    
+
     def serialize_data(self, data: Any) -> str:
         """
-        データをJSON文字列にシリアライズ
-        
+        チE�EタをJSON斁E���Eにシリアライズ
+
         Args:
-            data (Any): シリアライズするデータ
-            
+            data (Any): シリアライズするチE�Eタ
+
         Returns:
-            str: JSON文字列
-            
+            str: JSON斁E���E
+
         Raises:
-            ValueError: シリアライズできないデータの場合
+            ValueError: シリアライズできなぁE��ータの場吁E
         """
         try:
             return json.dumps(data, ensure_ascii=False, default=str)
         except (TypeError, ValueError) as e:
-            raise ValueError(f"データのシリアライズに失敗: {e}")
-    
+            raise ValueError(f"チE�Eタのシリアライズに失敁E {e}")
+
     def deserialize_data(self, data_str: str) -> Any:
         """
-        JSON文字列をデータにデシリアライズ
-        
+        JSON斁E���EをデータにチE��リアライズ
+
         Args:
-            data_str (str): JSON文字列
-            
+            data_str (str): JSON斁E���E
+
         Returns:
-            Any: デシリアライズされたデータ
-            
+            Any: チE��リアライズされたデータ
+
         Raises:
-            ValueError: デシリアライズできない文字列の場合
+            ValueError: チE��リアライズできなぁE��字�Eの場吁E
         """
         try:
             return json.loads(data_str)
         except (TypeError, ValueError) as e:
-            raise ValueError(f"データのデシリアライズに失敗: {e}")
-    
+            raise ValueError(f"チE�EタのチE��リアライズに失敁E {e}")
+
     def is_cache_valid(self, expires_at: datetime) -> bool:
         """
-        キャッシュの有効性をチェック
-        
+        キャチE��ュの有効性をチェチE��
+
         Args:
-            expires_at (datetime): キャッシュの有効期限
-            
+            expires_at (datetime): キャチE��ュの有効期限
+
         Returns:
-            bool: 有効な場合True、期限切れの場合False
+            bool: 有効な場吁Erue、期限�Eれ�E場吁Ealse
         """
         return datetime.now() < expires_at
-    
+
     def set_cached_data(self, key: str, data: Any, ttl: Optional[int] = None) -> bool:
         """
-        キャッシュデータを保存
-        
+        キャチE��ュチE�Eタを保孁E
+
         Args:
-            key (str): キャッシュキー
+            key (str): キャチE��ュキー
             data (Any): 保存するデータ
-            ttl (int, optional): TTL（秒）。Noneの場合はdefault_ttlを使用
-            
+            ttl (int, optional): TTL�E�秒）、Eoneの場合�Edefault_ttlを使用
+
         Returns:
-            bool: 保存が成功した場合True
-            
+            bool: 保存が成功した場吁Erue
+
         Example:
             >>> cache = CacheService()
             >>> success = cache.set_cached_data("weather_tokyo", {"temp": 25}, 600)
             >>> print(success)  # True
         """
         try:
-            # TTLが指定されていない場合はデフォルト値を使用
+            # TTLが指定されてぁE��ぁE��合�EチE��ォルト値を使用
             if ttl is None:
                 ttl = self.default_ttl
-            
-            # 有効期限を計算
+
+            # 有効期限を計箁E
             expires_at = datetime.now() + timedelta(seconds=ttl)
-            
-            # データをシリアライズ
+
+            # チE�Eタをシリアライズ
             serialized_data = self.serialize_data(data)
-            
-            # データベースに保存
+
+            # チE�Eタベ�Eスに保孁E
             with get_db_connection(self.db_path) as conn:
                 conn.execute('''
-                    INSERT OR REPLACE INTO cache 
-                    (cache_key, data, expires_at) 
+                    INSERT OR REPLACE INTO cache
+                    (cache_key, data, expires_at)
                     VALUES (?, ?, ?)
                 ''', (key, serialized_data, expires_at))
                 conn.commit()
-            
+
             return True
-            
+
         except Exception as e:
-            print(f"キャッシュ保存エラー (key: {key}): {e}")
+            print(f"キャチE��ュ保存エラー (key: {key}): {e}")
             return False
-    
+
     def get_cached_data(self, key: str) -> Optional[Any]:
         """
-        キャッシュデータを取得
-        
+        キャチE��ュチE�Eタを取征E
+
         Args:
-            key (str): キャッシュキー
-            
+            key (str): キャチE��ュキー
+
         Returns:
-            Any: キャッシュされたデータ。存在しないか期限切れの場合はNone
-            
+            Any: キャチE��ュされたデータ。存在しなぁE��期限刁E��の場合�ENone
+
         Example:
             >>> cache = CacheService()
             >>> data = cache.get_cached_data("weather_tokyo")
@@ -176,38 +176,38 @@ class CacheService:
         try:
             with get_db_connection(self.db_path) as conn:
                 cursor = conn.execute('''
-                    SELECT data, expires_at FROM cache 
+                    SELECT data, expires_at FROM cache
                     WHERE cache_key = ?
                 ''', (key,))
-                
+
                 row = cursor.fetchone()
-                
+
                 if row is None:
                     return None
-                
-                # 有効期限をチェック
+
+                # 有効期限をチェチE��
                 expires_at = datetime.fromisoformat(row['expires_at'])
                 if not self.is_cache_valid(expires_at):
-                    # 期限切れの場合は削除
+                    # 期限刁E��の場合�E削除
                     self._delete_cache_entry(key)
                     return None
-                
-                # データをデシリアライズして返す
+
+                # チE�Eタをデシリアライズして返す
                 return self.deserialize_data(row['data'])
-                
+
         except Exception as e:
-            print(f"キャッシュ取得エラー (key: {key}): {e}")
+            print(f"キャチE��ュ取得エラー (key: {key}): {e}")
             return None
-    
+
     def _delete_cache_entry(self, key: str) -> bool:
         """
-        指定されたキャッシュエントリを削除（内部メソッド）
-        
+        持E��されたキャチE��ュエントリを削除�E��E部メソチE���E�E
+
         Args:
-            key (str): 削除するキャッシュキー
-            
+            key (str): 削除するキャチE��ュキー
+
         Returns:
-            bool: 削除が成功した場合True
+            bool: 削除が�E功した場吁Erue
         """
         try:
             with get_db_connection(self.db_path) as conn:
@@ -215,36 +215,36 @@ class CacheService:
                 conn.commit()
             return True
         except Exception as e:
-            print(f"キャッシュ削除エラー (key: {key}): {e}")
+            print(f"キャチE��ュ削除エラー (key: {key}): {e}")
             return False
-    
+
     def delete_cached_data(self, key: str) -> bool:
         """
-        キャッシュデータを削除
-        
+        キャチE��ュチE�Eタを削除
+
         Args:
-            key (str): 削除するキャッシュキー
-            
+            key (str): 削除するキャチE��ュキー
+
         Returns:
-            bool: 削除が成功した場合True
+            bool: 削除が�E功した場吁Erue
         """
         return self._delete_cache_entry(key)
-    
+
     def clear_expired_cache(self) -> int:
         """
-        期限切れのキャッシュデータをすべて削除
-        
+        期限刁E��のキャチE��ュチE�Eタをすべて削除
+
         Returns:
             int: 削除されたレコード数
         """
         return cleanup_expired_cache(self.db_path)
-    
+
     def clear_all_cache(self) -> bool:
         """
-        すべてのキャッシュデータを削除
-        
+        すべてのキャチE��ュチE�Eタを削除
+
         Returns:
-            bool: 削除が成功した場合True
+            bool: 削除が�E功した場吁Erue
         """
         try:
             with get_db_connection(self.db_path) as conn:
@@ -252,18 +252,18 @@ class CacheService:
                 conn.commit()
             return True
         except Exception as e:
-            print(f"全キャッシュ削除エラー: {e}")
+            print(f"全キャチE��ュ削除エラー: {e}")
             return False
-    
+
     def get_cache_info(self, key: str) -> Optional[Dict[str, Any]]:
         """
-        キャッシュの詳細情報を取得
-        
+        キャチE��ュの詳細惁E��を取征E
+
         Args:
-            key (str): キャッシュキー
-            
+            key (str): キャチE��ュキー
+
         Returns:
-            dict: キャッシュ情報（作成日時、有効期限、データサイズなど）
+            dict: キャチE��ュ惁E���E�作�E日時、有効期限、データサイズなど�E�E
         """
         try:
             with get_db_connection(self.db_path) as conn:
@@ -271,15 +271,15 @@ class CacheService:
                     SELECT created_at, expires_at, LENGTH(data) as data_size
                     FROM cache WHERE cache_key = ?
                 ''', (key,))
-                
+
                 row = cursor.fetchone()
-                
+
                 if row is None:
                     return None
-                
+
                 expires_at = datetime.fromisoformat(row['expires_at'])
                 created_at = datetime.fromisoformat(row['created_at'])
-                
+
                 return {
                     'key': key,
                     'created_at': created_at,
@@ -288,55 +288,55 @@ class CacheService:
                     'data_size': row['data_size'],
                     'ttl_remaining': max(0, (expires_at - datetime.now()).total_seconds())
                 }
-                
+
         except Exception as e:
-            print(f"キャッシュ情報取得エラー (key: {key}): {e}")
+            print(f"キャチE��ュ惁E��取得エラー (key: {key}): {e}")
             return None
 
 
-# 使用例とテスト用コード
+# 使用例とチE��ト用コーチE
 if __name__ == '__main__':
     """
-    CacheServiceのテスト実行
+    CacheServiceのチE��ト実衁E
     """
-    print("CacheService テスト実行")
+    print("CacheService チE��ト実衁E)
     print("=" * 40)
-    
-    # CacheServiceインスタンス作成
+
+    # CacheServiceインスタンス作�E
     cache = CacheService()
-    
-    # テストデータ
+
+    # チE��トデータ
     test_data = {
         'temperature': 25.5,
         'condition': 'sunny',
         'location': '東京',
         'timestamp': datetime.now().isoformat()
     }
-    
-    # キャッシュキー生成テスト
+
+    # キャチE��ュキー生�EチE��チE
     cache_key = cache.generate_cache_key('weather', lat=35.6762, lon=139.6503)
-    print(f"✓ キャッシュキー生成: {cache_key}")
-    
-    # データ保存テスト
+    print(f"✁EキャチE��ュキー生�E: {cache_key}")
+
+    # チE�Eタ保存テスチE
     if cache.set_cached_data(cache_key, test_data, ttl=60):
-        print("✓ キャッシュデータ保存成功")
+        print("✁EキャチE��ュチE�Eタ保存�E劁E)
     else:
-        print("✗ キャッシュデータ保存失敗")
-    
-    # データ取得テスト
+        print("✁EキャチE��ュチE�Eタ保存失敁E)
+
+    # チE�Eタ取得テスチE
     cached_data = cache.get_cached_data(cache_key)
     if cached_data:
-        print(f"✓ キャッシュデータ取得成功: {cached_data['condition']}")
+        print(f"✁EキャチE��ュチE�Eタ取得�E劁E {cached_data['condition']}")
     else:
-        print("✗ キャッシュデータ取得失敗")
-    
-    # キャッシュ情報取得テスト
+        print("✁EキャチE��ュチE�Eタ取得失敁E)
+
+    # キャチE��ュ惁E��取得テスチE
     cache_info = cache.get_cache_info(cache_key)
     if cache_info:
-        print(f"✓ キャッシュ情報: TTL残り {cache_info['ttl_remaining']:.1f}秒")
-    
-    # 期限切れキャッシュクリーンアップテスト
+        print(f"✁EキャチE��ュ惁E��: TTL残り {cache_info['ttl_remaining']:.1f}私E)
+
+    # 期限刁E��キャチE��ュクリーンアチE�EチE��チE
     expired_count = cache.clear_expired_cache()
-    print(f"✓ 期限切れキャッシュクリーンアップ: {expired_count}件削除")
-    
-    print("テスト完了")
+    print(f"✁E期限刁E��キャチE��ュクリーンアチE�E: {expired_count}件削除")
+
+    print("チE��ト完亁E)

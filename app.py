@@ -5,11 +5,11 @@
 Lunch Roulette - メインアプリケーション
 東京エリアのランチスポット発見Webサービス
 
-このアプリケーションは以下の機能を提供します:
-- IPアドレスベースの位置情報検出
-- リアルタイム天気情報の取得
+こ�Eアプリケーションは以下�E機�Eを提供しまぁE
+- IPアドレスベ�Eスの位置惁E��検�E
+- リアルタイム天気情報の取征E
 - 近くのレストラン検索とランダム推薦
-- PythonAnywhere無料プラン対応
+- PythonAnywhere無料�Eラン対忁E
 """
 
 from flask import Flask, render_template, request, jsonify
@@ -19,23 +19,23 @@ from database import init_database
 from cache_service import CacheService
 from error_handler import ErrorHandler
 
-# Flaskアプリケーションの初期化
+# Flaskアプリケーションの初期匁E
 app = Flask(__name__)
 
-# 設定
+# 設宁E
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['DATABASE'] = 'cache.db'
 
-# デバッグモード（本番環境では無効にする）
+# チE��チE��モード（本番環墁E��は無効にする�E�E
 app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
-# キャッシュサービスの初期化
+# キャチE��ュサービスの初期匁E
 cache_service = CacheService(db_path=app.config['DATABASE'])
 
-# エラーハンドラーの初期化
+# エラーハンドラーの初期匁E
 error_handler = ErrorHandler()
 
-# ログ設定
+# ログ設宁E
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -44,7 +44,7 @@ logging.basicConfig(
 
 def init_db():
     """
-    SQLiteキャッシュデータベースを初期化
+    SQLiteキャチE��ュチE�Eタベ�Eスを�E期化
     アプリケーション起動時に実行される
     """
     return init_database(app.config['DATABASE'])
@@ -53,38 +53,38 @@ def init_db():
 @app.route('/')
 def index():
     """
-    メインページのルート
-    位置情報と天気情報を表示し、ルーレット機能を提供
-    
+    メインペ�EジのルーチE
+    位置惁E��と天気情報を表示し、ルーレチE��機�Eを提侁E
+
     Returns:
-        str: レンダリングされたHTMLテンプレート
+        str: レンダリングされたHTMLチE��プレーチE
     """
     try:
-        # 必要なサービスクラスをインポート
+        # 忁E��なサービスクラスをインポ�EチE
         from location_service import LocationService
         from weather_service import WeatherService
-        
-        # サービスインスタンスを作成
+
+        # サービスインスタンスを作�E
         location_service = LocationService(cache_service)
         weather_service = WeatherService(cache_service=cache_service)
-        
-        # クライアントのIPアドレスを取得
+
+        # クライアント�EIPアドレスを取征E
         client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
         if client_ip and ',' in client_ip:
             client_ip = client_ip.split(',')[0].strip()
-        
-        print(f"クライアントIP: {client_ip}")
-        
-        # 位置情報を取得
+
+        print(f"クライアンチEP: {client_ip}")
+
+        # 位置惁E��を取征E
         location_data = location_service.get_location_from_ip(client_ip)
-        
-        # 天気情報を取得
+
+        # 天気情報を取征E
         weather_data = weather_service.get_current_weather(
-            location_data['latitude'], 
+            location_data['latitude'],
             location_data['longitude']
         )
-        
-        # テンプレートに渡すデータを準備
+
+        # チE��プレートに渡すデータを準備
         template_data = {
             'location': location_data,
             'weather': weather_data,
@@ -92,27 +92,27 @@ def index():
             'is_default_location': location_service.is_default_location(location_data),
             'is_default_weather': weather_service.is_default_weather(weather_data),
             'weather_summary': weather_service.get_weather_summary(
-                location_data['latitude'], 
+                location_data['latitude'],
                 location_data['longitude']
             ),
             'is_good_walking_weather': weather_service.is_good_weather_for_walking(
-                location_data['latitude'], 
+                location_data['latitude'],
                 location_data['longitude']
             )
         }
-        
-        print(f"メインページ表示: {location_data['city']}, {weather_data['description']}")
-        
+
+        print(f"メインペ�Eジ表示: {location_data['city']}, {weather_data['description']}")
+
         return render_template('index.html', **template_data)
-        
+
     except Exception as e:
-        # エラーハンドリング：エラー時はデフォルト情報でページを表示
-        app.logger.error(f'メインページ表示でエラーが発生: {str(e)}')
-        
-        # エラーハンドラーでエラー情報を処理
+        # エラーハンドリング�E�エラー時�EチE��ォルト情報でペ�Eジを表示
+        app.logger.error(f'メインペ�Eジ表示でエラーが発甁E {str(e)}')
+
+        # エラーハンドラーでエラー惁E��を�E琁E
         error_info = error_handler.handle_location_error(e, fallback_available=True)
-        
-        # デフォルトデータでページを表示
+
+        # チE��ォルトデータでペ�Eジを表示
         default_data = {
             'location': {
                 'city': '東京',
@@ -123,7 +123,7 @@ def index():
             },
             'weather': {
                 'temperature': 20.0,
-                'description': '晴れ',
+                'description': '晴めE,
                 'uv_index': 3.0,
                 'icon': '01d',
                 'source': 'default'
@@ -131,70 +131,70 @@ def index():
             'weather_icon_url': 'https://openweathermap.org/img/wn/01d@2x.png',
             'is_default_location': True,
             'is_default_weather': True,
-            'weather_summary': '晴れ 20°C UV指数3',
+            'weather_summary': '晴めE20°C UV持E��3',
             'is_good_walking_weather': True,
-            'error_message': error_info  # エラーメッセージを追加
+            'error_message': error_info  # エラーメチE��ージを追加
         }
-        
+
         return render_template('index.html', **default_data)
 
 
 @app.route('/roulette', methods=['POST'])
 def roulette():
     """
-    レストランルーレットのエンドポイント
+    レストランルーレチE��のエンド�EインチE
     ランダムなレストラン推薦を返す
-    
+
     Returns:
-        dict: レストラン情報のJSONレスポンス
+        dict: レストラン惁E��のJSONレスポンス
     """
     try:
-        # 必要なサービスクラスをインポート
+        # 忁E��なサービスクラスをインポ�EチE
         from location_service import LocationService
         from weather_service import WeatherService
         from restaurant_service import RestaurantService
         from restaurant_selector import RestaurantSelector
         from distance_calculator import DistanceCalculator
-        
-        # サービスインスタンスを作成
+
+        # サービスインスタンスを作�E
         location_service = LocationService(cache_service)
         weather_service = WeatherService(cache_service=cache_service)
         restaurant_service = RestaurantService(cache_service=cache_service)
         distance_calculator = DistanceCalculator(error_handler)
         restaurant_selector = RestaurantSelector(distance_calculator, error_handler)
-        
-        # リクエストデータを取得
+
+        # リクエストデータを取征E
         request_data = request.get_json() or {}
-        
-        # 位置情報を取得（リクエストから、またはIPアドレスから）
+
+        # 位置惁E��を取得（リクエストから、また�EIPアドレスから�E�E
         if 'latitude' in request_data and 'longitude' in request_data:
-            # リクエストに位置情報が含まれている場合
+            # リクエストに位置惁E��が含まれてぁE��場吁E
             user_lat = float(request_data['latitude'])
             user_lon = float(request_data['longitude'])
-            print(f"リクエストから位置情報を取得: {user_lat}, {user_lon}")
+            print(f"リクエストから位置惁E��を取征E {user_lat}, {user_lon}")
         else:
-            # IPアドレスから位置情報を取得
+            # IPアドレスから位置惁E��を取征E
             client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
             if client_ip and ',' in client_ip:
                 client_ip = client_ip.split(',')[0].strip()
-            
+
             location_data = location_service.get_location_from_ip(client_ip)
             user_lat = location_data['latitude']
             user_lon = location_data['longitude']
-            print(f"IPアドレスから位置情報を取得: {user_lat}, {user_lon}")
-        
-        # 天気情報を取得（レスポンスに含めるため）
+            print(f"IPアドレスから位置惁E��を取征E {user_lat}, {user_lon}")
+
+        # 天気情報を取得（レスポンスに含めるため�E�E
         weather_data = weather_service.get_current_weather(user_lat, user_lon)
-        
-        # レストラン検索を実行（半径1km、ランチ予算≤¥1,200）
+
+        # レストラン検索を実行（半征Ekm、ランチ予算≤¥1,200�E�E
         restaurants = restaurant_service.search_lunch_restaurants(user_lat, user_lon, radius=1)
-        
-        # レストランが見つからない場合
+
+        # レストランが見つからなぁE��吁E
         if not restaurants:
-            # レストラン未発見エラーを処理
+            # レストラン未発見エラーを�E琁E
             no_restaurant_error = ValueError("近くにレストランが見つかりませんでした")
             error_info = error_handler.handle_restaurant_error(no_restaurant_error, fallback_available=False)
-            
+
             return jsonify({
                 'success': False,
                 'error_info': error_info,
@@ -206,15 +206,15 @@ def roulette():
                     'is_good_walking_weather': weather_service.is_good_weather_for_walking(user_lat, user_lon)
                 }
             })
-        
-        # ランダムにレストランを選択し、距離情報を統合
+
+        # ランダムにレストランを選択し、距離惁E��を統吁E
         selected_restaurant = restaurant_selector.select_random_restaurant(restaurants, user_lat, user_lon)
-        
+
         if not selected_restaurant:
-            # レストラン選択エラーを処理
+            # レストラン選択エラーを�E琁E
             selection_error = ValueError("レストラン選択中にエラーが発生しました")
             error_info = error_handler.handle_restaurant_error(selection_error, fallback_available=False)
-            
+
             return jsonify({
                 'success': False,
                 'error_info': error_info,
@@ -226,8 +226,8 @@ def roulette():
                     'is_good_walking_weather': weather_service.is_good_weather_for_walking(user_lat, user_lon)
                 }
             })
-        
-        # 成功レスポンスを生成
+
+        # 成功レスポンスを生戁E
         response_data = {
             'success': True,
             'restaurant': {
@@ -267,32 +267,31 @@ def roulette():
                 }
             }
         }
-        
-        print(f"ルーレット成功: {selected_restaurant['name']} ({selected_restaurant['distance_info']['distance_display']})")
-        
+
+        print(f"ルーレチE��成功: {selected_restaurant['name']} ({selected_restaurant['distance_info']['distance_display']})")
+
         return jsonify(response_data)
-        
+
     except ValueError as e:
         # 入力値エラー
-        app.logger.error(f'ルーレット処理で入力値エラー: {str(e)}')
+        app.logger.error(f'ルーレチE��処琁E��入力値エラー: {str(e)}')
         error_info = error_handler.handle_location_error(e, fallback_available=False)
-        
+
         return jsonify({
             'error': True,
             'error_info': error_info,
             'message': error_info['message'],
             'suggestion': error_info['suggestion']
         }), 400
-        
+
     except Exception as e:
-        # その他のエラー
-        app.logger.error(f'ルーレット処理で予期しないエラー: {str(e)}')
-        
+        # そ�E他�Eエラー
+        app.logger.error(f'ルーレチE��処琁E��予期しなぁE��ラー: {str(e)}')
+
         # 汎用エラーハンドリング
-        from error_handler import ErrorType
         error_type, error_info = error_handler.handle_api_error('roulette', e, fallback_available=False)
         user_message = error_handler.create_user_friendly_message(error_info)
-        
+
         return jsonify({
             'error': True,
             'error_info': user_message,
@@ -304,21 +303,21 @@ def roulette():
 @app.errorhandler(404)
 def not_found_error(error):
     """404エラーハンドラー"""
-    return jsonify({'error': True, 'message': 'ページが見つかりません'}), 404
+    return jsonify({'error': True, 'message': 'ペ�Eジが見つかりません'}), 404
 
 
 @app.errorhandler(500)
 def internal_error(error):
     """500エラーハンドラー"""
-    return jsonify({'error': True, 'message': 'サーバー内部エラーが発生しました'}), 500
+    return jsonify({'error': True, 'message': 'サーバ�E冁E��エラーが発生しました'}), 500
 
 
-# アプリケーション起動時の初期化
+# アプリケーション起動時の初期匁E
 if __name__ == '__main__':
-    # データベース初期化
+    # チE�Eタベ�Eス初期匁E
     init_db()
-    
-    # 開発サーバー起動
+
+    # 開発サーバ�E起勁E
     app.run(
         host='0.0.0.0',
         port=int(os.environ.get('PORT', 5000)),

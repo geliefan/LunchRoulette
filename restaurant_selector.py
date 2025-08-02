@@ -2,128 +2,128 @@
 # -*- coding: utf-8 -*-
 
 """
-RestaurantSelector - レストラン選択ロジッククラス
-検索結果からランダム選択機能とレストランデータと距離情報の統合機能を提供
+RestaurantSelector - レストラン選択ロジチE��クラス
+検索結果からランダム選択機�EとレストランチE�Eタと距離惁E��の統合機�Eを提侁E
 
-このクラスは以下の機能を提供します:
-- 検索結果からランダム選択機能
-- レストランデータと距離情報の統合機能
-- 選択結果の整形とフォーマット機能
+こ�Eクラスは以下�E機�Eを提供しまぁE
+- 検索結果からランダム選択機�E
+- レストランチE�Eタと距離惁E��の統合機�E
+- 選択結果の整形とフォーマット機�E
 """
 
 import random
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from distance_calculator import DistanceCalculator
 from error_handler import ErrorHandler
 
 
 class RestaurantSelector:
     """
-    レストラン選択とデータ統合を行うビジネスロジッククラス
-    
-    レストラン検索結果からランダムに選択し、距離情報を統合して
-    ユーザーに提供する最終的なレストラン情報を生成する。
+    レストラン選択とチE�Eタ統合を行うビジネスロジチE��クラス
+
+    レストラン検索結果からランダムに選択し、距離惁E��を統合して
+    ユーザーに提供する最終的なレストラン惁E��を生成する、E
     """
-    
-    def __init__(self, distance_calculator: Optional[DistanceCalculator] = None, 
+
+    def __init__(self, distance_calculator: Optional[DistanceCalculator] = None,
                  error_handler: Optional[ErrorHandler] = None):
         """
-        RestaurantSelectorを初期化
-        
+        RestaurantSelectorを�E期化
+
         Args:
             distance_calculator (DistanceCalculator, optional): 距離計算サービス
             error_handler (ErrorHandler, optional): エラーハンドラー
         """
         self.error_handler = error_handler or ErrorHandler()
         self.distance_calculator = distance_calculator or DistanceCalculator(self.error_handler)
-        self.random = random.Random()  # テスト可能性のためのRandomインスタンス
-    
+        self.random = random.Random()  # チE��ト可能性のためのRandomインスタンス
+
     def select_random_restaurant(self, restaurants: List[Dict], user_lat: float, user_lon: float) -> Optional[Dict]:
         """
-        レストランリストからランダムに1つを選択し、距離情報を統合
-        
+        レストランリストからランダムに1つを選択し、距離惁E��を統吁E
+
         Args:
-            restaurants (list): レストラン情報のリスト
+            restaurants (list): レストラン惁E��のリスチE
             user_lat (float): ユーザーの緯度
             user_lon (float): ユーザーの経度
-            
+
         Returns:
-            dict: 距離情報が統合されたレストラン情報、選択できない場合はNone
-            
+            dict: 距離惁E��が統合されたレストラン惁E��、E��択できなぁE��合�ENone
+
         Example:
             >>> selector = RestaurantSelector()
             >>> restaurants = [{'id': '1', 'name': 'Test Restaurant', 'lat': 35.6812, 'lng': 139.7671}]
             >>> result = selector.select_random_restaurant(restaurants, 35.6800, 139.7700)
             >>> print(result['name'])  # 'Test Restaurant'
-            >>> print(result['distance_info']['distance_display'])  # '約200m'
+            >>> print(result['distance_info']['distance_display'])  # '紁E00m'
         """
         try:
-            # レストランリストが空の場合
+            # レストランリストが空の場吁E
             if not restaurants:
                 no_restaurant_error = ValueError("選択可能なレストランがありません")
                 error_info = self.error_handler.handle_restaurant_error(no_restaurant_error, fallback_available=False)
                 print(f"レストラン選択エラー: {error_info['message']}")
                 return None
-            
+
             # 有効なレストランのみをフィルタリング
             valid_restaurants = self._filter_valid_restaurants(restaurants)
-            
+
             if not valid_restaurants:
-                invalid_data_error = ValueError("有効なレストランデータがありません")
+                invalid_data_error = ValueError("有効なレストランチE�Eタがありません")
                 error_info = self.error_handler.handle_restaurant_error(invalid_data_error, fallback_available=False)
                 print(f"レストラン選択エラー: {error_info['message']}")
                 return None
-            
-            # ランダムに1つのレストランを選択
+
+            # ランダムに1つのレストランを選抁E
             selected_restaurant = self.random.choice(valid_restaurants)
-            
-            print(f"レストランを選択: {selected_restaurant['name']}")
-            
-            # 距離情報を計算して統合
+
+            print(f"レストランを選抁E {selected_restaurant['name']}")
+
+            # 距離惁E��を計算して統吁E
             restaurant_with_distance = self._integrate_distance_info(
                 selected_restaurant, user_lat, user_lon
             )
-            
+
             return restaurant_with_distance
-            
+
         except Exception as e:
             error_info = self.error_handler.handle_restaurant_error(e, fallback_available=False)
             print(f"レストラン選択エラー: {error_info['message']}")
             return None
-    
+
     def select_multiple_restaurants(self, restaurants: List[Dict], user_lat: float, user_lon: float, count: int = 3) -> List[Dict]:
         """
-        レストランリストから複数をランダムに選択し、距離情報を統合
-        
+        レストランリストから褁E��をランダムに選択し、距離惁E��を統吁E
+
         Args:
-            restaurants (list): レストラン情報のリスト
+            restaurants (list): レストラン惁E��のリスチE
             user_lat (float): ユーザーの緯度
             user_lon (float): ユーザーの経度
-            count (int): 選択する件数、デフォルトは3件
-            
+            count (int): 選択する件数、デフォルト�E3件
+
         Returns:
-            list: 距離情報が統合されたレストラン情報のリスト
+            list: 距離惁E��が統合されたレストラン惁E��のリスチE
         """
         try:
-            # レストランリストが空の場合
+            # レストランリストが空の場吁E
             if not restaurants:
                 return []
-            
+
             # 有効なレストランのみをフィルタリング
             valid_restaurants = self._filter_valid_restaurants(restaurants)
-            
+
             if not valid_restaurants:
                 return []
-            
-            # 選択件数を調整（利用可能な件数を超えない）
+
+            # 選択件数を調整�E�利用可能な件数を趁E��なぁE��E
             actual_count = min(count, len(valid_restaurants))
-            
-            # ランダムに複数のレストランを選択（重複なし）
+
+            # ランダムに褁E��のレストランを選択（重褁E��し！E
             selected_restaurants = self.random.sample(valid_restaurants, actual_count)
-            
-            print(f"{actual_count}件のレストランを選択")
-            
-            # 各レストランに距離情報を統合
+
+            print(f"{actual_count}件のレストランを選抁E)
+
+            # 吁E��ストランに距離惁E��を統吁E
             restaurants_with_distance = []
             for restaurant in selected_restaurants:
                 restaurant_with_distance = self._integrate_distance_info(
@@ -131,256 +131,256 @@ class RestaurantSelector:
                 )
                 if restaurant_with_distance:
                     restaurants_with_distance.append(restaurant_with_distance)
-            
-            # 距離順でソート（近い順）
+
+            # 距離頁E��ソート（近い頁E��E
             restaurants_with_distance.sort(key=lambda r: r['distance_info']['distance_km'])
-            
+
             return restaurants_with_distance
-            
+
         except Exception as e:
-            print(f"複数レストラン選択エラー: {e}")
+            print(f"褁E��レストラン選択エラー: {e}")
             return []
-    
+
     def _filter_valid_restaurants(self, restaurants: List[Dict]) -> List[Dict]:
         """
-        有効なレストランデータのみをフィルタリング
-        
+        有効なレストランチE�Eタのみをフィルタリング
+
         Args:
-            restaurants (list): レストラン情報のリスト
-            
+            restaurants (list): レストラン惁E��のリスチE
+
         Returns:
-            list: 有効なレストラン情報のリスト
+            list: 有効なレストラン惁E��のリスチE
         """
         valid_restaurants = []
-        
+
         for restaurant in restaurants:
             if self._is_valid_restaurant(restaurant):
                 valid_restaurants.append(restaurant)
             else:
-                print(f"無効なレストランデータをスキップ: {restaurant.get('name', 'unknown')}")
-        
+                print(f"無効なレストランチE�EタをスキチE�E: {restaurant.get('name', 'unknown')}")
+
         return valid_restaurants
-    
+
     def _is_valid_restaurant(self, restaurant: Dict) -> bool:
         """
-        レストランデータの妥当性を検証
-        
+        レストランチE�Eタの妥当性を検証
+
         Args:
-            restaurant (dict): レストラン情報
-            
+            restaurant (dict): レストラン惁E��
+
         Returns:
-            bool: 有効な場合True
+            bool: 有効な場吁Erue
         """
         try:
-            # 必須フィールドの存在確認
+            # 忁E��フィールド�E存在確誁E
             required_fields = ['id', 'name', 'lat', 'lng']
             for field in required_fields:
                 if field not in restaurant or not restaurant[field]:
                     return False
-            
-            # 座標の妥当性確認
+
+            # 座標�E妥当性確誁E
             lat = float(restaurant['lat'])
             lng = float(restaurant['lng'])
-            
+
             if not (-90 <= lat <= 90):
                 return False
             if not (-180 <= lng <= 180):
                 return False
-            
-            # 名前が空でないことを確認
+
+            # 名前が空でなぁE��とを確誁E
             if not restaurant['name'].strip():
                 return False
-            
+
             return True
-            
+
         except (ValueError, TypeError, AttributeError):
             return False
-    
+
     def _integrate_distance_info(self, restaurant: Dict, user_lat: float, user_lon: float) -> Optional[Dict]:
         """
-        レストランデータに距離情報を統合
-        
+        レストランチE�Eタに距離惁E��を統吁E
+
         Args:
-            restaurant (dict): レストラン情報
+            restaurant (dict): レストラン惁E��
             user_lat (float): ユーザーの緯度
             user_lon (float): ユーザーの経度
-            
+
         Returns:
-            dict: 距離情報が統合されたレストラン情報、エラー時はNone
+            dict: 距離惁E��が統合されたレストラン惁E��、エラー時�ENone
         """
         try:
-            # レストランの座標を取得
+            # レストランの座標を取征E
             restaurant_lat = float(restaurant['lat'])
             restaurant_lng = float(restaurant['lng'])
-            
-            # 距離情報を計算
+
+            # 距離惁E��を計箁E
             distance_info = self.distance_calculator.calculate_walking_distance(
                 user_lat, user_lon, restaurant_lat, restaurant_lng
             )
-            
-            # レストランデータをコピーして距離情報を追加
+
+            # レストランチE�Eタをコピ�Eして距離惁E��を追加
             restaurant_with_distance = restaurant.copy()
             restaurant_with_distance['distance_info'] = distance_info
-            
-            # 追加の表示用情報を生成
+
+            # 追加の表示用惁E��を生戁E
             restaurant_with_distance['display_info'] = self._generate_display_info(
                 restaurant_with_distance
             )
-            
+
             return restaurant_with_distance
-            
+
         except Exception as e:
             error_info = self.error_handler.handle_distance_calculation_error(e)
-            print(f"距離情報統合エラー (レストラン: {restaurant.get('name', 'unknown')}): {error_info['message']}")
-            
-            # エラー時でもレストラン情報は返すが、距離情報はデフォルト値を使用
+            print(f"距離惁E��統合エラー (レストラン: {restaurant.get('name', 'unknown')}): {error_info['message']}")
+
+            # エラー時でもレストラン惁E��は返すが、距離惁E��はチE��ォルト値を使用
             restaurant_with_distance = restaurant.copy()
             restaurant_with_distance['distance_info'] = {
                 'distance_km': 0.5,
                 'distance_m': 500,
                 'walking_time_minutes': 8,
-                'distance_display': "約500m",
-                'time_display': "徒歩約8分",
+                'distance_display': "紁E00m",
+                'time_display': "徒歩紁E刁E,
                 'error_info': error_info
             }
             restaurant_with_distance['display_info'] = self._generate_display_info(restaurant_with_distance)
-            
+
             return restaurant_with_distance
-    
+
     def _generate_display_info(self, restaurant: Dict) -> Dict:
         """
-        表示用の追加情報を生成
-        
+        表示用の追加惁E��を生戁E
+
         Args:
-            restaurant (dict): 距離情報が統合されたレストラン情報
-            
+            restaurant (dict): 距離惁E��が統合されたレストラン惁E��
+
         Returns:
-            dict: 表示用情報
+            dict: 表示用惁E��
         """
         try:
             distance_info = restaurant.get('distance_info', {})
-            
-            # 予算情報の表示用文字列を生成
+
+            # 予算情報の表示用斁E���Eを生戁E
             budget_display = self._format_budget_display(restaurant.get('budget_average', 0))
-            
-            # ジャンル情報の表示用文字列を生成
+
+            # ジャンル惁E��の表示用斁E���Eを生戁E
             genre_display = restaurant.get('genre', '').strip() or '料理'
-            
-            # アクセス情報の表示用文字列を生成
+
+            # アクセス惁E��の表示用斁E���Eを生戁E
             access_display = self._format_access_display(restaurant.get('access', ''))
-            
-            # 営業時間の表示用文字列を生成
+
+            # 営業時間の表示用斁E���Eを生戁E
             hours_display = self._format_hours_display(restaurant.get('open', ''))
-            
+
             display_info = {
                 'budget_display': budget_display,
                 'genre_display': genre_display,
                 'access_display': access_display,
                 'hours_display': hours_display,
-                'distance_display': distance_info.get('distance_display', '不明'),
-                'time_display': distance_info.get('time_display', '徒歩時間不明'),
+                'distance_display': distance_info.get('distance_display', '不�E'),
+                'time_display': distance_info.get('time_display', '徒歩時間不�E'),
                 'photo_url': restaurant.get('photo', ''),
                 'map_url': self._generate_map_url(restaurant),
                 'hotpepper_url': restaurant.get('urls', {}).get('pc', ''),
                 'summary': self._generate_summary(restaurant)
             }
-            
+
             return display_info
-            
+
         except Exception as e:
-            print(f"表示情報生成エラー: {e}")
+            print(f"表示惁E��生�Eエラー: {e}")
             return {
-                'budget_display': '予算不明',
+                'budget_display': '予算不�E',
                 'genre_display': '料理',
                 'access_display': '',
                 'hours_display': '',
-                'distance_display': '距離不明',
-                'time_display': '徒歩時間不明',
+                'distance_display': '距離不�E',
+                'time_display': '徒歩時間不�E',
                 'photo_url': '',
                 'map_url': '',
                 'hotpepper_url': '',
                 'summary': ''
             }
-    
+
     def _format_budget_display(self, budget_average: int) -> str:
         """
-        予算の表示用文字列を生成
-        
+        予算�E表示用斁E���Eを生戁E
+
         Args:
-            budget_average (int): 平均予算（円）
-            
+            budget_average (int): 平坁E��算（�E�E�E
+
         Returns:
-            str: 表示用予算文字列
+            str: 表示用予算文字�E
         """
         try:
             if budget_average <= 0:
-                return '予算不明'
+                return '予算不�E'
             elif budget_average <= 500:
-                return '～¥500'
+                return '�E�¥500'
             elif budget_average <= 1000:
-                return '¥500～¥1,000'
+                return '¥500�E�¥1,000'
             elif budget_average <= 1500:
-                return '¥1,000～¥1,500'
+                return '¥1,000�E�¥1,500'
             elif budget_average <= 2000:
-                return '¥1,500～¥2,000'
+                return '¥1,500�E�¥2,000'
             else:
-                return f'¥{budget_average:,}～'
+                return f'¥{budget_average:,}�E�E
         except Exception:
-            return '予算不明'
-    
+            return '予算不�E'
+
     def _format_access_display(self, access: str) -> str:
         """
-        アクセス情報の表示用文字列を生成
-        
+        アクセス惁E��の表示用斁E���Eを生戁E
+
         Args:
-            access (str): アクセス情報
-            
+            access (str): アクセス惁E��
+
         Returns:
-            str: 表示用アクセス文字列
+            str: 表示用アクセス斁E���E
         """
         try:
             if not access or not access.strip():
                 return ''
-            
-            # 長すぎる場合は省略
+
+            # 長すぎる場合�E省略
             if len(access) > 100:
                 return access[:97] + '...'
-            
+
             return access.strip()
-            
+
         except Exception:
             return ''
-    
+
     def _format_hours_display(self, hours: str) -> str:
         """
-        営業時間の表示用文字列を生成
-        
+        営業時間の表示用斁E���Eを生戁E
+
         Args:
-            hours (str): 営業時間情報
-            
+            hours (str): 営業時間惁E��
+
         Returns:
-            str: 表示用営業時間文字列
+            str: 表示用営業時間斁E���E
         """
         try:
             if not hours or not hours.strip():
                 return ''
-            
-            # 長すぎる場合は省略
+
+            # 長すぎる場合�E省略
             if len(hours) > 50:
                 return hours[:47] + '...'
-            
+
             return hours.strip()
-            
+
         except Exception:
             return ''
-    
+
     def _generate_map_url(self, restaurant: Dict) -> str:
         """
-        地図URLを生成
-        
+        地図URLを生戁E
+
         Args:
-            restaurant (dict): レストラン情報
-            
+            restaurant (dict): レストラン惁E��
+
         Returns:
             str: Google Maps URL
         """
@@ -388,25 +388,25 @@ class RestaurantSelector:
             lat = restaurant.get('lat', 0)
             lng = restaurant.get('lng', 0)
             name = restaurant.get('name', '')
-            
+
             if lat and lng:
-                # Google Maps URLを生成
+                # Google Maps URLを生戁E
                 return f"https://www.google.com/maps/search/?api=1&query={lat},{lng}&query_place_id={name}"
-            
+
             return ''
-            
+
         except Exception:
             return ''
-    
+
     def _generate_summary(self, restaurant: Dict) -> str:
         """
-        レストランの要約情報を生成
-        
+        レストランの要紁E��報を生戁E
+
         Args:
-            restaurant (dict): レストラン情報
-            
+            restaurant (dict): レストラン惁E��
+
         Returns:
-            str: 要約文字列
+            str: 要紁E��字�E
         """
         try:
             name = restaurant.get('name', '')
@@ -414,44 +414,44 @@ class RestaurantSelector:
             distance_info = restaurant.get('distance_info', {})
             distance_display = distance_info.get('distance_display', '')
             time_display = distance_info.get('time_display', '')
-            
+
             summary_parts = []
-            
+
             if genre:
                 summary_parts.append(f"{genre}の")
-            
+
             summary_parts.append(f"{name}")
-            
+
             if distance_display and time_display:
-                summary_parts.append(f"（{distance_display}・{time_display}）")
-            
+                summary_parts.append(f"�E�Edistance_display}・{time_display}�E�E)
+
             return ''.join(summary_parts)
-            
+
         except Exception:
             return restaurant.get('name', 'レストラン')
-    
+
     def set_random_seed(self, seed: int) -> None:
         """
-        ランダムシードを設定（テスト用）
-        
+        ランダムシードを設定（テスト用�E�E
+
         Args:
             seed (int): ランダムシード値
         """
         self.random.seed(seed)
-    
+
     def get_selection_statistics(self, restaurants: List[Dict]) -> Dict:
         """
-        選択対象レストランの統計情報を取得
-        
+        選択対象レストランの統計情報を取征E
+
         Args:
-            restaurants (list): レストラン情報のリスト
-            
+            restaurants (list): レストラン惁E��のリスチE
+
         Returns:
             dict: 統計情報
         """
         try:
             valid_restaurants = self._filter_valid_restaurants(restaurants)
-            
+
             if not valid_restaurants:
                 return {
                     'total_count': 0,
@@ -460,21 +460,21 @@ class RestaurantSelector:
                     'genres': {},
                     'budget_ranges': {}
                 }
-            
-            # ジャンル別集計
+
+            # ジャンル別雁E��E
             genres = {}
             budget_ranges = {}
-            
+
             for restaurant in valid_restaurants:
-                # ジャンル集計
-                genre = restaurant.get('genre', '不明')
+                # ジャンル雁E��E
+                genre = restaurant.get('genre', '不�E')
                 genres[genre] = genres.get(genre, 0) + 1
-                
-                # 予算範囲集計
+
+                # 予算篁E��雁E��E
                 budget = restaurant.get('budget_average', 0)
                 budget_range = self._get_budget_range(budget)
                 budget_ranges[budget_range] = budget_ranges.get(budget_range, 0) + 1
-            
+
             return {
                 'total_count': len(restaurants),
                 'valid_count': len(valid_restaurants),
@@ -482,7 +482,7 @@ class RestaurantSelector:
                 'genres': genres,
                 'budget_ranges': budget_ranges
             }
-            
+
         except Exception as e:
             print(f"統計情報取得エラー: {e}")
             return {
@@ -492,110 +492,110 @@ class RestaurantSelector:
                 'genres': {},
                 'budget_ranges': {}
             }
-    
+
     def _get_budget_range(self, budget: int) -> str:
         """
-        予算から予算範囲文字列を取得
-        
+        予算から予算篁E��斁E���Eを取征E
+
         Args:
-            budget (int): 予算（円）
-            
+            budget (int): 予算（�E�E�E
+
         Returns:
-            str: 予算範囲文字列
+            str: 予算篁E��斁E���E
         """
         if budget <= 500:
-            return '～¥500'
+            return '�E�¥500'
         elif budget <= 1000:
-            return '¥500～¥1,000'
+            return '¥500�E�¥1,000'
         elif budget <= 1500:
-            return '¥1,000～¥1,500'
+            return '¥1,000�E�¥1,500'
         elif budget <= 2000:
-            return '¥1,500～¥2,000'
+            return '¥1,500�E�¥2,000'
         else:
-            return '¥2,000～'
+            return '¥2,000�E�E
 
 
-# 使用例とテスト用コード
+# 使用例とチE��ト用コーチE
 if __name__ == '__main__':
     """
-    RestaurantSelectorのテスト実行
+    RestaurantSelectorのチE��ト実衁E
     """
-    print("RestaurantSelector テスト実行")
+    print("RestaurantSelector チE��ト実衁E)
     print("=" * 40)
-    
-    # テスト用レストランデータ
+
+    # チE��ト用レストランチE�Eタ
     test_restaurants = [
         {
             'id': '1',
-            'name': 'テストレストラン1',
+            'name': 'チE��トレストラン1',
             'lat': 35.6812,
             'lng': 139.7671,
             'genre': 'イタリアン',
             'budget_average': 1000,
-            'address': '東京都千代田区丸の内1-1-1',
+            'address': '東京都十E��田区丸の冁E-1-1',
             'photo': 'https://example.com/photo1.jpg',
             'urls': {'pc': 'https://example.com/restaurant1'}
         },
         {
             'id': '2',
-            'name': 'テストレストラン2',
+            'name': 'チE��トレストラン2',
             'lat': 35.6820,
             'lng': 139.7680,
-            'genre': '和食',
+            'genre': '和飁E,
             'budget_average': 800,
-            'address': '東京都千代田区丸の内1-2-2',
+            'address': '東京都十E��田区丸の冁E-2-2',
             'photo': 'https://example.com/photo2.jpg',
             'urls': {'pc': 'https://example.com/restaurant2'}
         },
         {
             'id': '3',
-            'name': 'テストレストラン3',
+            'name': 'チE��トレストラン3',
             'lat': 35.6800,
             'lng': 139.7650,
             'genre': '中華',
             'budget_average': 1200,
-            'address': '東京都千代田区丸の内1-3-3',
+            'address': '東京都十E��田区丸の冁E-3-3',
             'photo': '',
             'urls': {'pc': 'https://example.com/restaurant3'}
         }
     ]
-    
-    # RestaurantSelectorインスタンス作成
+
+    # RestaurantSelectorインスタンス作�E
     selector = RestaurantSelector()
-    
-    # ユーザー位置（東京駅付近）
+
+    # ユーザー位置�E�東京駁E��近！E
     user_lat, user_lon = 35.6812, 139.7671
-    
-    # ランダムシードを設定（テスト結果の再現性のため）
+
+    # ランダムシードを設定（テスト結果の再現性のため�E�E
     selector.set_random_seed(42)
-    
-    # 1. 単一レストラン選択テスト
-    print("1. 単一レストラン選択:")
+
+    # 1. 単一レストラン選択テスチE
+    print("1. 単一レストラン選抁E")
     selected = selector.select_random_restaurant(test_restaurants, user_lat, user_lon)
     if selected:
         print(f"   選択されたレストラン: {selected['name']}")
         print(f"   ジャンル: {selected['genre']}")
         print(f"   距離: {selected['distance_info']['distance_display']}")
         print(f"   徒歩時間: {selected['distance_info']['time_display']}")
-        print(f"   要約: {selected['display_info']['summary']}")
-    
-    # 2. 複数レストラン選択テスト
-    print("\n2. 複数レストラン選択:")
+        print(f"   要紁E {selected['display_info']['summary']}")
+
+    # 2. 褁E��レストラン選択テスチE
+    print("\n2. 褁E��レストラン選抁E")
     multiple_selected = selector.select_multiple_restaurants(test_restaurants, user_lat, user_lon, 2)
     for i, restaurant in enumerate(multiple_selected, 1):
         print(f"   {i}. {restaurant['name']} - {restaurant['distance_info']['distance_display']}")
-    
-    # 3. 統計情報テスト
+
+    # 3. 統計情報チE��チE
     print("\n3. 統計情報:")
     stats = selector.get_selection_statistics(test_restaurants)
     print(f"   総件数: {stats['total_count']}")
     print(f"   有効件数: {stats['valid_count']}")
     print(f"   ジャンル別: {stats['genres']}")
-    print(f"   予算範囲別: {stats['budget_ranges']}")
-    
-    # 4. 空リストテスト
-    print("\n4. 空リスト処理:")
+    print(f"   予算篁E��別: {stats['budget_ranges']}")
+
+    # 4. 空リストテスチE
+    print("\n4. 空リスト�E琁E")
     empty_result = selector.select_random_restaurant([], user_lat, user_lon)
-    print(f"   空リストの結果: {empty_result}")
-    
-    print("\nテスト完了")
+    print(f"   空リスト�E結果: {empty_result}")
+
+    print("\nチE��ト完亁E)
