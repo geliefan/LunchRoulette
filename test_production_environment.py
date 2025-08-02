@@ -605,7 +605,7 @@ def run_production_tests():
         print("✓ 本番環境の準備が完了しました")
         return True
     else:
-        print("\n❁ 一部のテストが失敗しました")
+        print("\n❌ 一部のテストが失敗しました")
         print("⚠ 本番環境にプロイ前に問題を修正してください")
         return False
 
