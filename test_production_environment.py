@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-本番環墁E��スチE- Production Environment Testing
-Lunch Roulette アプリケーションの本番環墁E��応テスチE
+本番環境テスト - Production Environment Testing
+Lunch Roulette アプリケーションの本番環境対応テスト
 
-こ�EチE��トスイート�E以下をカバ�EしまぁE
-1. ローカル環墁E��の最終動作確誁E
-2. API制限�Eでの動作確誁E
-3. パフォーマンスチE��ト実衁E
+このテストスイートは以下をカバーします:
+1. ローカル環境での最終動作確認
+2. API制限下での動作確認
+3. パフォーマンステスト実行
 
 要件: 4.3, 5.4
 """
@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock
 import sqlite3
 
-# アプリケーションモジュールをインポ�EチE
+# アプリケーションモジュールをインポート
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from app import app, init_db
 from cache_service import CacheService
@@ -34,26 +34,26 @@ from restaurant_service import RestaurantService
 
 
 class ProductionEnvironmentTest(unittest.TestCase):
-    """本番環墁E��スト用のチE��トクラス"""
+    """本番環境テスト用のテストクラス"""
 
     @classmethod
     def setUpClass(cls):
-        """チE��トクラス全体�E初期匁E""
+        """テストクラス全体の初期化"""
         print("\n" + "="*60)
-        print("本番環墁E��スト開姁E- Production Environment Testing")
+        print("本番環境テスト開始 - Production Environment Testing")
         print("="*60)
         
-        # チE��ト用チE�Eタベ�Eスを�E期化
+        # テスト用データベースを初期化
         cls.test_db = 'test_production.db'
         if os.path.exists(cls.test_db):
             os.remove(cls.test_db)
         
-        # Flaskアプリケーションをテストモードで設宁E
+        # Flaskアプリケーションをテストモードで設定
         app.config['TESTING'] = True
         app.config['DATABASE'] = cls.test_db
-        app.config['DEBUG'] = False  # 本番環墁E��宁E
+        app.config['DEBUG'] = False  # 本番環境設定
         
-        # チE�Eタベ�Eス初期匁E
+        # データベース初期化
         init_db()
         
         cls.client = app.test_client()
@@ -69,68 +69,68 @@ class ProductionEnvironmentTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """チE��トクラス全体�EクリーンアチE�E"""
+        """テストクラス全体のクリーンアップ"""
         try:
-            # チE�Eタベ�Eス接続を明示皁E��閉じめE
+            # データベース接続を明示的に閉じる
             if hasattr(cls, 'cache_service'):
                 cls.cache_service.close_connection()
             
-            # ファイルが存在し、削除可能な場合�Eみ削除
+            # ファイルが存在し、削除可能な場合のみ削除
             if os.path.exists(cls.test_db):
                 try:
                     os.remove(cls.test_db)
                 except PermissionError:
-                    print(f"⚠ チE��トデータベ�Eスファイル {cls.test_db} を削除できませんでした�E�使用中�E�E)
+                    print(f"⚠ テストデータベースファイル {cls.test_db} を削除できませんでした（使用中）")
         except Exception as e:
-            print(f"⚠ クリーンアチE�E中にエラー: {e}")
+            print(f"⚠ クリーンアップ中にエラー: {e}")
         
         print("\n" + "="*60)
-        print("本番環墁E��スト完亁E)
+        print("本番環境テスト完了")
         print("="*60)
 
     def setUp(self):
-        """吁E��スト�E初期匁E""
+        """各テストの初期化"""
         self.start_time = time.time()
 
     def tearDown(self):
-        """吁E��スト�EクリーンアチE�E"""
+        """各テストのクリーンアップ"""
         end_time = time.time()
         execution_time = end_time - self.start_time
-        print(f"チE��ト実行時閁E {execution_time:.3f}私E)
+        print(f"テスト実行時間: {execution_time:.3f}秒")
 
 
 class LocalEnvironmentTest(ProductionEnvironmentTest):
-    """1. ローカル環墁E��の最終動作確誁E""
+    """1. ローカル環境での最終動作確認"""
 
     def test_01_application_startup(self):
-        """アプリケーション起動テスチE""
-        print("\n[チE��チE1.1] アプリケーション起動確誁E)
+        """アプリケーション起動テスト"""
+        print("\n[テストケース1.1] アプリケーション起動確認")
         
-        # メインペ�EジへのアクセスチE��チE
+        # メインページへのアクセステスト
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Lunch Roulette', response.data)
-        print("✁Eアプリケーションが正常に起勁E)
+        print("✓ アプリケーションが正常に起動しました")
 
     def test_02_database_initialization(self):
-        """チE�Eタベ�Eス初期化テスチE""
-        print("\n[チE��チE1.2] チE�Eタベ�Eス初期化確誁E)
+        """データベース初期化テスト"""
+        print("\n[テストケース1.2] データベース初期化確認")
         
-        # チE�Eタベ�Eスファイルの存在確誁E
+        # データベースファイルの存在確認
         self.assertTrue(os.path.exists(self.test_db))
         
-        # チE�Eブル構造の確誁E
+        # テーブル構造の確認
         conn = sqlite3.connect(self.test_db)
         cursor = conn.cursor()
         
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
         tables = cursor.fetchall()
         
-        # cacheチE�Eブルの存在確誁E
+        # cacheテーブルの存在確認
         table_names = [table[0] for table in tables]
         self.assertIn('cache', table_names)
         
-        # cacheチE�Eブルの構造確誁E
+        # cacheテーブルの構造確認
         cursor.execute("PRAGMA table_info(cache);")
         columns = cursor.fetchall()
         column_names = [col[1] for col in columns]
@@ -140,16 +140,16 @@ class LocalEnvironmentTest(ProductionEnvironmentTest):
             self.assertIn(col, column_names)
         
         conn.close()
-        print("✁EチE�Eタベ�Eスが正常に初期化されてぁE��")
+        print("✓ データベースが正常に初期化されました")
 
     def test_03_main_page_functionality(self):
-        """メインペ�Eジ機�EチE��チE""
-        print("\n[チE��チE1.3] メインペ�Eジ機�E確誁E)
+        """メインページ機能テスト"""
+        print("\n[テストケース1.3] メインページ機能確認")
         
         with patch('location_service.LocationService.get_location_from_ip') as mock_location, \
              patch('weather_service.WeatherService.get_current_weather') as mock_weather:
             
-            # モチE��チE�Eタを設宁E
+            # モックデータを設定
             mock_location.return_value = {
                 'city': '東京',
                 'region': '東京都',
@@ -160,7 +160,7 @@ class LocalEnvironmentTest(ProductionEnvironmentTest):
             
             mock_weather.return_value = {
                 'temperature': 22.5,
-                'description': '晴めE,
+                'description': '晴れ',
                 'uv_index': 4.0,
                 'icon': '01d',
                 'source': 'test'
@@ -169,24 +169,24 @@ class LocalEnvironmentTest(ProductionEnvironmentTest):
             response = self.client.get('/')
             self.assertEqual(response.status_code, 200)
             
-            # HTMLコンチE��チE�E確誁E
+            # HTMLコンテンツ確認
             html_content = response.data.decode('utf-8')
             self.assertIn('東京', html_content)
-            self.assertIn('晴めE, html_content)
-            self.assertIn('ルーレチE��を回ぁE, html_content)
+            self.assertIn('晴れ', html_content)
+            self.assertIn('ルーレットを回す', html_content)
             
-        print("✁Eメインペ�Eジが正常に動佁E)
+        print("✓ メインページが正常に動作しています")
 
     def test_04_roulette_endpoint(self):
-        """ルーレチE��エンド�EイントテスチE""
-        print("\n[チE��チE1.4] ルーレチE��エンド�Eイント確誁E)
+        """ルーレットエンドポイントテスト"""
+        print("\n[テストケース1.4] ルーレットエンドポイント確認")
         
         with patch('location_service.LocationService.get_location_from_ip') as mock_location, \
              patch('weather_service.WeatherService.get_current_weather') as mock_weather, \
              patch('weather_service.WeatherService.is_good_weather_for_walking') as mock_walking, \
              patch('restaurant_service.RestaurantService.search_lunch_restaurants') as mock_restaurants:
             
-            # モチE��チE�Eタを設宁E
+            # モックデータを設定
             mock_location.return_value = {
                 'latitude': 35.6812,
                 'longitude': 139.7671
@@ -194,8 +194,8 @@ class LocalEnvironmentTest(ProductionEnvironmentTest):
             
             mock_weather.return_value = {
                 'temperature': 22.5,
-                'description': '晴めE,
-                'condition': 'clear',  # 忁E��なフィールドを追加
+                'description': '晴れ',
+                'condition': 'clear',  # 応答に追加フィールド
                 'uv_index': 4.0,
                 'icon': '01d'
             }
@@ -204,28 +204,28 @@ class LocalEnvironmentTest(ProductionEnvironmentTest):
             
             mock_restaurants.return_value = [{
                 'id': 'test_restaurant_001',
-                'name': 'チE��トレストラン',
-                'genre': '和飁E,
-                'address': '東京都十E��田区',
+                'name': 'テストレストラン',
+                'genre': '和食',
+                'address': '東京都千代田区',
                 'lat': 35.6815,
                 'lng': 139.7675,
                 'budget': 1000,
                 'photo': 'https://example.com/photo.jpg',
                 'urls': {'pc': 'https://example.com/restaurant'},
                 'catch': 'おいしい和食レストラン',
-                'access': '東京駁E��歩5刁E,
+                'access': '東京駅から徒歩5分',
                 'open': '11:00-14:00'
             }]
             
-            # ルーレチE��エンド�EイントをチE��チE
+            # ルーレットエンドポイントをテスト
             response = self.client.post('/roulette', 
                                       json={'latitude': 35.6812, 'longitude': 139.7671},
                                       content_type='application/json')
             
-            # レスポンスの確認（エラーの場合�E詳細を表示�E�E
+            # レスポンスの確認（エラーの場合は詳細を表示）
             if response.status_code != 200:
                 print(f"エラーレスポンス: {response.status_code}")
-                print(f"レスポンス冁E��: {response.data.decode('utf-8')}")
+                print(f"レスポンス内容: {response.data.decode('utf-8')}")
             
             self.assertEqual(response.status_code, 200)
             
@@ -235,87 +235,87 @@ class LocalEnvironmentTest(ProductionEnvironmentTest):
             self.assertIn('distance', data)
             self.assertIn('weather', data)
             
-        print("✁EルーレチE��エンド�Eイントが正常に動佁E)
+        print("✓ ルーレットエンドポイントが正常に動作しています")
 
     def test_05_error_handling(self):
-        """エラーハンドリングチE��チE""
-        print("\n[チE��チE1.5] エラーハンドリング確誁E)
+        """エラーハンドリングテスト"""
+        print("\n[テストケース1.5] エラーハンドリング確認")
         
-        # 存在しなぁE��ンド�Eイントへのアクセス
+        # 存在しないエンドポイントへのアクセス
         response = self.client.get('/nonexistent')
         self.assertEqual(response.status_code, 404)
         
-        # 不正なJSONチE�EタでのPOST�E�Elaskが�E動的に400を返すことを期征E��E
+        # 不正なJSONデータでのPOSTリクエスト
         response = self.client.post('/roulette', 
                                   data='invalid json',
                                   content_type='application/json')
-        # 実際のレスポンスを確誁E
+        # 実際のレスポンスを確認
         if response.status_code not in [400, 500]:
-            print(f"予期しなぁE��チE�EタスコーチE {response.status_code}")
-            print(f"レスポンス冁E��: {response.data.decode('utf-8')}")
+            print(f"予期しないステータスコード {response.status_code}")
+            print(f"レスポンス内容: {response.data.decode('utf-8')}")
         
-        # 400また�E500のぁE��れかを許可�E�実裁E��よって異なる！E
+        # 400または500のいずれかを許可（実際の動作によって異なる）
         self.assertIn(response.status_code, [400, 500])
         
-        print("✁Eエラーハンドリングが正常に動佁E)
+        print("✓ エラーハンドリングが正常に動作しています")
 
 
 class APILimitTest(ProductionEnvironmentTest):
-    """2. API制限�Eでの動作確誁E""
+    """2. API制限下での動作確認"""
 
     def test_01_cache_functionality(self):
-        """キャチE��ュ機�EチE��チE""
-        print("\n[チE��チE2.1] キャチE��ュ機�E確誁E)
+        """キャッシュ機能テスト"""
+        print("\n[テストケース2.1] キャッシュ機能確認")
         
-        # キャチE��ュサービスのチE��チE
+        # キャッシュサービスのテスト
         test_key = "test_cache_key"
         test_data = {"test": "data", "timestamp": datetime.now().isoformat()}
         
-        # チE�EタをキャチE��ュに保孁E
-        self.cache_service.set_cached_data(test_key, test_data, ttl=600)  # 10刁E
+        # データをキャッシュに保存
+        self.cache_service.set_cached_data(test_key, test_data, ttl=600)  # 10分
         
-        # キャチE��ュからチE�Eタを取征E
+        # キャッシュからデータを取得
         cached_data = self.cache_service.get_cached_data(test_key)
         self.assertIsNotNone(cached_data)
         self.assertEqual(cached_data['test'], 'data')
         
-        print("✁EキャチE��ュ機�Eが正常に動佁E)
+        print("✓ キャッシュ機能が正常に動作しています")
 
     def test_02_cache_expiration(self):
-        """キャチE��ュ有効期限チE��チE""
-        print("\n[チE��チE2.2] キャチE��ュ有効期限確誁E)
+        """キャッシュ有効期限テスト"""
+        print("\n[テストケース2.2] キャッシュ有効期限確認")
         
         test_key = "test_expiration_key"
         test_data = {"test": "expiration_data"}
         
-        # 短ぁE��効期限でキャチE��ュに保存！E秒！E
+        # 短い有効期限でキャッシュに保存（1秒）
         self.cache_service.set_cached_data(test_key, test_data, ttl=1)
         
-        # すぐに取得（有効期限冁E��E
+        # すぐに取得（有効期限内）
         cached_data = self.cache_service.get_cached_data(test_key)
         self.assertIsNotNone(cached_data)
         
-        # 2秒征E��（有効期限刁E���E�E
+        # 2秒待機（有効期限切れ）
         time.sleep(2)
         
-        # 有効期限刁E��後�E取征E
+        # 有効期限切れ後に取得
         expired_data = self.cache_service.get_cached_data(test_key)
         self.assertIsNone(expired_data)
         
-        print("✁EキャチE��ュ有効期限が正常に動佁E)
+        print("✓ キャッシュ有効期限が正常に動作しています")
 
     def test_03_api_rate_limiting_simulation(self):
-        """API制限シミュレーションチE��チE""
-        print("\n[チE��チE2.3] API制限シミュレーション")
+        """API制限シミュレーションテスト"""
+        print("\n[テストケース2.3] API制限シミュレーション")
         
-        # キャチE��ュ効果をチE��ト（同じキーで褁E��回呼び出し！E
+        # キャッシュ効果をテスト（同じキーで複数回呼び出し）
         test_calls = 10
         cache_key = "test_location_192.168.1.1"
         
-        # 最初にキャチE��ュチE�Eタを設宁E
+        # 最初にキャッシュにデータを設定
         test_location_data = {
-            'city': 'チE��ト币E,
-            'region': 'チE��ト県',
+            'city': 'テストシティ',
+            'region': 'テスト県',
             'latitude': 35.6812,
             'longitude': 139.7671,
             'source': 'cache'
@@ -325,47 +325,47 @@ class APILimitTest(ProductionEnvironmentTest):
         
         location_service = LocationService(self.cache_service)
         
-        # API呼び出し回数をカウンチE
+        # API呼び出し回数をカウント
         cached_calls = 0
         api_calls = 0
         
         for i in range(test_calls):
             try:
-                # 同じIPアドレスで褁E��回呼び出し（キャチE��ュ効果を確認！E
+                # 同じIPアドレスで複数回呼び出し（キャッシュ効果を確認）
                 result = location_service.get_location_from_ip("192.168.1.1")
                 
                 if result.get('source') == 'cache':
                     cached_calls += 1
                 elif result.get('source') == 'default':
-                    # チE��ォルト値が返された場合！EPI制限やエラー�E�E
+                    # デフォルト値が返された場合はAPI制限やエラーの可能性
                     api_calls += 1
                 else:
                     api_calls += 1
                     
             except Exception as e:
-                print(f"API呼び出ぁE{i+1} でエラー: {e}")
+                print(f"API呼び出し{ i+1 } でエラー: {e}")
         
-        print(f"✁EキャチE��ュからの取征E {cached_calls}囁E)
-        print(f"✁EAPI/チE��ォルト呼び出ぁE {api_calls}囁E)
-        print(f"✁E総呼び出ぁE {cached_calls + api_calls}囁E)
+        print(f"✓ キャッシュからの取得回数: {cached_calls}回")
+        print(f"✓ API/デフォルト呼び出し回数: {api_calls}回")
+        print(f"✓ 総呼び出し回数: {cached_calls + api_calls}回")
         
-        # キャチE��ュが効果的に動作してぁE��ことを確誁E
-        # 最初�E呼び出し以外�EキャチE��ュから取得されるべぁE
-        self.assertGreaterEqual(cached_calls, test_calls - 2)  # 多少�E誤差を許容
+        # キャッシュが効果的に動作していることを確認
+        # 最初の呼び出し以外はキャッシュから取得されるべき
+        self.assertGreaterEqual(cached_calls, test_calls - 2)  # 多少の誤差を許容
 
     def test_04_concurrent_requests_handling(self):
-        """同時リクエスト�E琁E��スチE""
-        print("\n[チE��チE2.4] 同時リクエスト�E琁E��誁E)
+        """同時リクエスト処理テスト"""
+        print("\n[テストケース2.4] 同時リクエスト処理確認")
         
         def make_request():
-            """チE��ト用リクエスト関数"""
+            """テスト用リクエスト関数"""
             try:
                 response = self.client.get('/')
                 return response.status_code == 200
             except Exception:
                 return False
         
-        # 10個�E同時リクエストを実衁E
+        # 10個の同時リクエストを実行
         threads = []
         results = []
         
@@ -374,23 +374,23 @@ class APILimitTest(ProductionEnvironmentTest):
             threads.append(thread)
             thread.start()
         
-        # すべてのスレチE��の完亁E��征E��E
+        # すべてのスレッドの完了を待機
         for thread in threads:
             thread.join()
         
-        # 成功玁E��確誁E
+        # 成功率を計算
         success_rate = sum(results) / len(results)
-        self.assertGreaterEqual(success_rate, 0.8)  # 80%以上�E成功玁E
+        self.assertGreaterEqual(success_rate, 0.8)  # 80%以上が成功すること
         
-        print(f"✁E同時リクエスト�E功率: {success_rate*100:.1f}%")
+        print(f"✓ 同時リクエスト成功率: {success_rate*100:.1f}%")
 
 
 class PerformanceTest(ProductionEnvironmentTest):
-    """3. パフォーマンスチE��ト実衁E""
+    """3. パフォーマンステスト実行"""
 
     def test_01_response_time_measurement(self):
-        """レスポンス時間測定テスチE""
-        print("\n[チE��チE3.1] レスポンス時間測宁E)
+        """レスポンス時間測定テスト"""
+        print("\n[テストケース3.1] レスポンス時間測定")
         
         response_times = []
         test_iterations = 10
@@ -405,54 +405,54 @@ class PerformanceTest(ProductionEnvironmentTest):
             
             self.assertEqual(response.status_code, 200)
         
-        # 統計情報を計箁E
+        # 統計情報を計算
         avg_response_time = sum(response_times) / len(response_times)
         max_response_time = max(response_times)
         min_response_time = min(response_times)
         
-        print(f"✁E平坁E��スポンス時間: {avg_response_time:.3f}私E)
-        print(f"✁E最大レスポンス時間: {max_response_time:.3f}私E)
-        print(f"✁E最小レスポンス時間: {min_response_time:.3f}私E)
+        print(f"✓ 平均レスポンス時間: {avg_response_time:.3f}秒")
+        print(f"✓ 最大レスポンス時間: {max_response_time:.3f}秒")
+        print(f"✓ 最小レスポンス時間: {min_response_time:.3f}秒")
         
-        # パフォーマンス基準！E秒以冁E��E
+        # パフォーマンス基準（5秒以内）
         self.assertLess(avg_response_time, 5.0)
         self.assertLess(max_response_time, 10.0)
 
     def test_02_memory_usage_monitoring(self):
-        """メモリ使用量監視テスチE""
-        print("\n[チE��チE3.2] メモリ使用量監要E)
+        """メモリ使用量監視テスト"""
+        print("\n[テストケース3.2] メモリ使用量監視")
         
         try:
             import psutil
             process = psutil.Process()
             
-            # 初期メモリ使用釁E
+            # 初期メモリ使用量
             initial_memory = process.memory_info().rss / 1024 / 1024  # MB
             
-            # 褁E��回�Eリクエストを実衁E
+            # 複数回リクエストを実行
             for i in range(50):
                 response = self.client.get('/')
                 self.assertEqual(response.status_code, 200)
             
-            # 最終メモリ使用釁E
+            # 最終メモリ使用量
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
             
-            print(f"✁E初期メモリ使用釁E {initial_memory:.2f}MB")
-            print(f"✁E最終メモリ使用釁E {final_memory:.2f}MB")
-            print(f"✁Eメモリ増加釁E {memory_increase:.2f}MB")
+            print(f"✓ 初期メモリ使用量: {initial_memory:.2f}MB")
+            print(f"✓ 最終メモリ使用量: {final_memory:.2f}MB")
+            print(f"✓ メモリ増加量: {memory_increase:.2f}MB")
             
-            # メモリリークの確認！E00MB以下�E増加�E�E
+            # メモリリークの確認（100MB以下の増加を許可）
             self.assertLess(memory_increase, 100)
             
         except ImportError:
-            print("⚠ psutilが利用できなぁE��め、メモリ監視をスキチE�E")
+            print("⚠ psutilが利用できないため、メモリ監視をスキップします")
 
     def test_03_database_performance(self):
-        """チE�Eタベ�EスパフォーマンスチE��チE""
-        print("\n[チE��チE3.3] チE�Eタベ�Eスパフォーマンス")
+        """データベースパフォーマンステスト"""
+        print("\n[テストケース3.3] データベースパフォーマンス")
         
-        # 大量�EキャチE��ュチE�Eタを作�E
+        # 大量のキャッシュデータを作成
         cache_operations = 100
         operation_times = []
         
@@ -466,7 +466,7 @@ class PerformanceTest(ProductionEnvironmentTest):
             
             operation_times.append(end_time - start_time)
         
-        # 読み取りパフォーマンスチE��チE
+        # 読み取りパフォーマンステスト
         read_times = []
         for i in range(cache_operations):
             test_key = f"perf_test_key_{i}"
@@ -481,22 +481,22 @@ class PerformanceTest(ProductionEnvironmentTest):
         avg_write_time = sum(operation_times) / len(operation_times)
         avg_read_time = sum(read_times) / len(read_times)
         
-        print(f"✁E平坁E��き込み時間: {avg_write_time:.4f}私E)
-        print(f"✁E平坁E��み取り時間: {avg_read_time:.4f}私E)
+        print(f"✓ 平均書き込み時間: {avg_write_time:.4f}秒")
+        print(f"✓ 平均読み取り時間: {avg_read_time:.4f}秒")
         
-        # パフォーマンス基準（各操佁E.1秒以冁E��E
+        # パフォーマンス基準（各操作0.1秒以内）
         self.assertLess(avg_write_time, 0.1)
         self.assertLess(avg_read_time, 0.1)
 
     def test_04_load_testing_simulation(self):
-        """負荷チE��トシミュレーション"""
-        print("\n[チE��チE3.4] 負荷チE��トシミュレーション")
+        """負荷テストシミュレーション"""
+        print("\n[テストケース3.4] 負荷テストシミュレーション")
         
         def worker_thread(thread_id, results):
-            """ワーカースレチE��関数"""
+            """ワーカースレッド関数"""
             thread_results = []
             
-            for i in range(5):  # 吁E��レチE��で5回�EリクエスチE
+            for i in range(5):  # 各スレッドで5回リクエスト
                 try:
                     start_time = time.time()
                     response = self.client.get('/')
@@ -519,7 +519,7 @@ class PerformanceTest(ProductionEnvironmentTest):
             
             results.extend(thread_results)
         
-        # 10個�EワーカースレチE��で負荷チE��チE
+        # 10個のワーカースレッドで負荷テスト
         threads = []
         results = []
         
@@ -530,14 +530,14 @@ class PerformanceTest(ProductionEnvironmentTest):
             threads.append(thread)
             thread.start()
         
-        # すべてのスレチE��の完亁E��征E��E
+        # すべてのスレッドの完了を待機
         for thread in threads:
             thread.join()
         
         end_time = time.time()
         total_time = end_time - start_time
         
-        # 結果の刁E��
+        # 結果の集計
         successful_requests = sum(1 for r in results if r.get('success', False))
         total_requests = len(results)
         success_rate = successful_requests / total_requests if total_requests > 0 else 0
@@ -545,68 +545,68 @@ class PerformanceTest(ProductionEnvironmentTest):
         response_times = [r['response_time'] for r in results if 'response_time' in r]
         avg_response_time = sum(response_times) / len(response_times) if response_times else 0
         
-        print(f"✁E総リクエスト数: {total_requests}")
-        print(f"✁E成功リクエスト数: {successful_requests}")
-        print(f"✁E成功玁E {success_rate*100:.1f}%")
-        print(f"✁E平坁E��スポンス時間: {avg_response_time:.3f}私E)
-        print(f"✁E総実行時閁E {total_time:.3f}私E)
-        print(f"✁EスループッチE {total_requests/total_time:.2f} req/sec")
+        print(f"✓ 総リクエスト数: {total_requests}")
+        print(f"✓ 成功リクエスト数: {successful_requests}")
+        print(f"✓ 成功率: {success_rate*100:.1f}%")
+        print(f"✓ 平均レスポンス時間: {avg_response_time:.3f}秒")
+        print(f"✓ 総実行時間: {total_time:.3f}秒")
+        print(f"✓ スループット: {total_requests/total_time:.2f} req/sec")
         
-        # パフォーマンス基溁E
-        self.assertGreaterEqual(success_rate, 0.9)  # 90%以上�E成功玁E
-        self.assertLess(avg_response_time, 5.0)     # 平坁E秒以冁E
+        # パフォーマンス基準
+        self.assertGreaterEqual(success_rate, 0.9)  # 90%以上が成功すること
+        self.assertLess(avg_response_time, 5.0)     # 平均5秒以内
 
 
 def run_production_tests():
-    """本番環墁E��スト�E実衁E""
-    print("Lunch Roulette - 本番環墁E��スト実衁E)
+    """本番環境テスト実行"""
+    print("Lunch Roulette - 本番環境テスト実行")
     print("Production Environment Testing")
     print("="*60)
     
-    # チE��トスイートを作�E
+    # テストスイートを作成
     loader = unittest.TestLoader()
     test_suite = unittest.TestSuite()
     
-    # 1. ローカル環墁E��の最終動作確誁E
+    # 1. ローカル環境での最終動作確認
     test_suite.addTests(loader.loadTestsFromTestCase(LocalEnvironmentTest))
     
-    # 2. API制限�Eでの動作確誁E
+    # 2. API制限下での動作確認
     test_suite.addTests(loader.loadTestsFromTestCase(APILimitTest))
     
-    # 3. パフォーマンスチE��ト実衁E
+    # 3. パフォーマンステスト実行
     test_suite.addTests(loader.loadTestsFromTestCase(PerformanceTest))
     
-    # チE��トランナ�Eを作�Eして実衁E
+    # テストランナーを作成して実行
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(test_suite)
     
     # 結果サマリーを表示
     print("\n" + "="*60)
-    print("チE��ト結果サマリー - Test Results Summary")
+    print("テスト結果サマリー")
     print("="*60)
     print(f"実行テスト数: {result.testsRun}")
     print(f"成功: {result.testsRun - len(result.failures) - len(result.errors)}")
-    print(f"失敁E {len(result.failures)}")
+    print(f"失敗: {len(result.failures)}")
     print(f"エラー: {len(result.errors)}")
     
     if result.failures:
-        print("\n失敗したテスチE")
+        print("\n失敗したテストケース")
         for test, traceback in result.failures:
             print(f"- {test}: {traceback}")
     
     if result.errors:
-        print("\nエラーが発生したテスチE")
+        print("\nエラーが発生したテストケース")
         for test, traceback in result.errors:
             print(f"- {test}: {traceback}")
     
-    # 全体的な成功判宁E
+    # 全体的な成功判定
     if result.wasSuccessful():
-        print("\n🎉 すべてのチE��トが成功しました�E�E)
-        print("✁E本番環墁E��の準備が完亁E��てぁE��ぁE)
+        print("\n🎉 すべてのテストが成功しました")
+        print("✓ 本番環境の準備が完了しました")
         return True
     else:
-        print("\n❁E一部のチE��トが失敗しました")
-        print("⚠ 本番環墁E��プロイ前に問題を修正してください")
+        print("\n❁ 一部のテストが失敗しました")
+        print("⚠ 本番環境にプロイ前に問題を修正してください")
         return False
 
 

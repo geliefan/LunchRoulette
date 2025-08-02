@@ -3,13 +3,13 @@
 
 """
 WeatherService - 天気情報サービスクラス
-OpenWeatherMap APIから天気情報を取得する機�Eを提侁E
+OpenWeatherMap APIから天気情報を取得する機能を提供
 
-こ�Eクラスは以下�E機�Eを提供しまぁE
-- OpenWeatherMap One Call 3.0 API統吁E
-- 天気データの取得と整形機�E
-- キャチE��ュ機�Eとの統吁E
-- エラーハンドリングとフォールバック機�E
+このクラスは以下の機能を提供します:
+- OpenWeatherMap One Call 3.0 API統合
+- 天気データの取得と整形機能
+- キャッシュ機能との統合
+- エラーハンドリングとフォールバック機能
 """
 
 import requests
@@ -23,15 +23,15 @@ class WeatherService:
     """
     OpenWeatherMap APIから天気情報を取得するサービス
 
-    One Call 3.0 APIを使用して現在の天気、気温、UV持E��などを取得し、E
-    エラー時にはチE��ォルト天気情報を提供する、E
+    One Call 3.0 APIを使用して現在の天気、気温、UV指数などを取得し、
+    エラー時にはデフォルト天気情報を提供する。
     """
 
-    # チE��ォルト天気情報
+    # デフォルト天気情報
     DEFAULT_WEATHER = {
         'temperature': 20.0,
         'condition': 'clear',
-        'description': '晴めE,
+        'description': '晴れ',
         'uv_index': 3.0,
         'humidity': 60,
         'pressure': 1013,
@@ -41,10 +41,10 @@ class WeatherService:
         'icon': '01d'
     }
 
-    # 天気状況�E日本語�EチE��ング
+    # 天気状況の日本語マッピング
     CONDITION_MAPPING = {
-        'clear': '晴めE,
-        'clouds': '曁E��',
+        'clear': '晴れ',
+        'clouds': '曇り',
         'rain': '雨',
         'drizzle': '小雨',
         'thunderstorm': '雷雨',
@@ -53,95 +53,95 @@ class WeatherService:
         'fog': '霧',
         'haze': 'もや',
         'dust': '砂塵',
-        'sand': '砂嵁E,
+        'sand': '砂嵐',
         'ash': '火山灰',
-        'squall': '突E��',
+        'squall': '突風',
         'tornado': '竜巻'
     }
 
     def __init__(self, api_key: Optional[str] = None, cache_service: Optional[CacheService] = None):
         """
-        WeatherServiceを�E期化
+        WeatherServiceを初期化
 
         Args:
             api_key (str, optional): OpenWeatherMap APIキー
-            cache_service (CacheService, optional): キャチE��ュサービス
+            cache_service (CacheService, optional): キャッシュサービス
         """
         self.api_key = api_key or os.getenv('OPENWEATHER_API_KEY')
         self.cache_service = cache_service or CacheService()
         self.api_base_url = "https://api.openweathermap.org/data/3.0/onecall"
-        self.timeout = 10  # APIリクエスト�Eタイムアウト（秒！E
+        self.timeout = 10  # APIリクエストのタイムアウト（秒）
 
         if not self.api_key:
-            print("警呁E OpenWeatherMap APIキーが設定されてぁE��せん。デフォルト天気情報を使用します、E)
+            print("警告: OpenWeatherMap APIキーが設定されていません。デフォルト天気情報を使用します。")
 
     def get_current_weather(self, lat: float, lon: float) -> Dict[str, any]:
         """
-        持E��された座標�E現在の天気情報を取征E
+        指定された座標の現在の天気情報を取得
 
         Args:
             lat (float): 緯度
             lon (float): 経度
 
         Returns:
-            dict: 天気情報�E�気温、天気状況、UV持E��など�E�E
+            dict: 天気情報（気温、天気状況、UV指数など）
 
         Example:
             >>> weather_service = WeatherService()
             >>> weather = weather_service.get_current_weather(35.6812, 139.7671)
             >>> print(f"Temperature: {weather['temperature']}°C")
         """
-        # キャチE��ュキーを生戁E
+        # キャッシュキーを生成
         cache_key = self.cache_service.generate_cache_key(
             'weather',
-            lat=round(lat, 4),  # 精度を制限してキャチE��ュ効玁E��向丁E
+            lat=round(lat, 4),  # 精度を制限してキャッシュ効率向上
             lon=round(lon, 4)
         )
 
-        # キャチE��ュから取得を試衁E
+        # キャッシュから取得を試行
         cached_data = self.cache_service.get_cached_data(cache_key)
         if cached_data:
-            print(f"天気情報をキャチE��ュから取征E {cached_data['description']}")
+            print(f"天気情報をキャッシュから取得: {cached_data['description']}")
             return cached_data
 
-        # APIキーが設定されてぁE��ぁE��合�EチE��ォルト天気情報を返す
+        # APIキーが設定されていない場合、デフォルト天気情報を返す
         if not self.api_key:
             return self._get_default_weather()
 
         try:
-            # APIパラメータを構篁E
+            # APIパラメータを構築
             params = {
                 'lat': lat,
                 'lon': lon,
                 'appid': self.api_key,
                 'units': 'metric',  # 摂氏温度
-                'lang': 'ja',       # 日本誁E
-                'exclude': 'minutely,hourly,daily,alerts'  # 現在の天気�Eみ
+                'lang': 'ja',       # 日本語
+                'exclude': 'minutely,hourly,daily,alerts'  # 現在の天気のみ
             }
 
-            print(f"天気情報API呼び出ぁE lat={lat}, lon={lon}")
+            print(f"天気情報API呼び出し: lat={lat}, lon={lon}")
 
-            # APIリクエストを実衁E
+            # APIリクエストを実行
             response = requests.get(self.api_base_url, params=params, timeout=self.timeout)
             response.raise_for_status()
 
-            # レスポンスを解极E
+            # レスポンスを解析
             data = response.json()
 
             # 天気情報を整形
             weather_data = self._format_weather_data(data)
 
-            # キャチE��ュに保存！E0刁E���E�E
+            # キャッシュに保存（10分間）
             self.cache_service.set_cached_data(cache_key, weather_data, ttl=600)
 
-            print(f"天気情報取得�E劁E {weather_data['description']}, {weather_data['temperature']}°C")
+            print(f"天気情報取得成功: {weather_data['description']}, {weather_data['temperature']}°C")
             return weather_data
 
         except requests.exceptions.HTTPError as e:
-            # HTTPエラー�E�レート制限、認証エラーなど�E�E
+            # HTTPエラー（レート制限、認証エラーなど）
             if e.response.status_code == 429:
                 print(f"天気情報API レート制限エラー: {e}")
-                # レート制限時は古ぁE��ャチE��ュチE�Eタを使用を試衁E
+                # レート制限時は古いキャッシュデータを使用を試行
                 fallback_data = self._get_fallback_cache_data(cache_key)
                 if fallback_data:
                     return fallback_data
@@ -153,18 +153,18 @@ class WeatherService:
 
         except requests.exceptions.RequestException as e:
             print(f"天気情報API リクエストエラー: {e}")
-            # ネットワークエラー時�E古ぁE��ャチE��ュチE�Eタを使用を試衁E
+            # ネットワークエラー時は古いキャッシュデータを使用を試行
             fallback_data = self._get_fallback_cache_data(cache_key)
             if fallback_data:
                 return fallback_data
             return self._get_default_weather()
 
         except (ValueError, KeyError) as e:
-            print(f"天気情報チE�Eタ解析エラー: {e}")
+            print(f"天気情報データ解析エラー: {e}")
             return self._get_default_weather()
 
         except Exception as e:
-            print(f"天気情報取得で予期しなぁE��ラー: {e}")
+            print(f"天気情報取得で予期しないエラー: {e}")
             return self._get_default_weather()
 
     def _format_weather_data(self, api_data: Dict) -> Dict[str, any]:
@@ -178,15 +178,15 @@ class WeatherService:
             dict: 整形された天気情報
 
         Raises:
-            KeyError: 忁E��なフィールドが不足してぁE��場吁E
+            KeyError: 必要なフィールドが不足している場合に発生
         """
         try:
             current = api_data['current']
             weather = current['weather'][0]
 
-            # 基本皁E��天気情報
+            # 基本的な天気情報
             condition = weather['main'].lower()
-            description = weather.get('description', self.CONDITION_MAPPING.get(condition, '不�E'))
+            description = weather.get('description', self.CONDITION_MAPPING.get(condition, '不明'))
 
             return {
                 'temperature': round(current['temp'], 1),
@@ -208,17 +208,17 @@ class WeatherService:
             }
 
         except (KeyError, ValueError, TypeError, IndexError) as e:
-            raise KeyError(f"天気情報チE�Eタの忁E��フィールドが不足: {e}")
+            raise KeyError(f"天気情報データの不足フィールド: {e}")
 
     def _get_fallback_cache_data(self, cache_key: str) -> Optional[Dict[str, any]]:
         """
-        期限刁E��でも利用可能なキャチE��ュチE�Eタを取得（フォールバック用�E�E
+        期限切れでも利用可能なキャッシュデータを取得（フォールバック用）
 
         Args:
-            cache_key (str): キャチE��ュキー
+            cache_key (str): キャッシュキー
 
         Returns:
-            dict: キャチE��ュされた天気情報、存在しなぁE��合�ENone
+            dict: キャッシュされた天気情報、存在しない場合はNone
         """
         try:
             from database import get_db_connection
@@ -236,23 +236,23 @@ class WeatherService:
                 if row is None:
                     return None
 
-                # 期限刁E��でもデータを返す�E�フォールバック用�E�E
+                # 期限切れでもデータを返す（フォールバック用）
                 fallback_data = self.cache_service.deserialize_data(row['data'])
                 fallback_data['source'] = 'fallback_cache'
 
-                print("フォールバック用キャチE��ュチE�Eタを使用�E�期限�Eれ！E)
+                print("フォールバック用キャッシュデータを使用（期限切れ）")
                 return fallback_data
 
         except Exception as e:
-            print(f"フォールバックキャチE��ュ取得エラー: {e}")
+            print(f"フォールバックキャッシュ取得エラー: {e}")
             return None
 
     def _get_default_weather(self) -> Dict[str, any]:
         """
-        チE��ォルト天気情報を返す
+        デフォルト天気情報を返す
 
         Returns:
-            dict: チE��ォルト天気情報
+            dict: デフォルト天気情報
         """
         default_weather = self.DEFAULT_WEATHER.copy()
         default_weather.update({
@@ -264,47 +264,47 @@ class WeatherService:
             'source': 'default'
         })
 
-        print("チE��ォルト天気情報を使用")
+        print("デフォルト天気情報を使用")
         return default_weather
 
     def get_weather_summary(self, lat: float, lon: float) -> str:
         """
-        天気情報の要紁E��字�Eを取征E
+        天気情報の要約を取得
 
         Args:
             lat (float): 緯度
             lon (float): 経度
 
         Returns:
-            str: 天気要紁E��侁E "晴めE25°C UV持E��3"�E�E
+            str: 天気要約 "晴れ25°C UV指数3" など
         """
         weather = self.get_current_weather(lat, lon)
-        return f"{weather['description']} {weather['temperature']}°C UV持E��{weather['uv_index']}"
+        return f"{weather['description']} {weather['temperature']}°C UV指数{weather['uv_index']}"
 
     def is_good_weather_for_walking(self, lat: float, lon: float) -> bool:
         """
-        徒歩に適した天気かどぁE��を判宁E
+        徒歩に適した天気かどうかを判定
 
         Args:
             lat (float): 緯度
             lon (float): 経度
 
         Returns:
-            bool: 徒歩に適してぁE��場吁Erue
+            bool: 徒歩に適している場合はTrue
         """
         weather = self.get_current_weather(lat, lon)
 
-        # 雨めE��の場合�E徒歩に不適
+        # 雨や雪の場合は徒歩に不適
         bad_conditions = ['rain', 'drizzle', 'thunderstorm', 'snow']
         if weather['condition'] in bad_conditions:
             return False
 
-        # 極端な気温の場合�E徒歩に不適
+        # 極端な気温の場合は徒歩に不適
         temp = weather['temperature']
         if temp < 0 or temp > 35:
             return False
 
-        # 強風の場合�E徒歩に不適
+        # 強風の場合は徒歩に不適
         if weather['wind_speed'] > 10:
             return False
 
@@ -312,10 +312,10 @@ class WeatherService:
 
     def get_weather_icon_url(self, icon_code: str) -> str:
         """
-        天気アイコンのURLを取征E
+        天気アイコンのURLを取得
 
         Args:
-            icon_code (str): アイコンコーチE
+            icon_code (str): アイコンコード
 
         Returns:
             str: アイコンURL
@@ -324,39 +324,39 @@ class WeatherService:
 
     def is_default_weather(self, weather_data: Dict) -> bool:
         """
-        天気情報がデフォルト天気かどぁE��を判宁E
+        天気情報がデフォルト天気かどうかを判定
 
         Args:
             weather_data (dict): 天気情報
 
         Returns:
-            bool: チE��ォルト天気�E場吁Erue
+            bool: デフォルト天気の場合はTrue
         """
         return weather_data.get('source') == 'default'
 
     def validate_weather_data(self, weather_data: Dict) -> bool:
         """
-        天気情報チE�Eタの妥当性を検証
+        天気情報データの妥当性を検証
 
         Args:
             weather_data (dict): 天気情報
 
         Returns:
-            bool: 妥当な場吁Erue
+            bool: 妥当な場合はTrue
         """
         try:
-            # 忁E��フィールド�E存在確誁E
+            # 必要なフィールドの存在確認
             required_fields = ['temperature', 'condition', 'description', 'uv_index']
             for field in required_fields:
                 if field not in weather_data:
                     return False
 
-            # 気温の篁E��確認！E50°C、E0°C�E�E
+            # 気温の範囲確認（-50°C、60°Cまで許容）
             temp = float(weather_data['temperature'])
             if not (-50 <= temp <= 60):
                 return False
 
-            # UV持E��の篁E��確認！E、E5�E�E
+            # UV指数の範囲確認（0、15まで許容）
             uv = float(weather_data['uv_index'])
             if not (0 <= uv <= 15):
                 return False
@@ -367,44 +367,44 @@ class WeatherService:
             return False
 
 
-# 使用例とチE��ト用コーチE
+# 使用例とテスト用コード
 if __name__ == '__main__':
     """
-    WeatherServiceのチE��ト実衁E
+    WeatherServiceのテスト実行
     """
-    print("WeatherService チE��ト実衁E)
+    print("WeatherService テスト実行")
     print("=" * 40)
 
-    # WeatherServiceインスタンス作�E
+    # WeatherServiceインスタンス作成
     weather_service = WeatherService()
 
-    # 東京駁E�E座樁E
+    # 東京の緯度経度
     tokyo_lat, tokyo_lon = 35.6812, 139.7671
 
-    # 天気情報取得テスチE
-    print("1. 現在の天気情報取征E")
+    # 天気情報取得テスト
+    print("1. 現在の天気情報取得")
     weather = weather_service.get_current_weather(tokyo_lat, tokyo_lon)
-    print(f"   天氁E {weather['description']}")
+    print(f"   天気: {weather['description']}")
     print(f"   気温: {weather['temperature']}°C (体感: {weather['feels_like']}°C)")
-    print(f"   UV持E��: {weather['uv_index']}")
+    print(f"   UV指数: {weather['uv_index']}")
     print(f"   湿度: {weather['humidity']}%")
     print(f"   ソース: {weather['source']}")
 
-    # 天気要紁E��スチE
-    print("\n2. 天気要紁E")
+    # 天気要約取得テスト
+    print("\n2. 天気要約")
     summary = weather_service.get_weather_summary(tokyo_lat, tokyo_lon)
-    print(f"   要紁E {summary}")
+    print(f"   要約: {summary}")
 
-    # 徒歩適性判定テスチE
-    print(f"\n3. 徒歩適性判宁E {weather_service.is_good_weather_for_walking(tokyo_lat, tokyo_lon)}")
+    # 徒歩適性判定テスト
+    print(f"\n3. 徒歩適性判定: {weather_service.is_good_weather_for_walking(tokyo_lat, tokyo_lon)}")
 
-    # チE��ォルト天気判定テスチE
-    print(f"4. チE��ォルト天気判宁E {weather_service.is_default_weather(weather)}")
+    # デフォルト天気判定テスト
+    print(f"4. デフォルト天気判定: {weather_service.is_default_weather(weather)}")
 
-    # チE�Eタ妥当性検証チE��チE
-    print(f"5. チE�Eタ妥当性検証: {weather_service.validate_weather_data(weather)}")
+    # データ妥当性検証テスト
+    print(f"5. データ妥当性検証: {weather_service.validate_weather_data(weather)}")
 
-    # アイコンURL取得テスチE
+    # アイコンURL取得テスト
     print(f"\n6. 天気アイコンURL: {weather_service.get_weather_icon_url(weather['icon'])}")
 
-    print("\nチE��ト完亁E)
+    print("\nテスト完了")

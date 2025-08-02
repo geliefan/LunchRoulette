@@ -1,19 +1,19 @@
 /**
  * Lunch Roulette - メインJavaScript
- * ルーレチE��機�Eとレストラン表示のフロントエンド�E琁E
+ * ルーレット機能とレストラン表示のフロントエンド処理
  */
 
-// DOM要素の取征E
+// DOM要素の取得
 const rouletteBtn = document.getElementById('roulette-btn');
 const retryBtn = document.getElementById('retry-btn');
 const errorMessage = document.getElementById('error-message');
 const restaurantSection = document.getElementById('restaurant-section');
 
-// ボタン冁E�E要素
+// ボタン内の要素
 const btnText = rouletteBtn.querySelector('.btn-text');
 const btnLoading = rouletteBtn.querySelector('.btn-loading');
 
-// レストランカード�Eの要素
+// レストランカード内の要素
 const restaurantName = document.getElementById('restaurant-name');
 const restaurantGenre = document.getElementById('restaurant-genre');
 const restaurantImage = document.getElementById('restaurant-image');
@@ -27,8 +27,8 @@ const mapLink = document.getElementById('map-link');
 const hotpepperLink = document.getElementById('hotpepper-link');
 
 /**
- * ローチE��ング状態�E表示/非表示を�Eり替ぁE
- * @param {boolean} isLoading - ローチE��ング状態かどぁE��
+ * ローディング状態の表示/非表示を切り替える
+ * @param {boolean} isLoading - ローディング状態かどうか
  */
 function toggleLoading(isLoading) {
     if (isLoading) {
@@ -45,8 +45,8 @@ function toggleLoading(isLoading) {
 }
 
 /**
- * エラーメチE��ージの表示
- * @param {string} message - エラーメチE��ージ
+ * エラーメッセージの表示
+ * @param {string} message - エラーメッセージ
  */
 function showError(message) {
     const errorText = errorMessage.querySelector('.error-text');
@@ -60,44 +60,44 @@ function showError(message) {
 }
 
 /**
- * エラーメチE��ージの非表示
+ * エラーメッセージの非表示
  */
 function hideError() {
     errorMessage.style.display = 'none';
 }
 
 /**
- * レストランカード�E表示
- * @param {Object} data - レストランチE�Eタ
+ * レストランカードの表示
+ * @param {Object} data - レストランデータ
  */
 function displayRestaurant(data) {
     const { restaurant, distance, weather } = data;
     
-    // レストラン基本惁E��
+    // レストラン基本情報
     restaurantName.textContent = restaurant.name;
     restaurantGenre.textContent = restaurant.genre;
     restaurantAddress.textContent = restaurant.address;
     restaurantBudget.textContent = restaurant.budget_display;
     walkingTime.textContent = distance.time_display;
-    restaurantHours.textContent = restaurant.hours || '営業時間惁E��なぁE;
+    restaurantHours.textContent = restaurant.hours || '営業時間情報なし';
     restaurantCatch.textContent = restaurant.catch || restaurant.summary || '';
     
     // 距離バッジ
     distanceBadge.textContent = distance.distance_display;
     
-    // レストラン画僁E
+    // レストラン画像
     if (restaurant.photo_url && restaurant.photo_url !== 'no-image') {
         restaurantImage.src = restaurant.photo_url;
         restaurantImage.alt = `${restaurant.name}の写真`;
         restaurantImage.style.display = 'block';
     } else {
-        // チE��ォルト画像また�Eプレースホルダー
-        restaurantImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuODrOOCueODiOODqeODs+eUu+WDjzwvdGV4dD48L3N2Zz4=';
-        restaurantImage.alt = 'レストラン画像なぁE;
+        // デフォルト画像
+        restaurantImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXpl';
+        restaurantImage.alt = 'レストラン画像なし';
         restaurantImage.style.display = 'block';
     }
     
-    // リンク設宁E
+    // リンク設定
     mapLink.href = restaurant.map_url;
     hotpepperLink.href = restaurant.hotpepper_url;
     
@@ -110,7 +110,7 @@ function displayRestaurant(data) {
         block: 'start'
     });
     
-    console.log('レストラン表示完亁E', restaurant.name);
+    console.log('レストラン表示完了', restaurant.name);
 }
 
 /**
@@ -121,18 +121,18 @@ function hideRestaurant() {
 }
 
 /**
- * ルーレチE��実行！EJAX通信�E�E
+ * ルーレット実行
  */
 async function executeRoulette() {
     try {
-        // ローチE��ング開姁E
+        // ローディング開始
         toggleLoading(true);
         hideError();
         hideRestaurant();
         
-        console.log('ルーレチE��開姁E..');
+        console.log('ルーレット開始..');
         
-        // APIリクエスチE
+        // APIリクエスト
         const response = await fetch('/roulette', {
             method: 'POST',
             headers: {
@@ -141,39 +141,39 @@ async function executeRoulette() {
             body: JSON.stringify({})
         });
         
-        // レスポンス処琁E
+        // レスポンス処理
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
         
-        // エラーレスポンスの処琁E
+        // エラーレスポンスの処理
         if (data.error || !data.success) {
             const errorMsg = data.message || 'レストラン検索中にエラーが発生しました';
             throw new Error(errorMsg);
         }
         
-        // 成功時�E処琁E
+        // 成功時の処理
         if (data.success && data.restaurant) {
-            console.log('ルーレチE��成功:', data);
+            console.log('ルーレット成功:', data);
             displayRestaurant(data);
         } else {
-            throw new Error(data.message || 'レストランチE�Eタが正しくありません');
+            throw new Error(data.message || 'レストランデータが正しくありません');
         }
         
     } catch (error) {
-        console.error('ルーレチE��エラー:', error);
+        console.error('ルーレットエラー:', error);
         
-        // エラーメチE��ージの表示
+        // エラーメッセージの表示
         let errorMessage = 'レストラン検索中にエラーが発生しました';
         
         if (error.message.includes('Failed to fetch')) {
-            errorMessage = 'ネットワークエラーが発生しました。インターネット接続を確認してください、E;
+            errorMessage = 'ネットワークエラーが発生しました。インターネット接続を確認してください。';
         } else if (error.message.includes('HTTP 500')) {
-            errorMessage = 'サーバ�Eエラーが発生しました。しばらく時間を置ぁE��再度お試しください、E;
+            errorMessage = 'サーバーエラーが発生しました。しばらく時間を置いて再度お試しください。';
         } else if (error.message.includes('HTTP 429')) {
-            errorMessage = 'アクセスが集中してぁE��す。しばらく時間を置ぁE��再度お試しください、E;
+            errorMessage = 'アクセスが集中しています。しばらく時間を置いて再度お試しください。';
         } else if (error.message) {
             errorMessage = error.message;
         }
@@ -181,39 +181,39 @@ async function executeRoulette() {
         showError(errorMessage);
         
     } finally {
-        // ローチE��ング終亁E
+        // ローディング終了
         toggleLoading(false);
     }
 }
 
 /**
- * ペ�Eジ読み込み完亁E��の初期匁E
+ * ページ読み込み完了後の初期化
  */
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Lunch Roulette JavaScript 初期化完亁E);
+    console.log('Lunch Roulette JavaScript 初期化完了');
     
-    // ルーレチE��ボタンのクリチE��イベンチE
+    // ルーレットボタンのクリックイベント
     rouletteBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        console.log('ルーレチE��ボタンクリチE��');
+        console.log('ルーレットボタンクリック');
         executeRoulette();
     });
     
-    // 再ルーレチE��ボタンのクリチE��イベンチE
+    // 再ルーレットボタンのクリックイベント
     if (retryBtn) {
         retryBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('再ルーレチE��ボタンクリチE��');
+            console.log('再ルーレットボタンクリック');
             executeRoulette();
         });
     }
     
-    // エラーメチE��ージのクリチE��で非表示
+    // エラーメッセージのクリックで非表示
     errorMessage.addEventListener('click', function() {
         hideError();
     });
     
-    // キーボ�EドショートカチE���E�EnterキーでルーレチE��実行！E
+    // キーボードショートカット
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !rouletteBtn.disabled) {
             e.preventDefault();
@@ -221,32 +221,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    console.log('イベントリスナ�E設定完亁E);
+    console.log('イベントリスナー設定完了');
 });
 
 /**
- * ペ�Eジ離脱時�E処琁E
+ * ページ離脱時の処理
  */
 window.addEventListener('beforeunload', function() {
-    // 進行中のリクエストがある場合�E警告（オプション�E�E
+    // ルーレット中は警告を表示
     if (rouletteBtn.disabled) {
-        return 'レストラン検索中です。�Eージを離れますか�E�E;
+        return 'レストラン検索中です。ページを離れますか？';
     }
 });
 
 /**
- * エラーハンドリング - 未処琁E�EエラーをキャチE��
+ * エラーハンドリング
  */
 window.addEventListener('error', function(e) {
+    // JavaScriptエラーのキャッチ
     console.error('JavaScript エラー:', e.error);
-    showError('予期しなぁE��ラーが発生しました。�Eージを�E読み込みしてください、E);
+    showError('予期しないエラーが発生しました。ページを再読み込みしてください。');
 });
 
-/**
- * Promise の未処琁E��ラーをキャチE��
- */
 window.addEventListener('unhandledrejection', function(e) {
-    console.error('未処琁E�EPromiseエラー:', e.reason);
-    showError('通信エラーが発生しました。しばらく時間を置ぁE��再度お試しください、E);
+    console.error('未処理のPromiseエラー:', e.reason);
+    showError('通信エラーが発生しました。しばらく時間を置いて再度お試しください。');
     e.preventDefault();
 });
