@@ -14,6 +14,7 @@ RestaurantSelector - レストラン選択ロジッククラス
 import random
 from typing import Dict, List, Optional, Tuple
 from distance_calculator import DistanceCalculator
+from error_handler import ErrorHandler
 
 
 class RestaurantSelector:
@@ -24,14 +25,17 @@ class RestaurantSelector:
     ユーザーに提供する最終的なレストラン情報を生成する。
     """
     
-    def __init__(self, distance_calculator: Optional[DistanceCalculator] = None):
+    def __init__(self, distance_calculator: Optional[DistanceCalculator] = None, 
+                 error_handler: Optional[ErrorHandler] = None):
         """
         RestaurantSelectorを初期化
         
         Args:
             distance_calculator (DistanceCalculator, optional): 距離計算サービス
+            error_handler (ErrorHandler, optional): エラーハンドラー
         """
-        self.distance_calculator = distance_calculator or DistanceCalculator()
+        self.error_handler = error_handler or ErrorHandler()
+        self.distance_calculator = distance_calculator or DistanceCalculator(self.error_handler)
         self.random = random.Random()  # テスト可能性のためのRandomインスタンス
     
     def select_random_restaurant(self, restaurants: List[Dict], user_lat: float, user_lon: float) -> Optional[Dict]:
@@ -56,14 +60,18 @@ class RestaurantSelector:
         try:
             # レストランリストが空の場合
             if not restaurants:
-                print("選択可能なレストランがありません")
+                no_restaurant_error = ValueError("選択可能なレストランがありません")
+                error_info = self.error_handler.handle_restaurant_error(no_restaurant_error, fallback_available=False)
+                print(f"レストラン選択エラー: {error_info['message']}")
                 return None
             
             # 有効なレストランのみをフィルタリング
             valid_restaurants = self._filter_valid_restaurants(restaurants)
             
             if not valid_restaurants:
-                print("有効なレストランデータがありません")
+                invalid_data_error = ValueError("有効なレストランデータがありません")
+                error_info = self.error_handler.handle_restaurant_error(invalid_data_error, fallback_available=False)
+                print(f"レストラン選択エラー: {error_info['message']}")
                 return None
             
             # ランダムに1つのレストランを選択
@@ -79,7 +87,8 @@ class RestaurantSelector:
             return restaurant_with_distance
             
         except Exception as e:
-            print(f"レストラン選択エラー: {e}")
+            error_info = self.error_handler.handle_restaurant_error(e, fallback_available=False)
+            print(f"レストラン選択エラー: {error_info['message']}")
             return None
     
     def select_multiple_restaurants(self, restaurants: List[Dict], user_lat: float, user_lon: float, count: int = 3) -> List[Dict]:
@@ -221,8 +230,22 @@ class RestaurantSelector:
             return restaurant_with_distance
             
         except Exception as e:
-            print(f"距離情報統合エラー (レストラン: {restaurant.get('name', 'unknown')}): {e}")
-            return None
+            error_info = self.error_handler.handle_distance_calculation_error(e)
+            print(f"距離情報統合エラー (レストラン: {restaurant.get('name', 'unknown')}): {error_info['message']}")
+            
+            # エラー時でもレストラン情報は返すが、距離情報はデフォルト値を使用
+            restaurant_with_distance = restaurant.copy()
+            restaurant_with_distance['distance_info'] = {
+                'distance_km': 0.5,
+                'distance_m': 500,
+                'walking_time_minutes': 8,
+                'distance_display': "約500m",
+                'time_display': "徒歩約8分",
+                'error_info': error_info
+            }
+            restaurant_with_distance['display_info'] = self._generate_display_info(restaurant_with_distance)
+            
+            return restaurant_with_distance
     
     def _generate_display_info(self, restaurant: Dict) -> Dict:
         """

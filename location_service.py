@@ -101,8 +101,24 @@ class LocationService:
             print(f"位置情報取得成功: {location_data['city']}, {location_data['region']}")
             return location_data
             
+        except requests.exceptions.HTTPError as e:
+            # HTTPエラー（レート制限、認証エラーなど）
+            if e.response.status_code == 429:
+                print(f"位置情報API レート制限エラー: {e}")
+                # レート制限時は古いキャッシュデータを使用を試行
+                fallback_data = self._get_fallback_cache_data(cache_key)
+                if fallback_data:
+                    return fallback_data
+            else:
+                print(f"位置情報API HTTPエラー: {e}")
+            return self._get_default_location()
+            
         except requests.exceptions.RequestException as e:
             print(f"位置情報API リクエストエラー: {e}")
+            # ネットワークエラー時は古いキャッシュデータを使用を試行
+            fallback_data = self._get_fallback_cache_data(cache_key)
+            if fallback_data:
+                return fallback_data
             return self._get_default_location()
             
         except (ValueError, KeyError) as e:
@@ -140,6 +156,43 @@ class LocationService:
             }
         except (KeyError, ValueError, TypeError) as e:
             raise KeyError(f"位置情報データの必須フィールドが不足: {e}")
+    
+    def _get_fallback_cache_data(self, cache_key: str) -> Optional[Dict[str, any]]:
+        """
+        期限切れでも利用可能なキャッシュデータを取得（フォールバック用）
+        
+        Args:
+            cache_key (str): キャッシュキー
+            
+        Returns:
+            dict: キャッシュされた位置情報、存在しない場合はNone
+        """
+        try:
+            from database import get_db_connection
+            
+            with get_db_connection(self.cache_service.db_path) as conn:
+                cursor = conn.execute('''
+                    SELECT data FROM cache 
+                    WHERE cache_key = ?
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                ''', (cache_key,))
+                
+                row = cursor.fetchone()
+                
+                if row is None:
+                    return None
+                
+                # 期限切れでもデータを返す（フォールバック用）
+                fallback_data = self.cache_service.deserialize_data(row['data'])
+                fallback_data['source'] = 'fallback_cache'
+                
+                print("フォールバック用キャッシュデータを使用（期限切れ）")
+                return fallback_data
+                
+        except Exception as e:
+            print(f"フォールバックキャッシュ取得エラー: {e}")
+            return None
     
     def _get_default_location(self) -> Dict[str, any]:
         """

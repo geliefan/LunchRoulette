@@ -1,4 +1,6 @@
 import math
+from typing import Dict, Optional
+from error_handler import ErrorHandler
 
 
 class DistanceCalculator:
@@ -10,9 +12,14 @@ class DistanceCalculator:
     # 地球の半径（km）
     EARTH_RADIUS_KM = 6371.0
     
-    def __init__(self):
-        """DistanceCalculatorクラスの初期化"""
-        pass
+    def __init__(self, error_handler: Optional[ErrorHandler] = None):
+        """
+        DistanceCalculatorクラスの初期化
+        
+        Args:
+            error_handler (ErrorHandler, optional): エラーハンドラー
+        """
+        self.error_handler = error_handler or ErrorHandler()
     
     def calculate_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """
@@ -59,7 +66,8 @@ class DistanceCalculator:
             
         except Exception as e:
             # エラーハンドリング：距離計算エラー時は概算距離を返す
-            print(f"距離計算エラー: {e}")
+            error_info = self.error_handler.handle_distance_calculation_error(e)
+            print(f"距離計算エラー: {error_info['message']}")
             return self._calculate_approximate_distance(lat1, lon1, lat2, lon2)
     
     def calculate_walking_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> dict:
@@ -101,14 +109,16 @@ class DistanceCalculator:
             }
             
         except Exception as e:
-            print(f"徒歩距離計算エラー: {e}")
+            error_info = self.error_handler.handle_distance_calculation_error(e)
+            print(f"徒歩距離計算エラー: {error_info['message']}")
             # エラー時はデフォルト値を返す
             return {
                 'distance_km': 0.5,
                 'distance_m': 500,
                 'walking_time_minutes': 8,
                 'distance_display': "約500m",
-                'time_display': "徒歩約8分"
+                'time_display': "徒歩約8分",
+                'error_info': error_info  # エラー情報を追加
             }
     
     def _validate_coordinates(self, lat: float, lon: float) -> None:
