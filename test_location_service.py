@@ -294,7 +294,7 @@ class TestLocationService:
         """位置情報データ妥当性検証 - 無効な座標テスト"""
         # 緯度が範囲外
         invalid_lat_data = {
-            'latitude': 95.0,  # 90度を超えない
+            'latitude': 95.0,  # 90度を超える
             'longitude': 139.6503,
             'city': '東京',
             'region': '東京都',
