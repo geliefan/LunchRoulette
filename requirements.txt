@@ -1,0 +1,11 @@
+# Lunch Roulette - 本番環境依存関係
+# PythonAnywhere Python 3.11対応
+
+# Webフレームワーク
+Flask==3.0.0
+
+# HTTP リクエスト
+requests==2.31.0
+
+# 注意: SQLiteは標準ライブラリのため不要
+# 注意: pytestは開発環境のみ必要。requirements-dev.txtを参照。
