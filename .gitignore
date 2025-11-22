@@ -208,3 +208,6 @@ __marimo__/
 
 # cache.db
 cache.db
+
+# Mailmap file
+.mailmap
