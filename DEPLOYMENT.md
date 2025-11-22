@@ -52,7 +52,7 @@ PythonAnywhereのWebタブで以下の環境変数を設定してください。
 | 変数名 | 説明 | 値 |
 |--------|------|-----|
 | `SECRET_KEY` | Flaskセッション暗号化キー | `your-secret-key-here-change-in-production` |
-| `OPENWEATHER_API_KEY` | OpenWeatherMap APIキー | `abcd1234efgh5678ijkl9012mnop3456` |
+| `WEATHERAPI_KEY` | WeatherAPI.com APIキー | `weather_api_key` |
 | `HOTPEPPER_API_KEY` | Hot Pepper Gourmet APIキー | `1234567890abcdef1234567890abcdef` |
 | `FLASK_DEBUG` | デバッグモード（本番では`False`推奨） | `False` |
 
@@ -115,7 +115,7 @@ Webタブの "Static files" セクションで以下を設定
 
 | URL | Directory |
 |-----|-----------|
-| `/static/` | `/home/yourusername/lunch-roulette/static/` |
+| `/static/` | `/home/yourusername/lunch-roulette/src/lunch_roulette/static/` |
 
 ## 4. データベースの初期化
 

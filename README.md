@@ -1,4 +1,4 @@
-# Lunch Roulette
+# lunch-roulette
 
 東京エリアのランチスポット発見Webサービス
 
@@ -9,7 +9,7 @@ Lunch Rouletteは、東京エリアのユーザーがリアルタイムの天気
 ## 主な機能
 
 - **自動位置検出**: IPアドレスベースの位置情報検出
-- **リアルタイム天気情報**: OpenWeatherMap APIを使用した現在の天気表示
+- **リアルタイム天気情報**: WeatherAPI.com APIを使用した現在の天気表示
 - **レストラン検索**: Hot Pepper Gourmet APIを使用した半径1km以内のレストラン検索
 - **予算フィルタリング**: ランチ予算≤¥1,200での絞り込み
 - **距離計算**: ハーバーサイン公式を使用した正確な徒歩距離計算
@@ -22,7 +22,7 @@ Lunch Rouletteは、東京エリアのユーザーがリアルタイムの天気
 - **データベース**: SQLite（キャッシュ用）
 - **フロントエンド**: HTML5, CSS3, バニラJavaScript
 - **外部API**: 
-  - OpenWeatherMap One Call 3.0 API
+  - WeatherAPI.com Current Weather API
   - Hot Pepper Gourmet Web API
   - ipapi.co（位置情報検出用）
 - **デプロイメント**: PythonAnywhere無料プラン
@@ -33,7 +33,7 @@ Lunch Rouletteの技術的な基盤は、以下の理論とアルゴリズムに
 
 1. **ハーバーサイン公式**: 地球上の2点間の最短距離を計算するための公式。
 2. **キャッシュ最適化**: SQLiteを使用してAPIレスポンスをキャッシュし、リクエスト頻度を削減。
-3. **リアルタイムAPI統合**: OpenWeatherMapとHot Pepper Gourmet APIを統合し、リアルタイムデータを提供。
+3. **リアルタイムAPI統合**: WeatherAPI.comとHot Pepper Gourmet APIを統合し、リアルタイムデータを提供。
 4. **レスポンシブデザイン**: モバイルデバイスとデスクトップの両方で最適に動作するUI設計。
 
 ## セットアップ手順
@@ -77,17 +77,17 @@ Lunch Rouletteの技術的な基盤は、以下の理論とアルゴリズムに
 
    ```bash
    # Windows (コマンドプロンプト)
-   set OPENWEATHER_API_KEY=your_openweather_api_key
+   set WEATHERAPI_KEY=your_weatherapi_key
    set HOTPEPPER_API_KEY=your_hotpepper_api_key
    set FLASK_DEBUG=True
    
    # Windows (PowerShell)
-   $env:OPENWEATHER_API_KEY="your_openweather_api_key"
+   $env:WEATHERAPI_KEY="your_weatherapi_key"
    $env:HOTPEPPER_API_KEY="your_hotpepper_api_key"
    $env:FLASK_DEBUG="True"
    
    # macOS/Linux
-   export OPENWEATHER_API_KEY=your_openweather_api_key
+   export WEATHERAPI_KEY=your_weatherapi_key
    export HOTPEPPER_API_KEY=your_hotpepper_api_key
    export FLASK_DEBUG=True
    ```
@@ -95,13 +95,17 @@ Lunch Rouletteの技術的な基盤は、以下の理論とアルゴリズムに
 5. **データベースの初期化**
 
    ```bash
-   python database.py
+   python -c "from src.lunch_roulette.models.database import init_database; init_database('cache.db')"
    ```
 
 6. **アプリケーションの起動**
 
    ```bash
-   python app.py
+   # 新しい方法（推奨）
+   python run.py
+   
+   # または直接実行
+   python -m lunch_roulette.app
    ```
 
 7. **ブラウザでアクセス**
@@ -110,14 +114,15 @@ Lunch Rouletteの技術的な基盤は、以下の理論とアルゴリズムに
 
 ### APIキーの取得
 
-#### OpenWeatherMap API
+#### WeatherAPI.com API
 
+1. [WeatherAPI.com](https://www.weatherapi.com/)にアカウント登録
 
-1. [OpenWeatherMap](https://openweathermap.org/api)にアカウント登録
+2. Current Weather APIのAPIキーを取得
 
-2. One Call API 3.0のAPIキーを取得
+3. 無料プランでは1日100万回まで利用可能
 
-3. 無料プランでは1日1,000回まで利用可能
+**Note**: 現在、テスト用APIキー `weather_api_key` がデフォルトで設定されています。
 
 #### Hot Pepper Gourmet API
 
@@ -127,88 +132,6 @@ Lunch Rouletteの技術的な基盤は、以下の理論とアルゴリズムに
 2. Hot Pepper Gourmet APIのAPIキーを取得
 
 3. 無料プランでは1日3,000回まで利用可能
-
-## PythonAnywhereデプロイメント手順
-
-> **📋 詳細なデプロイメント手順やトラブルシューティングは [DEPLOYMENT.md](DEPLOYMENT.md) を参照してください。**
-
-### クイックスタート
-
-1. **PythonAnywhereアカウント準備**
-
-   - [PythonAnywhere](https://www.pythonanywhere.com/)で無料アカウントを作成
-   - Bashコンソールを開く
-
-2. **プロジェクトアップロード**
-
-   ```bash
-   cd ~
-   git clone <your-repository-url> lunch-roulette
-   cd lunch-roulette
-   ```
-
-3. **仮想環境セットアップ**
-
-   ```bash
-   python3.11 -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-4. **環境変数の設定**
-
-   PythonAnywhereのWebタブで以下の環境変数を設定：
-
-   - `SECRET_KEY`: Flaskセッション暗号化キー（本番用の強力なキー）
-   - `OPENWEATHER_API_KEY`: OpenWeatherMap APIキー
-   - `HOTPEPPER_API_KEY`: Hot Pepper Gourmet APIキー
-   - `FLASK_DEBUG`: `False`（本番環境）
-
-5. **WSGIファイルの設定**
-
-   PythonAnywhereのWebタブでWSGIファイルを編集：
-
-   ```python
-   #!/usr/bin/python3
-
-   import sys
-   import os
-
-   # プロジェクトディレクトリをPythonパスに追加
-   project_home = '/home/yourusername/lunch-roulette'  # 実際のパスに変更
-   if project_home not in sys.path:
-       sys.path = [project_home] + sys.path
-
-   # 仮想環境パスを設定
-   activate_this = '/home/yourusername/lunch-roulette/.venv/bin/activate_this.py'
-   if os.path.exists(activate_this):
-       exec(open(activate_this).read(), dict(__file__=activate_this))
-
-   # Flaskアプリケーションをインポート
-   from app import app as application
-
-   if __name__ == "__main__":
-       application.run()
-   ```
-
-6. **静的ファイルの設定**
-
-   PythonAnywhereのWebタブで静的ファイルマッピングを設定：
-
-   - URL: `/static/`
-   - Directory: `/home/yourusername/lunch-roulette/static/`
-
-7. **データベースの初期化**
-
-   ```bash
-   cd ~/lunch-roulette
-   source .venv/bin/activate
-   python database.py
-   ```
-
-8. **アプリケーションの起動**
-
-   PythonAnywhereのWebタブで「Reload」ボタンをクリックしてアプリケーションを起動
 
 ## テスト
 
@@ -249,29 +172,55 @@ autopep8 --in-place --aggressive --aggressive *.py
 
 ```plaintext
 lunch-roulette/
-├── app.py                          # メインFlaskアプリケーション
-├── wsgi.py                         # PythonAnywhere用WSGI設定
+├── src/                             # ソースコード
+│   └── lunch_roulette/              # メインパッケージ
+│       ├── __init__.py              # パッケージ初期化
+│       ├── app.py                   # メインFlaskアプリケーション
+│       ├── config.py                # 設定管理
+│       ├── wsgi.py                  # PythonAnywhere用WSGI設定
+│       ├── api/                     # API関連モジュール
+│       │   └── __init__.py
+│       ├── models/                  # データモデル
+│       │   ├── __init__.py
+│       │   └── database.py          # データベース管理
+│       ├── services/                # ビジネスロジック
+│       │   ├── __init__.py
+│       │   ├── cache_service.py     # キャッシュサービス
+│       │   ├── location_service.py  # 位置情報サービス
+│       │   ├── weather_service.py   # 天気情報サービス
+│       │   └── restaurant_service.py # レストラン検索サービス
+│       └── utils/                   # ユーティリティ
+│           ├── __init__.py
+│           ├── distance_calculator.py # 距離計算サービス
+│           ├── restaurant_selector.py # レストラン選択ロジック
+│           └── error_handler.py      # エラーハンドリング
+│       ├── static/                   # 静的ファイル
+│       │   ├── css/
+│       │   │   └── style.css         # メインスタイルシート
+│       │   └── js/
+│       │       └── main.js           # メインJavaScript
+│       └── templates/                # HTMLテンプレート
+│           └── index.html            # メインページテンプレート
+├── tests/                           # テスト
+│   ├── __init__.py
+│   ├── conftest.py                  # pytest設定
+│   ├── pytest.ini                   # pytest設定
+│   ├── unit/                        # 単体テスト
+│   │   ├── __init__.py
+│   │   └── test_*.py                # 各種テストファイル
+│   └── integration/                 # 統合テスト
+│       └── __init__.py
+├── docs/                           # ドキュメント
+├── config/                         # 設定ファイル
+├── run.py                          # 開発用エントリーポイント
+├── pyproject.toml                  # プロジェクト設定
 ├── requirements.txt                # Python依存関係
-├── .flake8                         # flake8設定
-├── pytest.ini                      # pytest設定
+├── requirements-dev.txt            # 開発用依存関係
 ├── README.md                       # このファイル
-├── cache.db                        # SQLiteキャッシュデータベース
-├── database.py                     # データベース初期化管理
-├── cache_service.py                # キャッシュサービス
-├── location_service.py             # 位置情報サービス
-├── weather_service.py              # 天気情報サービス
-├── restaurant_service.py           # レストラン検索サービス
-├── distance_calculator.py          # 距離計算サービス
-├── restaurant_selector.py          # レストラン選択ロジック
-├── error_handler.py                # エラーハンドリング
-├── static/                         # 静的ファイル
-│   ├── css/
-│   │   └── style.css              # メインスタイルシート
-│   └── js/
-│       └── main.js                # メインJavaScript
-├── templates/                      # HTMLテンプレート
-│   └── index.html                 # メインページテンプレート
-└── test_*.py                      # テストファイル群
+├── DEPLOYMENT.md                   # デプロイメントガイド
+├── .flake8                        # flake8設定
+├── .gitignore                     # Git無視ファイル
+└── cache.db                       # SQLiteキャッシュデータベース
 ```
 
 ## 技術理論概要
@@ -408,7 +357,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 ## 謝辞
 
-- OpenWeatherMap API
+- WeatherAPI.com API
 - Hot Pepper Gourmet API
 - PythonAnywhere
 - Flask コミュニティ
