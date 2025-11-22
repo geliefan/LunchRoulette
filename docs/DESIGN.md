@@ -589,13 +589,13 @@ from .utils.error_handler import ErrorHandler
 Python 3.11の型ヒントを積極的に使用
 
 ```python
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 def search_restaurants(
     lat: float,
     lon: float,
     radius: int = 1
-) -> List[Dict[str, any]]:
+) -> List[Dict[str, Any]]:
     """レストランを検索"""
     pass
 
