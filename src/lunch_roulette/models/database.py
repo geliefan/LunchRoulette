@@ -133,11 +133,12 @@ def get_cache_stats(db_path='cache.db'):
             # 総レコード数
             total_count = conn.execute('SELECT COUNT(*) FROM cache').fetchone()[0]
 
-            # 有効レコード数
+            # 有効レコード数（ISO形式の文字列として比較）
+            current_time_str = datetime.now().isoformat()
             valid_count = conn.execute('''
                 SELECT COUNT(*) FROM cache
                 WHERE expires_at > ?
-            ''', (datetime.now(),)).fetchone()[0]
+            ''', (current_time_str,)).fetchone()[0]
 
             # 期限切れレコード数
             expired_count = total_count - valid_count

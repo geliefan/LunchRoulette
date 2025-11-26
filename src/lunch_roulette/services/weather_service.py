@@ -5,11 +5,16 @@
 WeatherService - 天気情報サービスクラス
 WeatherAPI.com APIから天気情報を取得する機能を提供
 
-このクラスは以下の機能を提供します:
-- WeatherAPI.com Current Weather API統合
-- 天気データの取得と整形機能
-- キャッシュ機能との統合
-- エラーハンドリングとフォールバック機能
+このクラスができること:
+1. 指定した場所の現在の天気を取得
+2. 天気データを日本語に変換（例: "sunny" → "晴れ"）
+3. キャッシュを使ってAPI呼び出し回数を節約
+4. エラー時には標準的な天気情報を返す
+
+使用例:
+    service = WeatherService()
+    weather = service.get_current_weather(35.6812, 139.7671)  # 東京駅の天気
+    print(f"気温: {weather['temperature']}°C, 天気: {weather['description']}")
 """
 
 import requests
@@ -21,29 +26,33 @@ from .cache_service import CacheService
 
 class WeatherService:
     """
-    WeatherAPI.com APIから天気情報を取得するサービス
-
-    Current Weather APIを使用して現在の天気、気温、湿度などを取得し、
-    エラー時にはデフォルト天気情報を提供する。
+    天気情報を取得するサービスクラス
+    
+    WeatherAPI.comという外部サービスから天気データを取得します。
+    APIが使えない時は、標準的な天気情報（晴れ、20度）を返します。
     """
 
-    # デフォルト天気情報
+    # ===== デフォルト天気情報 =====
+    # APIが使えない時やエラー時に使用する標準的な天気データ
+    # 東京の平均的な春秋の天気をイメージして設定
     DEFAULT_WEATHER = {
-        'temperature': 20.0,
-        'condition': 'sunny',
-        'description': '晴れ',
-        'uv_index': 3.0,
-        'humidity': 60,
-        'pressure': 1013,
-        'visibility': 10.0,
-        'wind_speed': 2.0,
-        'wind_direction': 180,
-        'icon': 1000,  # WeatherAPI.comのsunnyアイコンコード
-        'feels_like': 20.0,
-        'source': 'default'
+        'temperature': 20.0,       # 気温（摂氏） - 20度は過ごしやすい気温
+        'condition': 'sunny',      # 天気状況（英語）
+        'description': '晴れ',     # 天気状況（日本語）
+        'uv_index': 3.0,           # UV指数 - 3は「中程度」
+        'humidity': 60,            # 湿度（%） - 60%は快適な範囲
+        'pressure': 1013,          # 気圧（hPa） - 標準大気圧
+        'visibility': 10.0,        # 視界（km） - 10kmは良好
+        'wind_speed': 2.0,         # 風速（m/s） - 微風
+        'wind_direction': 180,     # 風向（度） - 180度は南風
+        'icon': 1000,              # 天気アイコンコード（1000 = 晴れ）
+        'feels_like': 20.0,        # 体感温度 - 気温と同じ
+        'source': 'default'        # データソース - デフォルト値であることを明示
     }
 
-    # 天気状況の日本語マッピング（WeatherAPI.com用）
+    # ===== 天気状況の英語→日本語変換テーブル =====
+    # WeatherAPI.comから返ってくる英語の天気表現を日本語に変換するための辞書
+    # 例: 'sunny' → '晴れ', 'rainy' → '雨'
     CONDITION_MAPPING = {
         'sunny': '晴れ',
         'clear': '快晴', 
@@ -101,98 +110,142 @@ class WeatherService:
 
     def __init__(self, api_key: Optional[str] = None, cache_service: Optional[CacheService] = None):
         """
-        WeatherServiceを初期化
+        天気サービスを初期化します
+        
+        初期化時に以下を設定:
+        - WeatherAPI.comのAPIキー（外部サービスへのアクセスに必要）
+        - キャッシュサービス（同じデータを何度も取得しないため）
+        - APIのURLとタイムアウト設定
 
         Args:
-            api_key (str, optional): WeatherAPI.com APIキー
-            cache_service (CacheService, optional): キャッシュサービス
+            api_key: WeatherAPI.comのAPIキー（省略可、環境変数から取得）
+            cache_service: キャッシュサービス（省略可、自動作成）
         """
-        # 提供されたテスト用APIキーまたは環境変数から取得
-        self.api_key = api_key or os.getenv('WEATHERAPI_KEY', 'weather_api_key')
+        # APIキーの取得（2つの方法を試す）
+        # 1. 引数で渡されたAPIキーを使用
+        # 2. 環境変数 WEATHERAPI_KEY から取得
+        # ※どちらもなければNone（デフォルト天気を返す）
+        self.api_key = api_key or os.getenv('WEATHERAPI_KEY')
+        
+        # キャッシュサービスの設定（同じデータを繰り返し取得しないため）
         self.cache_service = cache_service or CacheService()
+        
+        # WeatherAPI.comのAPIエンドポイント（URL）
         self.api_base_url = "http://api.weatherapi.com/v1/current.json"
-        self.timeout = 10  # APIリクエストのタイムアウト（秒）
+        
+        # APIリクエストのタイムアウト設定（10秒）
+        # タイムアウト = サーバーからの応答を待つ最大時間
+        self.timeout = 10
 
+        # APIキーが設定されていない場合は警告を表示
         if not self.api_key:
             print("警告: WeatherAPI.com APIキーが設定されていません。デフォルト天気情報を使用します。")
 
     def get_current_weather(self, lat: float, lon: float) -> Dict[str, any]:
         """
-        指定された座標の現在の天気情報を取得
+        指定された場所の現在の天気情報を取得します
+        
+        処理の流れ:
+        1. キャッシュに同じ場所の天気データがあるか確認
+        2. キャッシュにあればそれを返す（APIを呼ばない）
+        3. なければWeatherAPI.comに問い合わせ
+        4. 取得した天気データをキャッシュに保存（10分間）
+        5. エラーが発生したらデフォルトの天気情報を返す
 
         Args:
-            lat (float): 緯度
-            lon (float): 経度
+            lat: 緯度（例: 東京駅は 35.6812）
+            lon: 経度（例: 東京駅は 139.7671）
 
         Returns:
-            dict: 天気情報（気温、天気状況、湿度など）
+            dict: 天気情報の辞書
+                - temperature: 気温（摂氏）
+                - description: 天気の説明（日本語）
+                - humidity: 湿度（%）
+                - uv_index: UV指数
+                など
 
-        Example:
-            >>> weather_service = WeatherService()
-            >>> weather = weather_service.get_current_weather(35.6812, 139.7671)
-            >>> print(f"Temperature: {weather['temperature']}°C")
+        使用例:
+            >>> service = WeatherService()
+            >>> weather = service.get_current_weather(35.6812, 139.7671)
+            >>> print(f"気温: {weather['temperature']}°C, 天気: {weather['description']}")
         """
-        # キャッシュキーを生成
+        # ===== ステップ1: キャッシュキーを生成 =====
+        # キャッシュキー = データを識別するための文字列
+        # 同じ場所の天気は、少しの時間（10分）なら同じデータを使い回す
         cache_key = self.cache_service.generate_cache_key(
             'weather',
-            lat=round(lat, 4),  # 精度を制限してキャッシュ効率向上
-            lon=round(lon, 4)
+            lat=round(lat, 4),  # 小数点以下4桁に丸める（例: 35.681234 → 35.6812）
+            lon=round(lon, 4)   # これにより、ほぼ同じ場所の天気は同じキャッシュを使える
         )
 
-        # キャッシュから取得を試行
+        # ===== ステップ2: キャッシュからデータ取得を試みる =====
         cached_data = self.cache_service.get_cached_data(cache_key)
         if cached_data:
-            print(f"天気情報をキャッシュから取得: {cached_data['description']}")
+            # キャッシュにデータがあった → APIを呼ばずに済む
+            desc = cached_data.get('description', cached_data.get('condition', '天気'))
+            print(f"天気情報をキャッシュから取得: {desc}")
             return cached_data
 
-        # APIキーが設定されていない場合、デフォルト天気情報を返す
+        # ===== ステップ3: APIキーの確認 =====
+        # APIキーがないと外部サービスを使えないので、デフォルト値を返す
         if not self.api_key:
+            print("APIキーが未設定のため、デフォルト天気情報を返します")
             return self._get_default_weather()
 
         try:
-            # APIパラメータを構築
+            # ===== ステップ4: APIリクエストのパラメータを準備 =====
             params = {
-                'key': self.api_key,
-                'q': f"{lat},{lon}",
-                'aqi': 'no'  # 大気質データは不要
+                'key': self.api_key,        # 認証用のAPIキー
+                'q': f"{lat},{lon}",        # 緯度・経度を「35.6812,139.7671」の形式で指定
+                'aqi': 'no'                 # 大気質データは不要（aqi = Air Quality Index）
             }
 
-            print(f"天気情報API呼び出し: lat={lat}, lon={lon}")
+            print(f"天気情報APIを呼び出します: 緯度={lat}, 経度={lon}")
 
-            # APIリクエストを実行
+            # ===== ステップ5: APIリクエストを実行 =====
+            # requests.get = HTTPのGETリクエストを送信する関数
             response = requests.get(self.api_base_url, params=params, timeout=self.timeout)
-            response.raise_for_status()
+            response.raise_for_status()  # エラーがあれば例外を発生させる
 
-            # レスポンスを解析
+            # ===== ステップ6: レスポンスをJSON形式で解析 =====
             data = response.json()
 
-            # 天気情報を整形
+            # ===== ステップ7: データを使いやすい形式に整形 =====
             weather_data = self._format_weather_data(data)
 
-            # キャッシュに保存（10分間）
+            # ===== ステップ8: データをキャッシュに保存 =====
+            # ttl=600 → 600秒（10分）間キャッシュを保持
             self.cache_service.set_cached_data(cache_key, weather_data, ttl=600)
 
             print(f"天気情報取得成功: {weather_data['description']}, {weather_data['temperature']}°C")
             return weather_data
 
         except requests.exceptions.HTTPError as e:
-            # HTTPエラー（レート制限、認証エラーなど）
+            # ===== エラー処理1: HTTPエラー =====
+            # HTTPエラー = サーバーから400番台または500番台のエラーが返ってきた
+            
             if e.response.status_code == 429:
-                print(f"天気情報API レート制限エラー: {e}")
-                # レート制限時は古いキャッシュデータを使用を試行
+                # 429エラー = レート制限（APIの呼び出し回数制限に達した）
+                print(f"天気情報API: リクエスト回数制限に達しました: {e}")
+                # 古いキャッシュがあればそれを使う
                 fallback_data = self._get_fallback_cache_data(cache_key)
                 if fallback_data:
                     return fallback_data
+                    
             elif e.response.status_code == 401:
-                print(f"天気情報API 認証エラー: {e}")
+                # 401エラー = 認証エラー（APIキーが間違っている）
+                print(f"天気情報API: APIキーが無効です: {e}")
             else:
-                print(f"天気情報API HTTPエラー: {e}")
+                # その他のHTTPエラー
+                print(f"天気情報API: HTTPエラーが発生しました: {e}")
 
+            # エラー時はデフォルトの天気情報を返す
             return self._get_default_weather()
 
         except requests.exceptions.RequestException as e:
-            # ネットワークエラー、タイムアウトなど
-            print(f"天気情報API リクエストエラー: {e}")
+            # ===== エラー処理2: ネットワークエラー =====
+            # ネットワークエラー = インターネット接続の問題、タイムアウトなど
+            print(f"天気情報API: 通信エラーが発生しました: {e}")
             
             # 古いキャッシュデータがあれば使用
             fallback_data = self._get_fallback_cache_data(cache_key)

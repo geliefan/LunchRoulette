@@ -9,9 +9,13 @@ Lunch Rouletteは、東京エリアのユーザーがリアルタイムの天気
 ## 主な機能
 
 - **自動位置検出**: IPアドレスベースの位置情報検出
+- **GPS位置取得**: ブラウザのGeolocation APIによる正確な現在地取得
 - **リアルタイム天気情報**: WeatherAPI.com APIを使用した現在の天気表示
-- **レストラン検索**: Hot Pepper Gourmet APIを使用した半径1km以内のレストラン検索
-- **予算フィルタリング**: ランチ予算≤¥1,200での絞り込み
+- **レストラン検索**: Hot Pepper Gourmet APIを使用したレストラン検索
+- **カスタマイズ可能な検索条件**:
+  - 徒歩時間指定（5分/10分/15分/20分/20分超）
+  - 予算カテゴリ選択（すべて/〜500円/〜1000円/〜1500円/〜2000円/〜3000円）
+  - ランチフィルタ（ランチ営業ありの店舗に絞り込み）
 - **距離計算**: ハーバーサイン公式を使用した正確な徒歩距離計算
 - **キャッシング**: SQLiteを使用した10分間のAPIレスポンスキャッシュ
 - **モダンUI**: レスポンシブデザインとモダンなユーザーインターフェース
@@ -121,8 +125,6 @@ Lunch Rouletteの技術的な基盤は、以下の理論とアルゴリズムに
 2. Current Weather APIのAPIキーを取得
 
 3. 無料プランでは1日100万回まで利用可能
-
-**Note**: 現在、テスト用APIキー `weather_api_key` がデフォルトで設定されています。
 
 #### Hot Pepper Gourmet API
 
@@ -339,11 +341,11 @@ logging.basicConfig(level=logging.DEBUG)
 
 ## 貢献
 
-1. こリポジトリをフォーク
-2. 機ブランチを作 (`git chckout -b fatur/amazing-fatur`)
-3. 変更をコミッチ(`git commit -m 'Add amazing fatur'`)
-4. ブランチにプッシュ (`git push origin fatur/amazing-fatur`)
-5. プルリクエストを作
+1. このリポジトリをフォーク
+2. 機能ブランチを作成 (`git checkout -b feature/amazing-feature`)
+3. 変更をコミット (`git commit -m 'Add amazing feature'`)
+4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
+5. プルリクエストを作成
 
 ## ライセンス
 

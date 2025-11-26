@@ -30,6 +30,10 @@ class Config:
     # レストラン検索設定
     SEARCH_RADIUS_KM = float(os.environ.get('SEARCH_RADIUS_KM', '1.0'))
     MAX_BUDGET_YEN = int(os.environ.get('MAX_BUDGET_YEN', '1200'))
+    
+    # 新しい検索条件設定
+    DEFAULT_BUDGET_CODE = os.environ.get('DEFAULT_BUDGET_CODE', None)  # デフォルトは指定なし（すべての予算）
+    DEFAULT_MAX_WALKING_TIME_MIN = int(os.environ.get('DEFAULT_MAX_WALKING_TIME_MIN', '10'))  # デフォルト徒歩10分
 
 
 class DevelopmentConfig(Config):
