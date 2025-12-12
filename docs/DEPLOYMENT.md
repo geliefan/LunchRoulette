@@ -7,9 +7,9 @@
 ## 前提条件
 
 - PythonAnywhereアカウント（無料プラン）
-- OpenWeatherMap APIキー
+- WeatherAPI.com APIキー
 - Hot Pepper Gourmet APIキー
-- Gitリポジトリ（GitHub、GitLab等）
+- Gitリポジトリ（GitHub、Gitea等）
 
 ## 1. PythonAnywhereでのプロジェクトセットアップ
 
@@ -24,7 +24,7 @@
 ```bash
 # Bashコンソールで実行
 cd ~
-git clone https://github.com/yourusername/lunch-roulette.git
+git clone <your-git-repository-url>
 cd lunch-roulette
 ```
 
@@ -49,12 +49,27 @@ pip install -r requirements.txt
 
 PythonAnywhereのWebタブで以下の環境変数を設定してください。
 
-| 変数名 | 説明 | 値 |
-|--------|------|-----|
-| `SECRET_KEY` | Flaskセッション暗号化キー | `your-secret-key-here-change-in-production` |
-| `WEATHERAPI_KEY` | WeatherAPI.com APIキー | `weather_api_key` |
-| `HOTPEPPER_API_KEY` | Hot Pepper Gourmet APIキー | `1234567890abcdef1234567890abcdef` |
-| `FLASK_DEBUG` | デバッグモード（本番では`False`推奨） | `False` |
+| 変数名 | 説明 | 値 | デフォルト |
+|--------|------|-----|-----------|
+| `SECRET_KEY` | Flaskセッション暗号化キー | 強力なランダム文字列を設定 | `dev-secret-key-change-in-production` |
+| `WEATHERAPI_KEY` | WeatherAPI.com APIキー | 取得したAPIキーを設定 | `weather_api_key` |
+| `HOTPEPPER_API_KEY` | Hot Pepper Gourmet APIキー | 取得したAPIキーを設定 | なし（必須） |
+| `FLASK_DEBUG` | デバッグモード（本番では`False`推奨） | `False` | `False` |
+
+### 2.2 オプション環境変数
+
+以下の環境変数はデフォルト値があるため、必須ではありません。必要に応じて設定してください。
+
+| 変数名 | 説明 | デフォルト値 |
+|--------|------|------------|
+| `DEFAULT_BUDGET_CODE` | デフォルト予算カテゴリ（Hot Pepper予算コード） | `None`（すべて） |
+| `DEFAULT_MAX_WALKING_TIME_MIN` | デフォルト最大徒歩時間（分） | `10` |
+| `DATABASE_PATH` | SQLiteキャッシュDBパス | `cache.db` |
+| `CACHE_TTL_MINUTES` | キャッシュ有効期限（分） | `10` |
+| `DEFAULT_LATITUDE` | デフォルト緯度（東京駅） | `35.6812` |
+| `DEFAULT_LONGITUDE` | デフォルト経度（東京駅） | `139.7671` |
+| `SEARCH_RADIUS_KM` | レストラン検索半径（km） | `1.0` |
+| `MAX_BUDGET_YEN` | 最大予算（円） | `1200` |
 
 ### 2.2 環境変数設定手順
 
@@ -68,18 +83,18 @@ PythonAnywhereのWebタブで以下の環境変数を設定してください。
 
 ### 2.3 APIキーの取得方法
 
-**OpenWeatherMap APIキー:**
+**WeatherAPI.com APIキー:**
 
-1. [OpenWeatherMap](https://openweathermap.org/) にアクセス
-2. アカウント作成・ログイン
-3. API Keys セクションでキーを生成
-4. One Call API 3.0の利用を確認
+1. [WeatherAPI.com](https://www.weatherapi.com/) にアクセス
+2. アカウント作成（Sign Up）
+3. ダッシュボードでAPIキーを確認
+4. 無料プランで十分（月100万リクエストまで）
 
 **Hot Pepper Gourmet APIキー:**
 
-1. [Hot Pepper Gourmet API](https://webservice.recruit.co.jp/) にアクセス
+1. [リクルートWebサービス](https://webservice.recruit.co.jp/) にアクセス
 2. アカウント作成・ログイン
-3. Hot Pepper Gourmet API v1のキーを取得
+3. Hot Pepper Gourmet Search API のAPIキーを取得
 
 ## 3. Webアプリケーションの設定
 
@@ -95,19 +110,20 @@ PythonAnywhereのWebタブで以下の環境変数を設定してください。
 | Framework | Manual configuration |
 | Source code | `/home/yourusername/lunch-roulette` |
 | Working directory | `/home/yourusername/lunch-roulette` |
-| WSGI configuration file | `/home/yourusername/lunch-roulette/wsgi.py` |
+| WSGI configuration file | `/home/yourusername/lunch-roulette/src/lunch_roulette/wsgi.py` |
 
-### 3.2 wsgi.pyの編集
+### 3.2 wsgi.pyの設定確認
 
-`wsgi.py`ファイル内の以下の行を編集
+`src/lunch_roulette/wsgi.py`は自動的にプロジェクトパスを設定します。
+特に編集は不要ですが、以下の警告メッセージが表示されないことを確認してください:
 
-```python
-# 変更前
-project_home = '/home/yourusername/lunch-roulette'
-
-# 変更後（実際のユーザー名に置換）
-project_home = '/home/actual_username/lunch-roulette'
 ```
+警告: SECRET_KEYが設定されていません
+警告: WEATHERAPI_KEYが設定されていません
+警告: HOTPEPPER_API_KEYが設定されていません
+```
+
+警告が表示される場合は、環境変数の設定を確認してください。
 
 ### 3.3 静的ファイルの設定
 
@@ -129,7 +145,7 @@ Webタブの "Static files" セクションで以下を設定
 # Bashコンソールで実行
 cd ~/lunch-roulette
 source venv/bin/activate
-python3 -c "from database import init_database; init_database('cache.db')"
+python3 -c "from src.lunch_roulette.models.database import init_database; init_database('cache.db')"
 ```
 
 ## 5. デプロイメント確認
@@ -167,10 +183,11 @@ python3 -c "from database import init_database; init_database('cache.db')"
 
 ### 6.1 よくある問題と解決方法
 
-#### 問題 "ImportError: No module named 'app'"
+#### 問題 "ImportError: No module named 'lunch_roulette'"
 
-- 解決: wsgi.pyのproject_homeパスを確認
-- Working directoryが正しく設定されているか確認
+- 解決: WSGI configuration fileが `/home/yourusername/lunch-roulette/src/lunch_roulette/wsgi.py` に設定されているか確認
+- Working directoryが `/home/yourusername/lunch-roulette` に設定されているか確認
+- sys.pathにsrcディレクトリが含まれているか確認（wsgi.pyで自動設定されます）
 
 #### 問題 "API key not found"
 
@@ -250,11 +267,11 @@ pip install -r requirements.txt
 
 - [PythonAnywhere Help](https://help.pythonanywhere.com/)
 - [Flask Documentation](https://flask.palletsprojects.com/)
-- [OpenWeatherMap API](https://openweathermap.org/api)
+- [WeatherAPI.com Documentation](https://www.weatherapi.com/docs/)
 - [Hot Pepper Gourmet API](https://webservice.recruit.co.jp/doc/hotpepper/)
 
 ### 9.2 プロジェクト情報
 
-- GitHub: [プロジェクトURL]
 - 技術スタック: Python 3.11, Flask 3.0, SQLite
+- 外部API: WeatherAPI.com (天気情報), Hot Pepper Gourmet Search API (レストラン情報)
 - 対応プラットフォーム: PythonAnywhere無料プラン

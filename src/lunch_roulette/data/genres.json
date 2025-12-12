@@ -1,0 +1,49 @@
+{
+  "genres": [
+    {
+      "code": "",
+      "name": "指定なし",
+      "description": "ジャンルを絞り込まない"
+    },
+    {
+      "code": "G004",
+      "name": "和食",
+      "description": "和食全般"
+    },
+    {
+      "code": "G007",
+      "name": "中華",
+      "description": "中華料理"
+    },
+    {
+      "code": "G005",
+      "name": "洋食",
+      "description": "洋食・西洋料理"
+    },
+    {
+      "code": "G013",
+      "name": "ラーメン",
+      "description": "ラーメン・つけ麺"
+    },
+    {
+      "code": "G016",
+      "name": "カレー",
+      "description": "カレー"
+    },
+    {
+      "code": "G014",
+      "name": "カフェ・スイーツ",
+      "description": "カフェ・スイーツ"
+    },
+    {
+      "code": "G001",
+      "name": "焼肉・ホルモン",
+      "description": "焼肉・ホルモン・ジンギスカン"
+    },
+    {
+      "code": "G003",
+      "name": "居酒屋",
+      "description": "居酒屋・ダイニングバー"
+    }
+  ]
+}

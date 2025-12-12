@@ -50,6 +50,14 @@
                     <p class="coordinates">
                         {{ "%.4f"|format(location.latitude) }}, {{ "%.4f"|format(location.longitude) }}
                     </p>
+                    <!-- GPS位置取得ボタン -->
+                    <div class="gps-control">
+                        <button id="gps-btn" class="gps-btn" type="button">
+                            <span class="btn-icon">🛰️</span>
+                            <span class="btn-text">GPS位置を取得</span>
+                        </button>
+                        <span id="gps-status" class="gps-status"></span>
+                    </div>
                 </div>
             </div>
 
@@ -86,12 +94,96 @@
             </div>
         </section>
 
+        <!-- 検索条件セクション -->
+        <section class="search-conditions-section">
+            <div class="search-conditions-box">
+                <h2 class="box-title">
+                    <span class="title-icon">🔍</span>
+                    検索条件
+                </h2>
+                <div class="conditions-grid">
+                    <!-- 位置指定モード選択 -->
+                    <div class="condition-group mode-select-group">
+                        <label class="condition-label">
+                            <span class="label-icon">📍</span>
+                            位置の指定方法
+                        </label>
+                        <div class="mode-select-buttons">
+                            <button type="button" id="mode-current" class="mode-btn active">
+                                <span class="mode-icon">🛰️</span>
+                                現在地から探す
+                            </button>
+                            <button type="button" id="mode-area" class="mode-btn">
+                                <span class="mode-icon">🗺️</span>
+                                エリアを指定
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- エリア選択（エリアモード時のみ表示） -->
+                    <div class="condition-group" id="area-select-group" style="display: none;">
+                        <label class="condition-label" for="area">
+                            <span class="label-icon">🗺️</span>
+                            エリア
+                        </label>
+                        <select id="area" class="condition-select">
+                            <option value="">エリアを選択してください</option>
+                            <!-- エリア選択肢はJavaScriptで動的に追加 -->
+                        </select>
+                    </div>
+
+                    <!-- 徒歩時間選択（現在地モード時のみ表示） -->
+                    <div class="condition-group" id="walking-time-group">
+                        <label class="condition-label" for="walking-time-select">
+                            <span class="label-icon">🚶</span>
+                            徒歩時間
+                        </label>
+                        <select id="walking-time-select" class="condition-select">
+                            <option value="5">〜5分</option>
+                            <option value="10" selected>〜10分</option>
+                            <option value="15">〜15分</option>
+                            <option value="20">〜20分</option>
+                            <option value="30">20分超</option>
+                        </select>
+                    </div>
+
+                    <!-- 予算カテゴリ選択 -->
+                    <div class="condition-group">
+                        <label class="condition-label" for="budget">
+                            <span class="label-icon">💰</span>
+                            予算
+                        </label>
+                        <select id="budget" class="condition-select">
+                            <option value="">すべて</option>
+                            <option value="B009">〜500円</option>
+                            <option value="B010" selected>〜1000円</option>
+                            <option value="B011">〜1500円</option>
+                            <option value="B001">〜2000円</option>
+                            <option value="B002">〜3000円</option>
+                        </select>
+                    </div>
+
+                    <!-- ジャンル選択 -->
+                    <div class="condition-group">
+                        <label class="condition-label" for="genre">
+                            <span class="label-icon">🍽️</span>
+                            ジャンル
+                        </label>
+                        <select id="genre" class="condition-select">
+                            <option value="">指定なし</option>
+                            <!-- ジャンル選択肢はJavaScriptで動的に追加 -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ルーレットセクション -->
         <section class="roulette-section">
             <div class="roulette-container">
                 <h2 class="section-title">ランチルーレット</h2>
                 <p class="section-description">
-                    半径200m以内のランチスポットをランダムに選びます
+                    条件を指定してランチスポットをランダムに選びます
                 </p>
 
                 <!-- ルーレットボタン -->

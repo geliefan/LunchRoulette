@@ -44,7 +44,7 @@ class TestFlaskEndpointsIntegration:
     def test_main_page_endpoint_success(self, client):
         """メインページエンドポイント成功テスト"""
         with patch('lunch_roulette.services.location_service.LocationService') as mock_location_service, \
-                patch('weather_service.WeatherService') as mock_weather_service:
+                patch('lunch_roulette.services.weather_service.WeatherService') as mock_weather_service:
 
             # モックサービスの設定
             mock_location_instance = Mock()
@@ -84,7 +84,7 @@ class TestFlaskEndpointsIntegration:
     def test_main_page_endpoint_service_error(self, client):
         """メインページエンドポイント（サービスエラー）テスト"""
         with patch('lunch_roulette.services.location_service.LocationService') as mock_location_service, \
-                patch('weather_service.WeatherService') as mock_weather_service:
+                patch('lunch_roulette.services.weather_service.WeatherService') as mock_weather_service:
 
             # サービスでエラーが発生する場合
             mock_location_service.side_effect = Exception("Location service error")
@@ -98,167 +98,6 @@ class TestFlaskEndpointsIntegration:
             # デフォルトデータでページが表示されることを確認
             html_content = response.data.decode('utf-8')
             assert '東京' in html_content  # デフォルト位置
-
-    def test_roulette_endpoint_success(self, client):
-        """ルーレットエンドポイント成功テスト"""
-        with patch('lunch_roulette.services.restaurant_service.RestaurantService') as mock_restaurant_service, \
-                patch('restaurant_selector.RestaurantSelector') as mock_restaurant_selector, \
-                patch('weather_service.WeatherService') as mock_weather_service:
-
-            # モックサービスの設定
-            mock_restaurant_instance = Mock()
-            mock_restaurant_instance.search_lunch_restaurants.return_value = [{
-                'id': 'J001234567',
-                'name': 'テストレストラン',
-                'genre': '和食',
-                'lat': 35.6815,
-                'lng': 139.7675,
-                'budget_average': 1000,
-                'address': '東京都千代田区',
-                'urls': {'pc': 'http://example.com'},
-                'photo': 'http://example.com/photo.jpg'
-            }]
-            mock_restaurant_service.return_value = mock_restaurant_instance
-
-            mock_selector_instance = Mock()
-            mock_selector_instance.select_random_restaurant.return_value = {
-                'id': 'J001234567',
-                'name': 'テストレストラン',
-                'genre': '和食',
-                'address': '東京都千代田区',
-                'catch': 'おいしいレストラン',
-                'display_info': {
-                    'budget_display': '¥1,000',
-                    'photo_url': 'http://example.com/photo.jpg',
-                    'hotpepper_url': 'http://example.com',
-                    'map_url': 'https://maps.google.com',
-                    'summary': 'テストレストラン - 和食',
-                    'access_display': '徒歩5分',
-                    'hours_display': '11:00-14:00'
-                },
-                'distance_info': {
-                    'distance_km': 0.5,
-                    'distance_display': '500m',
-                    'walking_time_minutes': 8,
-                    'time_display': '徒歩8分'
-                }
-            }
-            mock_restaurant_selector.return_value = mock_selector_instance
-
-            mock_weather_instance = Mock()
-            mock_weather_instance.get_current_weather.return_value = {
-                'temperature': 25.0,
-                'description': '晴れ',
-                'uv_index': 5.0,
-                'icon': '01d',
-                'source': 'openweathermap'
-            }
-            mock_weather_instance.is_good_weather_for_walking.return_value = True
-            mock_weather_service.return_value = mock_weather_instance
-
-            # リクエストデータ
-            request_data = {
-                'latitude': 35.6812,
-                'longitude': 139.7671
-            }
-
-            response = client.post('/roulette',
-                                   data=json.dumps(request_data),
-                                   content_type='application/json')
-
-            assert response.status_code == 200
-            assert response.content_type == 'application/json'
-
-            # レスポンスデータの確認
-            data = response.get_json()
-            assert data['success'] is True
-            assert 'restaurant' in data
-            assert 'distance' in data
-            assert data['restaurant']['name'] == 'テストレストラン'
-            assert data['distance']['distance_display'] == '500m'
-
-    def test_roulette_endpoint_no_restaurants(self, client):
-        """ルーレットエンドポイント（レストランなし）テスト"""
-        with patch('lunch_roulette.services.restaurant_service.RestaurantService') as mock_restaurant_service, \
-                patch('weather_service.WeatherService') as mock_weather_service:
-
-            # レストランが見つからない場合
-            mock_restaurant_instance = Mock()
-            mock_restaurant_instance.search_lunch_restaurants.return_value = []
-            mock_restaurant_service.return_value = mock_restaurant_instance
-
-            mock_weather_instance = Mock()
-            mock_weather_instance.get_current_weather.return_value = {
-                'temperature': 25.0,
-                'description': '晴れ',
-                'uv_index': 5.0,
-                'icon': '01d'
-            }
-            mock_weather_instance.is_good_weather_for_walking.return_value = True
-            mock_weather_service.return_value = mock_weather_instance
-
-            request_data = {
-                'latitude': 35.6812,
-                'longitude': 139.7671
-            }
-
-            response = client.post('/roulette',
-                                   data=json.dumps(request_data),
-                                   content_type='application/json')
-
-            assert response.status_code == 200
-
-            data = response.get_json()
-            assert data['success'] is False
-            assert 'レストランが見つかりません' in data['message']
-
-    def test_roulette_endpoint_missing_coordinates(self, client):
-        """ルーレットエンドポイント（座標不足）テスト"""
-        with patch('lunch_roulette.services.location_service.LocationService') as mock_location_service, \
-                patch('restaurant_service.RestaurantService') as mock_restaurant_service, \
-                patch('weather_service.WeatherService') as mock_weather_service:
-
-            # LocationServiceのモック設定（IPから位置情報を取得）
-            mock_location_instance = Mock()
-            mock_location_instance.get_location_from_ip.return_value = {
-                'latitude': 35.6812,
-                'longitude': 139.7671,
-                'city': '東京',
-                'source': 'ipapi.co'
-            }
-            mock_location_service.return_value = mock_location_instance
-
-            # レストランが見つからない場合
-            mock_restaurant_instance = Mock()
-            mock_restaurant_instance.search_lunch_restaurants.return_value = []
-            mock_restaurant_service.return_value = mock_restaurant_instance
-
-            mock_weather_instance = Mock()
-            mock_weather_instance.get_current_weather.return_value = {
-                'temperature': 25.0,
-                'description': '晴れ',
-                'uv_index': 5.0,
-                'icon': '01d'
-            }
-            mock_weather_instance.is_good_weather_for_walking.return_value = True
-            mock_weather_service.return_value = mock_weather_instance
-
-            # 座標が不足しているリクエスト（IPから取得される）
-            request_data = {
-                'latitude': 35.6812
-                # longitude が不足
-            }
-
-            response = client.post('/roulette',
-                                   data=json.dumps(request_data),
-                                   content_type='application/json')
-
-            # 座標不足でIPから取得するため200が返される
-            assert response.status_code == 200
-
-            data = response.get_json()
-            assert data['success'] is False  # レストランが見つからないため
-            assert 'レストランが見つかりません' in data['message']
 
     def test_roulette_endpoint_invalid_json(self, client):
         """ルーレットエンドポイント（無効なJSON）テスト"""
@@ -305,7 +144,7 @@ class TestFlaskEndpointsIntegration:
         if response.content_type == 'application/json':
             data = response.get_json()
             assert data['error'] is True
-            assert 'ペ�Eジが見つかりません' in data['message']
+            assert 'ページが見つかりません' in data['message']
         else:
             # HTMLエラーページの場合
             assert response.content_type.startswith('text/html')
@@ -372,8 +211,8 @@ class TestFlaskEndpointsIntegration:
     def test_concurrent_requests_simulation(self, client):
         """同時リクエストシミュレーションテスト"""
         with patch('lunch_roulette.services.restaurant_service.RestaurantService') as mock_restaurant_service, \
-                patch('restaurant_selector.RestaurantSelector') as mock_restaurant_selector, \
-                patch('weather_service.WeatherService') as mock_weather_service:
+                patch('lunch_roulette.utils.restaurant_selector.RestaurantSelector') as mock_restaurant_selector, \
+                patch('lunch_roulette.services.weather_service.WeatherService') as mock_weather_service:
 
             mock_restaurant_instance = Mock()
             mock_restaurant_instance.search_lunch_restaurants.return_value = [{

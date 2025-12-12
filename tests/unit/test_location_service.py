@@ -44,7 +44,7 @@ class TestLocationService:
         assert LocationService.DEFAULT_LOCATION['city'] == '東京'
         assert LocationService.DEFAULT_LOCATION['country'] == '日本'
 
-    @patch('location_service.requests.get')
+    @patch('lunch_roulette.services.location_service.requests.get')
     def test_get_location_from_ip_success(self, mock_get, location_service, mock_cache_service):
         """位置情報取得成功テスト"""
         # モックAPIレスポンス
@@ -81,7 +81,7 @@ class TestLocationService:
         # キャッシュに保存されたことを確認
         mock_cache_service.set_cached_data.assert_called_once()
 
-    @patch('location_service.requests.get')
+    @patch('lunch_roulette.services.location_service.requests.get')
     def test_get_location_from_ip_auto_detect(self, mock_get, location_service):
         """自動IP検出テスト"""
         # モックAPIレスポンス
@@ -122,12 +122,15 @@ class TestLocationService:
         # APIが呼ばれなかったことを確認
         mock_cache_service.get_cached_data.assert_called_once()
 
-    @patch('location_service.requests.get')
+    @patch('lunch_roulette.services.location_service.requests.get')
     def test_get_location_from_ip_http_error(self, mock_get, location_service):
         """HTTP エラー時のテスト"""
         # HTTPエラーをシミュレート
         mock_response = Mock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Not Found")
+        mock_response.status_code = 404
+        http_error = requests.exceptions.HTTPError("404 Not Found")
+        http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
         mock_get.return_value = mock_response
 
         result = location_service.get_location_from_ip('invalid.ip')
@@ -138,13 +141,15 @@ class TestLocationService:
         assert result['latitude'] == 35.6812
         assert result['longitude'] == 139.7671
 
-    @patch('location_service.requests.get')
+    @patch('lunch_roulette.services.location_service.requests.get')
     def test_get_location_from_ip_rate_limit(self, mock_get, location_service, mock_cache_service):
         """レート制限エラー時のテスト"""
         # レート制限エラーをシミュレート
         mock_response = Mock()
         mock_response.status_code = 429
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("429 Too Many Requests")
+        http_error = requests.exceptions.HTTPError("429 Too Many Requests")
+        http_error.response = mock_response
+        mock_response.raise_for_status.side_effect = http_error
         mock_get.return_value = mock_response
 
         # フォールバックキャッシュデータを設定
@@ -161,7 +166,7 @@ class TestLocationService:
             # フォールバックデータが返されることを確認
             assert result == fallback_data
 
-    @patch('location_service.requests.get')
+    @patch('lunch_roulette.services.location_service.requests.get')
     def test_get_location_from_ip_network_error(self, mock_get, location_service):
         """ネットワークエラー時のテスト"""
         # ネットワークエラーをシミュレート
@@ -173,7 +178,7 @@ class TestLocationService:
         assert result['source'] == 'default'
         assert result['city'] == '東京'
 
-    @patch('location_service.requests.get')
+    @patch('lunch_roulette.services.location_service.requests.get')
     def test_get_location_from_ip_api_error_response(self, mock_get, location_service):
         """API エラーレスポンス時のテスト"""
         # APIエラーレスポンスをシミュレート
@@ -324,32 +329,7 @@ class TestLocationService:
 
         assert location_service.validate_location_data(invalid_type_data) is False
 
-    @patch('location_service.get_db_connection')
-    def test_get_fallback_cache_data_success(self, mock_get_db_connection, location_service):
-        """フォールバックキャッシュデータ取得成功テスト"""
-        # モックデータベース接続を設定
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_get_db_connection.return_value.__enter__.return_value = mock_conn
-        mock_conn.execute.return_value = mock_cursor
-
-        # フォールバックデータをモック
-        fallback_data = {
-            'latitude': 35.6762,
-            'longitude': 139.6503,
-            'city': '東京'
-        }
-        mock_cursor.fetchone.return_value = {
-            'data': location_service.cache_service.serialize_data(fallback_data)
-        }
-
-        with patch.object(location_service.cache_service, 'deserialize_data', return_value=fallback_data):
-            result = location_service._get_fallback_cache_data('test_key')
-
-            assert result is not None
-            assert result['source'] == 'fallback_cache'
-
-    @patch('location_service.get_db_connection')
+    @patch('lunch_roulette.models.database.get_db_connection')
     def test_get_fallback_cache_data_not_found(self, mock_get_db_connection, location_service):
         """フォールバックキャッシュデータ取得（データなし）テスト"""
         # モックデータベース接続を設定

@@ -1,0 +1,48 @@
+version: "3.3"
+
+services:
+  lunch-roulette:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lunch-roulette-app
+    environment:
+      # Flask設定
+      - HOST=0.0.0.0
+      - PORT=5000
+      - FLASK_DEBUG=false
+      - SECRET_KEY=${SECRET_KEY}
+      
+      # API Keys（必須：.envファイルまたは環境変数で設定）
+      - WEATHERAPI_KEY=${WEATHERAPI_KEY}
+      - HOTPEPPER_API_KEY=${HOTPEPPER_API_KEY}
+      
+      # データベース設定
+      - DATABASE_PATH=/app/data/cache.db
+      
+      # キャッシュ設定
+      - CACHE_TTL_MINUTES=${CACHE_TTL_MINUTES}
+      
+      # 位置情報設定（デフォルト：東京）
+      - DEFAULT_LATITUDE=${DEFAULT_LATITUDE}
+      - DEFAULT_LONGITUDE=${DEFAULT_LONGITUDE}
+      
+      # レストラン検索設定
+      - SEARCH_RADIUS_KM=${SEARCH_RADIUS_KM}
+      - MAX_BUDGET_YEN=${MAX_BUDGET_YEN}
+      - DEFAULT_MAX_WALKING_TIME_MIN=${DEFAULT_MAX_WALKING_TIME_MIN}
+    expose:
+      - "5000"  # コンテナ内ポート
+    restart: unless-stopped # コンテナが停止した場合に自動再起動
+    volumes:
+      - /etc/localtime:/etc/localtime:ro  # ホストのタイムゾーンを共有
+    networks:
+      lunch-roulette:
+        ipv4_address: 172.40.10.10
+
+networks:
+  lunch-roulette:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.40.10.0/24

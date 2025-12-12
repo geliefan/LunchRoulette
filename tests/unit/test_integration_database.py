@@ -176,18 +176,18 @@ class TestDatabaseIntegration:
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
-            """, ('valid_key1', '{"test": "valid1"}', datetime.now() + timedelta(hours=1)))
+            """, ('valid_key1', '{"test": "valid1"}', (datetime.now() + timedelta(hours=1)).isoformat()))
 
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
-            """, ('valid_key2', '{"test": "valid2"}', datetime.now() + timedelta(hours=2)))
+            """, ('valid_key2', '{"test": "valid2"}', (datetime.now() + timedelta(hours=2)).isoformat()))
 
             # 期限切れキャッシュ
             conn.execute("""
                 INSERT INTO cache (cache_key, data, expires_at)
                 VALUES (?, ?, ?)
-            """, ('expired_key', '{"test": "expired"}', datetime.now() - timedelta(hours=1)))
+            """, ('expired_key', '{"test": "expired"}', (datetime.now() - timedelta(hours=1)).isoformat()))
 
             conn.commit()
 

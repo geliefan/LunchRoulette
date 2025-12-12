@@ -201,6 +201,64 @@ body {
   opacity: 0.7;
 }
 
+/* GPS位置取得コントロール（現在地カード内） */
+.gps-control {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--surface-variant);
+}
+
+.gps-btn {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--primary-color);
+  border-radius: var(--radius-small);
+  background-color: var(--surface-color);
+  color: var(--primary-color);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  transition: all var(--transition-base);
+}
+
+.gps-btn:hover {
+  background-color: var(--primary-color);
+  color: var(--on-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-1);
+}
+
+.gps-btn:active {
+  transform: translateY(0);
+}
+
+.gps-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.gps-status {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--on-surface-variant);
+  text-align: center;
+  padding: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.gps-status.success {
+  color: var(--success-color);
+}
+
+.gps-status.error {
+  color: var(--error-color);
+}
+
 /* 天気情報カード*/
 .weather-main {
   display: flex;
@@ -832,3 +890,128 @@ body {
     border: 1px solid #ccc;
   }
 }
+
+/* ===== 検索条件セクション ===== */
+.search-conditions-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.search-conditions-box {
+  background: var(--surface-color);
+  border-radius: var(--radius-medium);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-1);
+}
+
+.box-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--on-surface);
+  margin-bottom: var(--spacing-md);
+}
+
+.title-icon {
+  font-size: var(--font-size-xl);
+}
+
+.conditions-grid {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+.condition-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.mode-select-group {
+  grid-column: 1 / -1; /* 全幅表示 */
+}
+
+.mode-select-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.mode-btn {
+  flex: 1;
+  min-width: 150px;
+  padding: var(--spacing-md);
+  border: 2px solid var(--surface-container-high);
+  border-radius: var(--radius-small);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  background-color: var(--surface-color);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.mode-btn:hover {
+  border-color: var(--primary-light);
+  background-color: var(--surface-variant);
+}
+
+.mode-btn.active {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  color: var(--on-primary);
+}
+
+.mode-icon {
+  font-size: var(--font-size-lg);
+}
+
+.condition-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--on-surface-variant);
+  margin-bottom: var(--spacing-sm);
+}
+
+.label-icon {
+  font-size: var(--font-size-lg);
+}
+
+.condition-select {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 2px solid var(--surface-container-high);
+  border-radius: var(--radius-small);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  color: var(--on-surface);
+  background-color: var(--surface-color);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.condition-select:hover {
+  border-color: var(--primary-light);
+}
+
+.condition-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(103, 80, 164, 0.1);
+}
+
+/* レスポンシブ対応（検索条件） */
+@media (min-width: 768px) {
+  .conditions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+

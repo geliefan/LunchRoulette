@@ -4,14 +4,19 @@
 
 ## 概要
 
-Lunch Rouletteは、東京エリアのユーザーがリアルタイムの天気データと徒歩距離計算を組み合わせてランチスポットを発見できる低コストWebサービスです。PythonAnywhere無料プランで動作し、予算制限下で近くのレストランを見つけるためのシンプルで効率的なインターフェースを提供します。
+Lunch Rouletteは、東京エリアのユーザーがリアルタイムの天気データと徒歩距離計算を組み合わせてランチスポットを発見できるWebサービスです。予算制限下で近くのレストランを見つけるためのシンプルで効率的なインターフェースを提供します。
 
 ## 主な機能
 
 - **自動位置検出**: IPアドレスベースの位置情報検出
+- **GPS位置取得**: ブラウザのGeolocation APIによる正確な現在地取得
 - **リアルタイム天気情報**: WeatherAPI.com APIを使用した現在の天気表示
-- **レストラン検索**: Hot Pepper Gourmet APIを使用した半径1km以内のレストラン検索
-- **予算フィルタリング**: ランチ予算≤¥1,200での絞り込み
+- **レストラン検索**: Hot Pepper Gourmet APIを使用したレストラン検索
+- **カスタマイズ可能な検索条件**:
+  - 徒歩時間指定（5分/10分/15分/20分/20分超）
+  - 予算カテゴリ選択（すべて/〜500円/〜1000円/〜1500円/〜2000円/〜3000円）
+  - ジャンル選択（和食/中華/洋食/ラーメン/カレー/カフェ・スイーツ/焼肉・ホルモン/居酒屋/指定なし）
+  - ランチフィルタ（ランチ営業ありの店舗に絞り込み）
 - **距離計算**: ハーバーサイン公式を使用した正確な徒歩距離計算
 - **キャッシング**: SQLiteを使用した10分間のAPIレスポンスキャッシュ
 - **モダンUI**: レスポンシブデザインとモダンなユーザーインターフェース
@@ -25,7 +30,7 @@ Lunch Rouletteは、東京エリアのユーザーがリアルタイムの天気
   - WeatherAPI.com Current Weather API
   - Hot Pepper Gourmet Web API
   - ipapi.co（位置情報検出用）
-- **デプロイメント**: PythonAnywhere無料プラン
+- **開発環境**: ローカル環境, GitHub Codespaces
 
 ## 技術理論概要
 
@@ -122,8 +127,6 @@ Lunch Rouletteの技術的な基盤は、以下の理論とアルゴリズムに
 
 3. 無料プランでは1日100万回まで利用可能
 
-**Note**: 現在、テスト用APIキー `weather_api_key` がデフォルトで設定されています。
-
 #### Hot Pepper Gourmet API
 
 
@@ -177,9 +180,11 @@ lunch-roulette/
 │       ├── __init__.py              # パッケージ初期化
 │       ├── app.py                   # メインFlaskアプリケーション
 │       ├── config.py                # 設定管理
-│       ├── wsgi.py                  # PythonAnywhere用WSGI設定
+│       ├── wsgi.py                  # WSGI設定
 │       ├── api/                     # API関連モジュール
 │       │   └── __init__.py
+│       ├── data/                    # マスタデータ
+│       │   └── genres.json          # ジャンルマスタデータ
 │       ├── models/                  # データモデル
 │       │   ├── __init__.py
 │       │   └── database.py          # データベース管理
@@ -326,24 +331,19 @@ expires_at = datetime.now() + cache_duration
 ### ログの確認
 
 ```bash
-# アプリケーションログの確認
-tail -f /var/log/pythonanywhere.log
-
-# エラーログの確認
-python -c "
-import logging
-logging.basicConfig(level=logging.DEBUG)
-# アプリケーションを実行
-"
+# デバッグモードでアプリケーションを起動
+FLASK_DEBUG=true python run.py
 ```
+
+デバッグモードではコンソールに詳細なログが出力されます。
 
 ## 貢献
 
-1. こリポジトリをフォーク
-2. 機ブランチを作 (`git chckout -b fatur/amazing-fatur`)
-3. 変更をコミッチ(`git commit -m 'Add amazing fatur'`)
-4. ブランチにプッシュ (`git push origin fatur/amazing-fatur`)
-5. プルリクエストを作
+1. このリポジトリをフォーク
+2. 機能ブランチを作成 (`git checkout -b feature/amazing-feature`)
+3. 変更をコミット (`git commit -m 'Add amazing feature'`)
+4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
+5. プルリクエストを作成
 
 ## ライセンス
 
@@ -359,7 +359,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 - WeatherAPI.com API
 - Hot Pepper Gourmet API
-- PythonAnywhere
 - Flask コミュニティ
 
 ---
