@@ -1,85 +1,124 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
-RestaurantSelector - レストラン選択ロジッククラス
-検索結果からランダム選択機能とレストランデータと距離情報の統合機能を提供
+レストラン選択モジュール - ランチのお店をランダムに選ぶ
 
-このクラスは以下の機能を提供します:
-- 検索結果からランダム選択機能
-- レストランデータと距離情報の統合機能
-- 選択結果の整形とフォーマット機能
+【このモジュールがやること】
+検索で見つかったレストランの中から、ランダムに1つ（または複数）選びます。
+まるでルーレットを回すような感覚でお店を選べます。
+
+【なぜ必要か】
+「今日のランチ、どこにしよう？」と迷った時、選択肢が多すぎると逆に決められません。
+このモジュールがランダムにお店を選んでくれるので、決断の手間が省けます。
+
+【主な機能】
+1. リストからランダムに1つのお店を選ぶ（ルーレット機能）
+2. 選んだお店までの距離と歩く時間を計算
+3. お店の情報をわかりやすく整形
 """
 
-import random
-from typing import Dict, List, Optional
-from .distance_calculator import DistanceCalculator
-from .error_handler import ErrorHandler
+import random  # ランダム選択に使う標準ライブラリ
+from typing import Dict, List, Optional  # 型ヒント用（プログラムをわかりやすくするため）
+from .distance_calculator import DistanceCalculator  # 距離計算機能
+from .error_handler import ErrorHandler  # エラー処理機能
 
 
 class RestaurantSelector:
     """
-    レストラン選択とデータ統合を行うビジネスロジッククラス
-
-    レストラン検索結果からランダムに選択し、距離情報を統合して
-    ユーザーに提供する最終的なレストラン情報を生成する。
+    レストランをランダムに選び、距離情報を追加するクラス
+    
+    【何をするクラス?】
+    1. 検索結果からランダムにお店を選ぶ（ルーレット）
+    2. 選んだお店までの距離を計算
+    3. 「徒歩〇分」などの情報を追加
+    
+    【使い方のイメージ】
+    たくさんのお店の中から「今日のランチはここ!」と
+    ルーレットのように1つ選んでくれます。
+    
+    【使用例】
+        selector = RestaurantSelector()
+        # 10件のお店から1つ選ぶ
+        chosen = selector.select_random_restaurant(restaurants, 緯度, 経度)
+        print(f"今日のランチは{chosen['name']}!")
+        print(f"徒歩{chosen['distance_info']['walking_time_minutes']}分")
     """
 
     def __init__(self, distance_calculator: Optional[DistanceCalculator] = None,
                  error_handler: Optional[ErrorHandler] = None):
         """
-        RestaurantSelectorを初期化
+        レストラン選択機能を初期化
+        
+        【初期化でやること】
+        1. 距離計算機を準備（お店までの距離を計算するため）
+        2. エラー処理機を準備（問題が起きた時の対処用）
+        3. ランダム選択機能を準備（ルーレットのように選ぶため）
 
         Args:
-            distance_calculator (DistanceCalculator, optional): 距離計算サービス
-            error_handler (ErrorHandler, optional): エラーハンドラー
+            distance_calculator: 距離計算機（省略可、自動で作成）
+            error_handler: エラー処理機（省略可、自動で作成）
         """
         self.error_handler = error_handler or ErrorHandler()
         self.distance_calculator = distance_calculator or DistanceCalculator(self.error_handler)
-        self.random = random.Random()  # テスト可能性のためのRandomインスタンス
+        self.random = random.Random()  # ランダム選択用（テストでも使いやすいようにインスタンス化）
 
     def select_random_restaurant(self, restaurants: List[Dict], user_lat: float, user_lon: float) -> Optional[Dict]:
         """
-        レストランリストからランダムに1つを選択し、距離情報を統合
+        レストランのリストからランダムに1つを選ぶ（ルーレット機能）
+        
+        【処理の流れ】
+        1. お店のリストが空でないかチェック
+        2. データがちゃんとしているお店だけに絞る
+        3. その中からランダムに1つ選ぶ（サイコロを振るイメージ）
+        4. 選んだお店までの距離と歩く時間を計算
+        5. すべての情報をまとめて返す
+        
+        【イメージ】
+        10件のお店 → 有効な8件に絞る → ランダムに1つ選ぶ → 距離を計算 → 完成!
 
         Args:
-            restaurants (list): レストラン情報のリスト
-            user_lat (float): ユーザーの緯度
-            user_lon (float): ユーザーの経度
+            restaurants: お店の情報リスト（10件、20件など）
+            user_lat: あなたがいる場所の緯度（例: 35.6812）
+            user_lon: あなたがいる場所の経度（例: 139.7671）
 
         Returns:
-            dict: 距離情報が統合されたレストラン情報、選択できなかった場合はNone
+            選ばれたお店の情報（距離・徒歩時間付き）
+            選べなかった場合は None を返す
 
-        Example:
+        使用例:
             >>> selector = RestaurantSelector()
-            >>> restaurants = [{'id': '1', 'name': 'Test Restaurant', 'lat': 35.6812, 'lng': 139.7671}]
-            >>> result = selector.select_random_restaurant(restaurants, 35.6800, 139.7700)
-            >>> print(result['name'])  # 'Test Restaurant'
-            >>> print(result['distance_info']['distance_display'])  # '約200m'
+            >>> restaurants = [...10件のお店リスト...]
+            >>> chosen = selector.select_random_restaurant(restaurants, 35.6800, 139.7700)
+            >>> print(chosen['name'])  # '◯◯食堂'
+            >>> print(chosen['distance_info']['distance_display'])  # '約200m'
         """
         try:
-            # レストランリストが空の場合
+            # ===== ステップ1: お店のリストが空でないかチェック =====
             if not restaurants:
+                # リストが空の場合はエラーメッセージを表示
                 no_restaurant_error = ValueError("選択可能なレストランがありません")
                 error_info = self.error_handler.handle_restaurant_error(no_restaurant_error, fallback_available=False)
                 print(f"レストラン選択エラー: {error_info['message']}")
                 return None
 
-            # 有効なレストランのみをフィルタリング
+            # ===== ステップ2: データがちゃんとしているお店だけに絞る =====
+            # 座標がおかしい、名前が空など、問題のあるデータを除外
             valid_restaurants = self._filter_valid_restaurants(restaurants)
 
             if not valid_restaurants:
+                # 全部除外されてしまった場合
                 invalid_data_error = ValueError("有効なレストランデータがありません")
                 error_info = self.error_handler.handle_restaurant_error(invalid_data_error, fallback_available=False)
                 print(f"レストラン選択エラー: {error_info['message']}")
                 return None
 
-            # ランダムに1つのレストランを選択
+            # ===== ステップ3: ランダムに1つのお店を選ぶ =====
+            # random.choice()は、リストからランダムに1つ選ぶPythonの機能
+            # まるでサイコロを振るように、毎回違うお店が選ばれます
             selected_restaurant = self.random.choice(valid_restaurants)
 
             print(f"レストランを選択: {selected_restaurant['name']}")
 
-            # 距離情報を計算して統合
+            # ===== ステップ4: 距離情報を計算して追加 =====
+            # 選んだお店までの距離、徒歩時間などを計算して情報に追加
             restaurant_with_distance = self._integrate_distance_info(
                 selected_restaurant, user_lat, user_lon
             )
@@ -87,6 +126,7 @@ class RestaurantSelector:
             return restaurant_with_distance
 
         except Exception as e:
+            # 予期しないエラーが発生した場合の処理
             error_info = self.error_handler.handle_restaurant_error(e, fallback_available=False)
             print(f"レストラン選択エラー: {error_info['message']}")
             return None

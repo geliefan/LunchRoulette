@@ -127,6 +127,77 @@ class TestRestaurantService:
 
         assert restaurant_service.validate_restaurant_data(invalid_data) is False
 
+    @patch('lunch_roulette.services.restaurant_service.requests.get')
+    def test_search_restaurants_with_genre_code(self, mock_get, restaurant_service, mock_cache_service):
+        """ジャンルコード指定でのレストラン検索テスト"""
+        # キャッシュなし
+        mock_cache_service.get_cached_data.return_value = None
+        
+        # APIレスポンスのモック
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'results': {
+                'shop': [
+                    {
+                        'id': 'J001',
+                        'name': '中華料理店',
+                        'genre': {'code': 'G007', 'name': '中華'},
+                        'budget': {'code': 'B010', 'name': '〜1000円'},
+                        'lat': '35.6812',
+                        'lng': '139.7671',
+                        'address': '東京都千代田区',
+                        'photo': {}
+                    }
+                ]
+            }
+        }
+        mock_get.return_value = mock_response
+        
+        # ジャンルコード指定で検索
+        result = restaurant_service.search_restaurants(
+            lat=35.6812,
+            lon=139.7671,
+            radius=1,
+            genre_code='G007'
+        )
+        
+        # APIが正しく呼ばれたことを確認
+        assert mock_get.called
+        call_args = mock_get.call_args
+        assert 'params' in call_args.kwargs
+        assert call_args.kwargs['params']['genre'] == 'G007'
+        
+        # 結果が返されることを確認
+        assert len(result) >= 0
+
+    def test_search_lunch_restaurants_with_genre(self, restaurant_service, mock_cache_service):
+        """ジャンル指定でのランチレストラン検索テスト"""
+        # search_restaurantsのモック
+        with patch.object(restaurant_service, 'search_restaurants') as mock_search:
+            mock_search.return_value = [
+                {'id': '1', 'name': 'ラーメン店', 'budget_average': 800, 'genre': 'ラーメン'},
+                {'id': '2', 'name': '高級ラーメン', 'budget_average': 1500, 'genre': 'ラーメン'}
+            ]
+            
+            # ジャンルコード指定で検索
+            result = restaurant_service.search_lunch_restaurants(
+                lat=35.6812,
+                lon=139.7671,
+                radius=1,
+                genre_code='G013'
+            )
+            
+            # search_restaurantsがgenre_code付きで呼ばれたことを確認
+            mock_search.assert_called_once()
+            call_kwargs = mock_search.call_args.kwargs
+            assert 'genre_code' in call_kwargs
+            assert call_kwargs['genre_code'] == 'G013'
+            
+            # 予算フィルタリングが適用されることを確認
+            assert len(result) == 1  # 1200円以下は1件のみ
+            assert result[0]['id'] == '1'
+
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

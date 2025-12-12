@@ -22,7 +22,17 @@ const gpsBtn = document.getElementById('gps-btn');            // GPS位置取得
 // 検索条件の入力要素
 const walkingTimeSelect = document.getElementById('walking-time-select');  // 徒歩時間選択
 const budgetSelect = document.getElementById('budget');                     // 予算選択
+const genreSelect = document.getElementById('genre');                       // ジャンル選択
+const areaSelect = document.getElementById('area');                         // エリア選択
 const gpsStatus = document.getElementById('gps-status');            // GPSステータス表示
+
+// モード切り替えボタン
+const modeCurrentBtn = document.getElementById('mode-current');  // 現在地モードボタン
+const modeAreaBtn = document.getElementById('mode-area');        // エリアモードボタン
+
+// 条件グループの表示/非表示制御用
+const walkingTimeGroup = document.getElementById('walking-time-group');  // 徒歩時間グループ
+const areaSelectGroup = document.getElementById('area-select-group');    // エリア選択グループ
 
 // メッセージ表示エリア
 const errorMessage = document.getElementById('error-message');          // エラーメッセージ表示エリア
@@ -48,6 +58,7 @@ const hotpepperLink = document.getElementById('hotpepper-link');         // ホ�
 
 // ===== グローバル変数 =====
 let userLocation = null;  // GPS取得した位置情報を保持する変数
+let currentLocationMode = 'current';  // 現在の位置指定モード（'current' or 'area'）
 
 /**
  * ローディング状態の表示/非表示を切り替える関数
@@ -80,13 +91,16 @@ function toggleLoading(isLoading) {
  */
 function showError(message) {
     const errorText = errorMessage.querySelector('.error-text');
-    errorText.textContent = message;              // エラーメッセージのテキストを設定
+    
+    // 改行を<br>タグに変換して表示
+    const formattedMessage = message.replace(/\n/g, '<br>');
+    errorText.innerHTML = formattedMessage;       // エラーメッセージのHTMLを設定
     errorMessage.style.display = 'flex';          // エラーメッセージエリアを表示
     
-    // 5秒後に自動的に非表示にする
+    // 10秒後に自動的に非表示にする（長めのメッセージに対応）
     setTimeout(() => {
         hideError();
-    }, 5000);  // 5000ミリ秒 = 5秒
+    }, 10000);  // 10000ミリ秒 = 10秒
 }
 
 /**
@@ -249,12 +263,19 @@ function displayRestaurant(data) {
     restaurantGenre.textContent = restaurant.genre;        // ジャンル（例: 和食、イタリアン）
     restaurantAddress.textContent = restaurant.address;    // 住所
     restaurantBudget.textContent = restaurant.budget_display;  // 予算表示
-    walkingTime.textContent = distance.time_display;       // 徒歩時間（例: 「徒歩約8分」）
     restaurantHours.textContent = restaurant.hours || '営業時間情報なし';  // 営業時間
     restaurantCatch.textContent = restaurant.catch || restaurant.summary || '';  // キャッチコピー
     
-    // 距離バッジ（例: 「500m」や「1.2km」）
-    distanceBadge.textContent = distance.distance_display;
+    // 距離情報と徒歩時間（現在地モードの場合のみ）
+    if (distance) {
+        walkingTime.textContent = distance.time_display;       // 徒歩時間（例: 「徒歩約8分」）
+        distanceBadge.textContent = distance.distance_display; // 距離バッジ（例: 「500m」や「1.2km」）
+        distanceBadge.style.display = 'inline-block';
+    } else {
+        // エリアモードの場合は距離情報なし
+        walkingTime.textContent = 'アクセス情報は店舗詳細をご確認ください';
+        distanceBadge.style.display = 'none';
+    }
     
     // ===== レストランの写真を設定 =====
     if (restaurant.photo_url && restaurant.photo_url !== 'no-image') {
@@ -320,21 +341,42 @@ async function executeRoulette() {
         // ===== ステップ1.5: 検索条件を収集 =====
         const searchParams = {};
         
-        // GPS位置情報があれば追加
-        if (userLocation) {
-            searchParams.latitude = userLocation.latitude;
-            searchParams.longitude = userLocation.longitude;
-            console.log('GPS位置情報を使用:', userLocation);
-        }
+        // 位置指定モードを追加
+        searchParams.location_mode = currentLocationMode;
         
-        // 徒歩時間を追加
-        const walkingTimeValue = parseInt(walkingTimeSelect.value);
-        searchParams.max_walking_time_min = walkingTimeValue;
+        if (currentLocationMode === 'current') {
+            // 現在地モード
+            // GPS位置情報があれば追加
+            if (userLocation) {
+                searchParams.latitude = userLocation.latitude;
+                searchParams.longitude = userLocation.longitude;
+                console.log('GPS位置情報を使用:', userLocation);
+            }
+            
+            // 徒歩時間を追加
+            const walkingTimeValue = parseInt(walkingTimeSelect.value);
+            searchParams.max_walking_time_min = walkingTimeValue;
+        } else {
+            // エリアモード
+            const areaValue = areaSelect.value;
+            if (!areaValue) {
+                // エリアが選択されていない場合はエラー
+                throw new Error('エリアを選択してください');
+            }
+            searchParams.middle_area_code = areaValue;
+            console.log('エリアコードを使用:', areaValue);
+        }
         
         // 予算コードを追加（空文字列の場合はnull）
         const budgetValue = budgetSelect.value;
         if (budgetValue) {
             searchParams.budget_code = budgetValue;
+        }
+        
+        // ジャンルコードを追加（空文字列の場合はnull）
+        const genreValue = genreSelect.value;
+        if (genreValue) {
+            searchParams.genre_code = genreValue;
         }
         
         // ランチフィルタを追加（デフォルト: 1 = ランチあり）
@@ -366,7 +408,13 @@ async function executeRoulette() {
         // ===== ステップ5: エラーレスポンスのチェック =====
         if (data.error || !data.success) {
             // サーバーからエラーが返ってきた場合
-            const errorMsg = data.message || 'レストラン検索中にエラーが発生しました';
+            let errorMsg = data.message || 'レストラン検索中にエラーが発生しました';
+            
+            // サジェスションがある場合は追加
+            if (data.suggestion) {
+                errorMsg += '\n' + data.suggestion;
+            }
+            
             throw new Error(errorMsg);
         }
         
@@ -410,6 +458,124 @@ async function executeRoulette() {
 }
 
 /**
+ * ジャンルマスタデータを取得してセレクトボックスに設定する関数
+ * 
+ * サーバーからジャンルデータを取得し、ジャンル選択UIに反映します。
+ */
+async function loadGenres() {
+    try {
+        console.log('ジャンルマスタを読み込み中...');
+        
+        // サーバーからジャンルデータを取得
+        const response = await fetch('/api/genres');
+        
+        if (!response.ok) {
+            throw new Error('ジャンルマスタの取得に失敗しました');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || !data.genres) {
+            throw new Error('ジャンルデータが不正です');
+        }
+        
+        // セレクトボックスをクリア（「指定なし」以外）
+        genreSelect.innerHTML = '<option value="">指定なし</option>';
+        
+        // ジャンルデータをセレクトボックスに追加
+        data.genres.forEach(genre => {
+            // code が空文字列（「指定なし」）はスキップ
+            if (genre.code === '') {
+                return;
+            }
+            
+            const option = document.createElement('option');
+            option.value = genre.code;
+            option.textContent = genre.name;
+            genreSelect.appendChild(option);
+        });
+        
+        console.log(`ジャンルマスタを読み込みました: ${data.genres.length}件`);
+        
+    } catch (error) {
+        console.error('ジャンルマスタ読み込みエラー:', error);
+        // エラー時もアプリは動作するようにする（ジャンル選択は「指定なし」のまま）
+    }
+}
+
+/**
+ * エリアマスタデータを読み込む関数
+ * 
+ * サーバーからエリアデータを取得し、エリア選択UIに反映します。
+ */
+async function loadAreas() {
+    try {
+        console.log('エリアマスタを読み込み中...');
+        
+        // サーバーからエリアデータを取得
+        const response = await fetch('/api/areas');
+        
+        if (!response.ok) {
+            throw new Error('エリアマスタの取得に失敗しました');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || !data.areas) {
+            throw new Error('エリアデータが不正です');
+        }
+        
+        // セレクトボックスをクリア
+        areaSelect.innerHTML = '<option value="">エリアを選択してください</option>';
+        
+        // エリアデータをセレクトボックスに追加
+        data.areas.forEach(area => {
+            const option = document.createElement('option');
+            option.value = area.code;
+            option.textContent = area.name;
+            areaSelect.appendChild(option);
+        });
+        
+        console.log(`エリアマスタを読み込みました: ${data.areas.length}件`);
+        
+    } catch (error) {
+        console.error('エリアマスタ読み込みエラー:', error);
+        // エラー時もアプリは動作するようにする
+    }
+}
+
+/**
+ * 位置指定モードを切り替える関数
+ * 
+ * @param {string} mode - 'current'（現在地モード） または 'area'（エリアモード）
+ */
+function switchLocationMode(mode) {
+    currentLocationMode = mode;
+    
+    if (mode === 'current') {
+        // 現在地モード
+        modeCurrentBtn.classList.add('active');
+        modeAreaBtn.classList.remove('active');
+        
+        // 徒歩時間選択を表示、エリア選択を非表示
+        walkingTimeGroup.style.display = 'block';
+        areaSelectGroup.style.display = 'none';
+        
+        console.log('現在地モードに切り替えました');
+    } else {
+        // エリアモード
+        modeAreaBtn.classList.add('active');
+        modeCurrentBtn.classList.remove('active');
+        
+        // エリア選択を表示、徒歩時間選択を非表示
+        walkingTimeGroup.style.display = 'none';
+        areaSelectGroup.style.display = 'block';
+        
+        console.log('エリアモードに切り替えました');
+    }
+}
+
+/**
  * ページ読み込み完了後の初期化処理
  * 
  * DOMContentLoaded = HTMLの読み込みが完了した時に実行されるイベント
@@ -417,6 +583,25 @@ async function executeRoulette() {
  */
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Lunch Roulette JavaScript 初期化完了');
+    
+    // ===== 初期化: ジャンルマスタとエリアマスタを読み込む =====
+    loadGenres();
+    loadAreas();
+    
+    // ===== イベント0: モード切り替えボタンのクリック =====
+    if (modeCurrentBtn) {
+        modeCurrentBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            switchLocationMode('current');
+        });
+    }
+    
+    if (modeAreaBtn) {
+        modeAreaBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            switchLocationMode('area');
+        });
+    }
     
     // ===== イベント1: ルーレットボタンのクリック =====
     // ボタンがクリックされた時に executeRoulette() を実行

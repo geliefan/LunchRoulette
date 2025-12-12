@@ -148,6 +148,100 @@ def test_error_handlers():
             print(f"✘ テスト実行エラー: {e}")
 
 
+def test_genres_endpoint():
+    """ジャンルマスタAPIエンドポイント: GET /api/genres のテスト"""
+    print("\n" + "=" * 50)
+    print("ジャンルマスタAPIエンドポイント: GET /api/genres のテスト")
+    print("=" * 50)
+
+    with app.test_client() as client:
+        try:
+            response = client.get('/api/genres')
+            print(f"ステータスコード: {response.status_code}")
+            print(f"Content-Type: {response.content_type}")
+
+            if response.status_code == 200:
+                try:
+                    data = response.get_json()
+                    print("レスポンス形式: JSON")
+
+                    if data.get('success') and 'genres' in data:
+                        print("✔ ジャンルマスタAPIが正常に動作しています")
+                        genres = data['genres']
+                        print(f"  ジャンル数: {len(genres)}件")
+                        
+                        # 最初の3件を表示
+                        for i, genre in enumerate(genres[:3]):
+                            print(f"  - {genre.get('name', 'N/A')} (code: {genre.get('code', 'N/A')})")
+                        
+                        # 「中華」が含まれているか確認
+                        chinese_genre = next((g for g in genres if g.get('name') == '中華'), None)
+                        if chinese_genre:
+                            print(f"✔ 中華ジャンルが見つかりました (code: {chinese_genre.get('code')})")
+                        else:
+                            print("⚠ 中華ジャンルが見つかりませんでした")
+                    else:
+                        print("✘ ジャンルマスタデータが不正です")
+                        print(f"  レスポンス: {data}")
+
+                except Exception as e:
+                    print(f"✘ JSONレスポンス解析エラー: {e}")
+                    print(f"レスポンス: {response.data.decode('utf-8')[:200]}...")
+            else:
+                print(f"✘ エラー: ステータスコード {response.status_code}")
+                print(f"レスポンス: {response.data.decode('utf-8')[:200]}...")
+
+        except Exception as e:
+            print(f"✘ テスト実行エラー: {e}")
+
+
+def test_roulette_with_genre():
+    """ジャンル指定でのルーレットエンドポイントのテスト"""
+    print("\n" + "=" * 50)
+    print("ジャンル指定でのルーレットエンドポイントのテスト")
+    print("=" * 50)
+
+    with app.test_client() as client:
+        try:
+            # ジャンル指定でのテスト
+            test_data = {
+                'latitude': 35.6812,  # 東京駅
+                'longitude': 139.7671,
+                'genre_code': 'G007'  # 中華
+            }
+
+            response = client.post('/roulette',
+                                   json=test_data,
+                                   content_type='application/json')
+
+            print(f"ステータスコード: {response.status_code}")
+
+            if response.status_code in [200, 400, 500]:
+                try:
+                    data = response.get_json()
+                    print("レスポンス形式: JSON")
+
+                    if data.get('success'):
+                        print("✔ ジャンル指定での成功レスポンス")
+                        if 'restaurant' in data:
+                            print(f"  レストラン名: {data['restaurant'].get('name', 'N/A')}")
+                            print(f"  ジャンル: {data['restaurant'].get('genre', 'N/A')}")
+                    elif data.get('error') or not data.get('success'):
+                        print("⚠ エラーレスポンス")
+                        print(f"  メッセージ: {data.get('message', 'N/A')}")
+                        if 'APIキー' in data.get('message', '') or 'レストランが見つかりません' in data.get('message', ''):
+                            print("  ※ APIキー未設定またはレストラン未発見のため正常です")
+
+                except Exception as e:
+                    print(f"✘ JSONレスポンス解析エラー: {e}")
+                    print(f"レスポンス: {response.data.decode('utf-8')[:200]}...")
+            else:
+                print(f"✘ 予期しないステータスコード: {response.status_code}")
+
+        except Exception as e:
+            print(f"✘ テスト実行エラー: {e}")
+
+
 if __name__ == '__main__':
     print("Flask エンドポイントテスト開始")
     print("Task 5: Flaskルーティングとエンドポイントの実装 - 検証")
@@ -155,6 +249,8 @@ if __name__ == '__main__':
     # テスト実行
     test_main_page_endpoint()
     test_roulette_endpoint()
+    test_genres_endpoint()
+    test_roulette_with_genre()
     test_error_handlers()
 
     print("\n" + "=" * 50)

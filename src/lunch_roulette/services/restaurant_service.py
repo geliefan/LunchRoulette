@@ -95,7 +95,7 @@ class RestaurantService:
         if not self.api_key:
             print("警告: Hot Pepper Gourmet APIキーが設定されていません。")
 
-    def search_restaurants(self, lat: float, lon: float, radius: int = 1, budget_code: str = None, lunch: int = None) -> List[Dict]:
+    def search_restaurants(self, lat: float = None, lon: float = None, radius: int = 1, budget_code: str = None, lunch: int = None, genre_code: str = None, middle_area: str = None) -> List[Dict]:
         """
         指定された座標周辺のレストランを検索
         
@@ -112,14 +112,21 @@ class RestaurantService:
         10. レストランリストを返す
 
         Args:
-            lat (float): 緯度（例: 35.6812 = 東京駅付近）
-            lon (float): 経度（例: 139.7671 = 東京駅付近）
+            lat (float, optional): 緯度（例: 35.6812 = 東京駅付近）
+                - middle_area 指定時は不要
+            lon (float, optional): 経度（例: 139.7671 = 東京駅付近）
+                - middle_area 指定時は不要
             radius (int): 検索半径(km)、デフォルトは1km
                 - 1km = 徒歩約12〜15分の距離
+                - middle_area 指定時は無視される
             budget_code (str, optional): Hot Pepper予算コード（例: "B010"）
                 - None の場合は予算フィルタなし
             lunch (int, optional): ランチフィルタ（1=ランチあり、None=指定なし）
                 - 1 を指定すると「ランチあり」の店舗のみ検索
+            genre_code (str, optional): Hot Pepperジャンルコード（例: "G007"）
+                - None の場合はジャンルフィルタなし
+            middle_area (str, optional): Hot Pepperエリアコード（例: "Y005"）
+                - 指定時は lat/lon/radius は使用されない
 
         Returns:
             list: レストラン情報のリスト
@@ -138,20 +145,36 @@ class RestaurantService:
             >>> lunch_restaurants = restaurant_service.search_restaurants(
             ...     35.6812, 139.7671, budget_code="B010", lunch=1
             ... )
+            >>> # エリア指定
+            >>> shinjuku_restaurants = restaurant_service.search_restaurants(
+            ...     middle_area="Y005"  # 新宿エリア
+            ... )
         """
         # ====== ステップ1: キャッシュキーを生成 ======
         # 同じ場所・同じ半径の検索結果は再利用できるようにキャッシュキーを作る
         # round(lat, 4) で小数点以下4桁に丸める理由:
         #   - 緯度経度の0.0001度 ≒ 約10m の違いなので、この程度の誤差は許容
         #   - 細かすぎるとキャッシュが効きにくくなる
-        cache_key = self.cache_service.generate_cache_key(
-            'restaurants',
-            lat=round(lat, 4),
-            lon=round(lon, 4),
-            radius=radius,
-            budget_code=budget_code or 'all',
-            lunch=lunch or 0
-        )
+        
+        # エリア指定と座標指定で異なるキャッシュキーを生成
+        if middle_area:
+            cache_key = self.cache_service.generate_cache_key(
+                'restaurants',
+                middle_area=middle_area,
+                budget_code=budget_code or 'all',
+                lunch=lunch or 0,
+                genre_code=genre_code or 'all'
+            )
+        else:
+            cache_key = self.cache_service.generate_cache_key(
+                'restaurants',
+                lat=round(lat, 4) if lat else 0,
+                lon=round(lon, 4) if lon else 0,
+                radius=radius,
+                budget_code=budget_code or 'all',
+                lunch=lunch or 0,
+                genre_code=genre_code or 'all'
+            )
 
         # ====== ステップ2: キャッシュから取得を試みる ======
         # 過去に同じ検索をしていれば、そのデータを再利用（API呼び出しを節約）
@@ -171,12 +194,21 @@ class RestaurantService:
             # Hot Pepper APIに送信するパラメータを辞書形式で作成
             params = {
                 'key': self.api_key,           # APIキー（認証用）
-                'lat': lat,                    # 緯度
-                'lng': lon,                    # 経度（Hot Pepper APIでは'lng'と表記）
-                'range': self._convert_radius_to_range_code(radius),  # 検索範囲コード（後述）
                 'count': 100,                  # 最大取得件数（100件まで一度に取得）
                 'format': 'json'               # レスポンス形式（JSON形式で受け取る）
             }
+            
+            # エリア指定と座標指定で異なるパラメータを追加
+            if middle_area:
+                # エリア指定モード: middle_area コードを使用
+                params['middle_area'] = middle_area
+                # large_area (東京) も指定すると検索精度が上がる
+                params['large_area'] = 'Z011'  # 東京都
+            else:
+                # 座標指定モード: lat/lon/range を使用
+                params['lat'] = lat                    # 緯度
+                params['lng'] = lon                    # 経度（Hot Pepper APIでは'lng'と表記）
+                params['range'] = self._convert_radius_to_range_code(radius)  # 検索範囲コード
             
             # 予算コードが指定されている場合は追加
             if budget_code:
@@ -185,8 +217,15 @@ class RestaurantService:
             # ランチフィルタが指定されている場合は追加
             if lunch is not None:
                 params['lunch'] = lunch
+            
+            # ジャンルコードが指定されている場合は追加
+            if genre_code:
+                params['genre'] = genre_code
 
-            print(f"レストラン検索API呼び出し: lat={lat}, lon={lon}, radius={radius}km, budget={budget_code}, lunch={lunch}")
+            if middle_area:
+                print(f"レストラン検索API呼び出し: middle_area={middle_area}, budget={budget_code}, lunch={lunch}, genre={genre_code}")
+            else:
+                print(f"レストラン検索API呼び出し: lat={lat}, lon={lon}, radius={radius}km, budget={budget_code}, lunch={lunch}, genre={genre_code}")
 
             # ====== ステップ5: Hot Pepper APIにHTTPリクエストを送信 ======
             # requests.get() でAPIサーバーにアクセス
@@ -301,7 +340,7 @@ class RestaurantService:
         print(f"予算フィルタリング: {len(restaurants)}件 → {len(filtered_restaurants)}件 (≤¥{max_budget})")
         return filtered_restaurants
 
-    def search_lunch_restaurants(self, lat: float, lon: float, radius: int = 1) -> List[Dict]:
+    def search_lunch_restaurants(self, lat: float = None, lon: float = None, radius: int = 1, genre_code: str = None, middle_area: str = None) -> List[Dict]:
         """
         ランチに適したレストランを検索（予算フィルタリング込み）
         
@@ -312,17 +351,24 @@ class RestaurantService:
         実質的に「近くて安いランチのお店を探す」ための便利関数です。
 
         Args:
-            lat (float): 緯度（例: 35.6812 = 東京駅付近）
-            lon (float): 経度（例: 139.7671 = 東京駅付近）
+            lat (float, optional): 緯度（例: 35.6812 = 東京駅付近）
+                - middle_area 指定時は不要
+            lon (float, optional): 経度（例: 139.7671 = 東京駅付近）
+                - middle_area 指定時は不要
             radius (int): 検索半径(km)、デフォルトは1km
                 - 1km = 徒歩約12〜15分の距離
+                - middle_area 指定時は無視される
+            genre_code (str, optional): Hot Pepperジャンルコード（例: "G007"）
+                - None の場合はジャンルフィルタなし
+            middle_area (str, optional): Hot Pepperエリアコード（例: "Y005"）
+                - 指定時は lat/lon/radius は使用されない
 
         Returns:
             list: ランチに適したレストラン情報のリスト
                 - 予算1200円以下のお店のみ含まれる
         """
         # ステップ1: 全レストランを検索（予算関係なく周辺のお店を全部取得）
-        all_restaurants = self.search_restaurants(lat, lon, radius)
+        all_restaurants = self.search_restaurants(lat, lon, radius, genre_code=genre_code, middle_area=middle_area)
 
         # ステップ2: 予算でフィルタリング（1200円以下だけ残す）
         lunch_restaurants = self.filter_by_budget(all_restaurants, self.LUNCH_BUDGET_LIMIT)

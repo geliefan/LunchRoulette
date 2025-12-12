@@ -200,118 +200,279 @@ def roulette():
     """
     ランチルーレット機能（レストランをランダムに選ぶ機能）
     
+    【このエンドポイントがやること】
     「ルーレットを回す」ボタンが押された時に実行されます。
+    まるでルーレットを回すように、条件に合ったお店の中から
+    ランダムに1つのお店を選んで、詳細情報を返します。
     
-    処理の流れ:
-    1. ユーザーの現在地を確認
-    2. 現在地から半径1km以内のレストランを検索
-    3. 予算1200円以下のお店に絞り込み
-    4. その中からランダムに1つのお店を選ぶ
-    5. お店までの距離と徒歩時間を計算
-    6. 結果をJSON形式で返す（JavaScriptが受け取る）
+    【処理の流れ（全体像）】
+    ┌─────────────┐
+    │1. 現在地を確認  │
+    └────┬────────┘
+         ↓
+    ┌─────────────┐
+    │2. お店を検索   │（半径1km、予算1200円以下など）
+    └────┬────────┘
+         ↓
+    ┌─────────────┐
+    │3. ランダムに選ぶ│（ルーレット！）
+    └────┬────────┘
+         ↓
+    ┌─────────────┐
+    │4. 距離を計算   │（徒歩〇分）
+    └────┬────────┘
+         ↓
+    ┌─────────────┐
+    │5. 結果を返す   │（JSON形式でブラウザへ）
+    └─────────────┘
+    
+    【返すデータ】
+    - 成功時: お店の情報（名前、住所、予算、写真、距離、徒歩時間など）
+    - 失敗時: エラーメッセージ（お店が見つからない、など）
     
     Returns:
-        JSON形式のデータ:
-        - 成功時: レストラン情報、距離、天気情報
-        - 失敗時: エラーメッセージ
+        JSON形式のデータ（JavaScriptが受け取ってブラウザに表示）
     """
     try:
-        # ===== ステップ1: 必要な部品（サービスクラス）を準備 =====
-        from .services.location_service import LocationService      # 位置情報取得
-        from .services.weather_service import WeatherService        # 天気情報取得
-        from .services.restaurant_service import RestaurantService  # レストラン検索
-        from .utils.restaurant_selector import RestaurantSelector   # レストラン選択
-        from .utils.distance_calculator import DistanceCalculator   # 距離計算
+        # ========================================
+        # ステップ1: 必要な部品（サービスクラス）を準備
+        # ========================================
+        # それぞれの部品（モジュール）を読み込む
+        from .services.location_service import LocationService      # 位置情報取得部品
+        from .services.weather_service import WeatherService        # 天気情報取得部品
+        from .services.restaurant_service import RestaurantService  # レストラン検索部品
+        from .utils.restaurant_selector import RestaurantSelector   # レストラン選択部品（ルーレット）
+        from .utils.distance_calculator import DistanceCalculator   # 距離計算部品
 
-        # 各サービスのインスタンスを作成（実際に使えるようにする）
+        # 各部品のインスタンスを作成（実際に使えるようにする）
+        # インスタンス = クラスを実際に使える状態にしたもの
         location_service = LocationService(cache_service)
         weather_service = WeatherService(cache_service=cache_service)
         restaurant_service = RestaurantService(cache_service=cache_service)
         distance_calculator = DistanceCalculator(error_handler)
         restaurant_selector = RestaurantSelector(distance_calculator, error_handler)
 
-        # ===== ステップ2: ブラウザから送られてきたデータを取得 =====
-        # JavaScriptから送られてくるJSON形式のデータを受け取る
+        # ========================================
+        # ステップ2: ブラウザから送られてきたデータを取得
+        # ========================================
+        # ユーザーがブラウザで指定した条件（位置、予算、ジャンルなど）を受け取る
+        # JavaScriptから送られてくるJSON形式のデータを辞書型に変換
         request_data = request.get_json() or {}
 
-        # ===== ステップ3: ユーザーの位置情報を取得 =====
-        # 2つの方法で位置情報を取得できます
-        if 'latitude' in request_data and 'longitude' in request_data:
-            # 方法1: ブラウザのGPS機能から送られてきた位置情報を使用
-            user_lat = float(request_data['latitude'])   # 緯度
-            user_lon = float(request_data['longitude'])  # 経度
-            print(f"ブラウザのGPSから位置情報を取得: 緯度{user_lat}, 経度{user_lon}")
-        else:
-            # 方法2: IPアドレスから位置情報を推測
-            client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
-            if client_ip and ',' in client_ip:
-                client_ip = client_ip.split(',')[0].strip()
-
-            location_data = location_service.get_location_from_ip(client_ip)
-            user_lat = location_data['latitude']
-            user_lon = location_data['longitude']
-            print(f"IPアドレスから位置情報を取得: 緯度{user_lat}, 経度{user_lon}")
-
-        # ===== ステップ3.5: 検索条件パラメータを取得 =====
-        # 徒歩時間（分）を取得（デフォルト: 10分）
-        max_walking_time = request_data.get('max_walking_time_min', 10)
+        # ========================================
+        # ステップ3: 検索条件を整理する
+        # ========================================
+        # 【検索条件の種類】
+        # 1. location_mode: 現在地モード or エリア指定モード
+        # 2. budget_code: 予算（例: B010 = 1000円以下）
+        # 3. lunch_filter: ランチ営業しているか（1=Yes, 0=No）
+        # 4. genre_code: ジャンル（例: G001 = 居酒屋）
         
-        # 予算コードを取得（デフォルト: None = すべての予算）
-        budget_code = request_data.get('budget_code', None)
+        location_mode = request_data.get('location_mode', 'current')  # デフォルトは現在地モード
+        budget_code = request_data.get('budget_code', None)  # Noneなら予算制限なし
+        lunch_filter = request_data.get('lunch', 1)  # デフォルトはランチ営業中のみ
+        genre_code = request_data.get('genre_code', None)  # Noneなら全ジャンル
         
-        # ランチフィルタを取得（デフォルト: 1 = ランチあり）
-        lunch_filter = request_data.get('lunch', 1)
+        # 空文字列が送られてきた場合はNoneに変換
+        if genre_code == '':
+            genre_code = None
         
-        print(f"検索条件: 徒歩{max_walking_time}分以内, 予算={budget_code or 'すべて'}, ランチ={lunch_filter}")
+        # ========================================
+        # ステップ4: 検索モードに応じて処理を分岐
+        # ========================================
+        # location_mode に応じて2つの処理に分かれます
+        
+        if location_mode == 'area':
+            # ===== パターンA: エリア指定モード =====
+            # 「渋谷周辺」「新宿周辺」のようにエリアで検索
+            # 現在地が不明な場合や、別のエリアを探したい時に使います
+            
+            middle_area_code = request_data.get('middle_area_code')
+            
+            # エリアコードが指定されていない場合はエラー
+            if not middle_area_code:
+                return jsonify({
+                    'success': False,
+                    'message': 'エリアを選択してください。',
+                    'suggestion': 'エリア選択から検索したいエリアを指定してください。'
+                }), 400
+            
+            print(f"エリア指定モード: middle_area={middle_area_code}, 予算={budget_code or 'すべて'}, ランチ={lunch_filter}, ジャンル={genre_code or 'すべて'}")
+            
+            # エリアモードでは天気情報は取得しない
+            # 理由: エリアが広すぎて、どの地点の天気か特定できないため
+            # デフォルトの天気情報（晴れ、20度）を使用
+            weather_data = {
+                'temperature': 20.0,
+                'description': '晴れ',
+                'uv_index': 3.0,
+                'condition': 'sunny',
+                'source': 'default'
+            }
+            
+            # エリアベースでレストランを検索
+            restaurants = restaurant_service.search_restaurants(
+                middle_area=middle_area_code,  # エリアコード（例: Y055 = 渋谷）
+                budget_code=budget_code,       # 予算コード
+                lunch=lunch_filter,            # ランチ営業フィルタ
+                genre_code=genre_code          # ジャンルコード
+            )
+            
+            # エリアモードでは距離計算ができない
+            # 理由: ユーザーの正確な位置がわからないため
+            user_lat = None
+            user_lon = None
+            
+        elif location_mode == 'current':
+            # ===== パターンB: 現在地モード（GPSや位置情報を使う）=====
+            # 「今いる場所の近く」を探す場合に使います
+            
+            # 徒歩時間の上限（分）を取得（デフォルト: 10分）
+            # 例: 10分なら徒歩10分以内のお店だけを検索
+            max_walking_time = request_data.get('max_walking_time_min', 10)
+            
+            # ユーザーの現在位置（緯度・経度）を取得する
+            # 2つの方法があります:
+            #   方法1: ブラウザのGPS機能から取得（精度が高い）
+            #   方法2: IPアドレスから推測（精度は低いが、GPSなしでも使える）
+            
+            if 'latitude' in request_data and 'longitude' in request_data:
+                # 方法1: ブラウザのGPS機能から送られてきた位置情報を使用
+                # JavaScriptのgeolocation APIで取得した座標
+                user_lat = float(request_data['latitude'])   # 緯度（北緯35度など）
+                user_lon = float(request_data['longitude'])  # 経度（東経139度など）
+                print(f"ブラウザのGPSから位置情報を取得: 緯度{user_lat}, 経度{user_lon}")
+            else:
+                # 方法2: IPアドレスから位置情報を推測
+                # GPS機能が使えない場合の代替手段
+                # 精度は低い（市区町村レベル）が、おおよその位置はわかる
+                client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+                # プロキシ経由の場合、複数のIPが含まれるので最初のものを使用
+                if client_ip and ',' in client_ip:
+                    client_ip = client_ip.split(',')[0].strip()
 
-        # ===== ステップ4: 現在の天気情報を取得 =====
-        # 結果に天気情報も含めるため、天気APIを呼び出す
-        weather_data = weather_service.get_current_weather(user_lat, user_lon)
+                location_data = location_service.get_location_from_ip(client_ip)
+                user_lat = location_data['latitude']
+                user_lon = location_data['longitude']
+                print(f"IPアドレスから位置情報を取得: 緯度{user_lat}, 経度{user_lon}")
+            
+            print(f"現在地モード: 徒歩{max_walking_time}分以内, 予算={budget_code or 'すべて'}, ランチ={lunch_filter}, ジャンル={genre_code or 'すべて'}")
+            
+            # ===== ステップ4: 現在の天気情報を取得 =====
+            # 結果に天気情報も含めるため、天気APIを呼び出す
+            weather_data = weather_service.get_current_weather(user_lat, user_lon)
 
-        # ===== ステップ5: 近くのレストランを検索 =====
-        # 徒歩時間をrangeコードに変換
-        search_range = restaurant_service.walking_time_to_range(max_walking_time)
-        
-        # 条件:
-        # - 徒歩時間内（rangeコードに変換）
-        # - 予算コード指定（ある場合）
-        # - ランチフィルタ
-        restaurants = restaurant_service.search_restaurants(
-            user_lat, 
-            user_lon, 
-            radius=search_range,
-            budget_code=budget_code,
-            lunch=lunch_filter
-        )
+            # ===== ステップ5: 近くのレストランを検索 =====
+            # 徒歩時間をrangeコードに変換
+            search_range = restaurant_service.walking_time_to_range(max_walking_time)
+            
+            # 条件:
+            # - 徒歩時間内（rangeコードに変換）
+            # - 予算コード指定（ある場合）
+            # - ランチフィルタ
+            # - ジャンルコード指定（ある場合）
+            restaurants = restaurant_service.search_restaurants(
+                user_lat, 
+                user_lon, 
+                radius=search_range,
+                budget_code=budget_code,
+                lunch=lunch_filter,
+                genre_code=genre_code
+            )
         
         print(f"検索結果: {len(restaurants)}件のレストランが見つかりました")
 
         # ===== ステップ6: レストランが見つからなかった場合の処理 =====
         if not restaurants:
-            # エラー情報を作成
-            no_restaurant_error = ValueError("近くにレストランが見つかりませんでした")
-            error_info = error_handler.handle_restaurant_error(no_restaurant_error, fallback_available=False)
+            # 検索条件に応じたメッセージを作成
+            conditions = []
+            if genre_code:
+                # ジャンル名を取得（genres.jsonから）
+                import json
+                genres_file = package_dir / 'data' / 'genres.json'
+                try:
+                    with open(genres_file, 'r', encoding='utf-8') as f:
+                        genres_data = json.load(f)
+                    genre_name = next((g['name'] for g in genres_data['genres'] if g['code'] == genre_code), 'ジャンル指定')
+                    conditions.append(f'「{genre_name}」')
+                except:
+                    conditions.append('指定されたジャンル')
+            
+            if budget_code:
+                budget_names = {
+                    'B009': '〜500円',
+                    'B010': '〜1000円',
+                    'B011': '〜1500円',
+                    'B001': '〜2000円',
+                    'B002': '〜3000円'
+                }
+                budget_name = budget_names.get(budget_code, '指定された予算')
+                conditions.append(f'予算{budget_name}')
+            
+            # 現在地モードの場合のみ徒歩時間を追加
+            if location_mode == 'current':
+                conditions.append(f'徒歩{max_walking_time}分以内')
+            
+            conditions_text = '、'.join(conditions)
+            message = f'{conditions_text}の条件に該当するお店が見つかりませんでした。'
+            suggestion = '条件を緩めて再度お試しください。'
 
             # エラーメッセージをJSON形式で返す
-            # JSON = JavaScript Object Notation = データをやり取りする標準的な形式
-            return jsonify({
+            response = {
                 'success': False,
-                'error_info': error_info,
-                'message': error_info['message'],
-                'suggestion': error_info['suggestion'],
-                'weather': {
+                'message': message,
+                'suggestion': suggestion
+            }
+            
+            # 現在地モードの場合は天気情報も含める
+            if location_mode == 'current':
+                response['weather'] = {
                     'description': weather_data['description'],
                     'temperature': weather_data['temperature'],
                     'is_good_walking_weather': weather_service.is_good_weather_for_walking(user_lat, user_lon)
                 }
-            })
+            
+            return jsonify(response)
 
         # ===== ステップ7: 見つかったレストランの中からランダムに1つ選ぶ =====
-        # restaurant_selector.select_random_restaurant が以下を実行:
-        # 1. リストからランダムに1つのレストランを選択
-        # 2. そのレストランまでの距離と徒歩時間を計算
-        # 3. 距離情報をレストラン情報に追加
-        selected_restaurant = restaurant_selector.select_random_restaurant(restaurants, user_lat, user_lon)
+        # エリアモードと現在地モードで処理を分岐
+        if location_mode == 'area':
+            # エリアモード: 距離計算なしでランダム選択
+            import random
+            selected = random.choice(restaurants)
+            
+            # display_info を生成（距離情報なし）
+            budget_avg = selected.get('budget_average', 0)
+            if budget_avg <= 0:
+                budget_display = '予算不明'
+            elif budget_avg <= 500:
+                budget_display = '〜500円'
+            elif budget_avg <= 1000:
+                budget_display = '〜1000円'
+            elif budget_avg <= 1500:
+                budget_display = '〜1500円'
+            elif budget_avg <= 2000:
+                budget_display = '〜2000円'
+            else:
+                budget_display = f'{budget_avg}円〜'
+            
+            selected_restaurant = selected.copy()
+            selected_restaurant['display_info'] = {
+                'budget_display': budget_display,
+                'photo_url': selected.get('photo', ''),
+                'hotpepper_url': selected.get('urls', {}).get('pc', ''),
+                'map_url': f"https://www.google.com/maps/search/?api=1&query={selected.get('lat', 0)},{selected.get('lng', 0)}",
+                'summary': selected.get('catch', selected.get('name', '')),
+                'access_display': selected.get('access', '').strip() or 'アクセス情報なし',
+                'hours_display': selected.get('open', '').strip() or '営業時間情報なし'
+            }
+        else:
+            # 現在地モード: 距離計算ありでランダム選択
+            # restaurant_selector.select_random_restaurant が以下を実行:
+            # 1. リストからランダムに1つのレストランを選択
+            # 2. そのレストランまでの距離と徒歩時間を計算
+            # 3. 距離情報をレストラン情報に追加
+            selected_restaurant = restaurant_selector.select_random_restaurant(restaurants, user_lat, user_lon)
 
         # ===== ステップ8: レストラン選択に失敗した場合の処理 =====
         if not selected_restaurant:
@@ -319,17 +480,22 @@ def roulette():
             selection_error = ValueError("レストラン選択中にエラーが発生しました")
             error_info = error_handler.handle_restaurant_error(selection_error, fallback_available=False)
 
-            return jsonify({
+            response = {
                 'success': False,
                 'error_info': error_info,
                 'message': error_info['message'],
-                'suggestion': error_info['suggestion'],
-                'weather': {
+                'suggestion': error_info['suggestion']
+            }
+            
+            # 現在地モードの場合は天気情報も含める
+            if location_mode == 'current':
+                response['weather'] = {
                     'description': weather_data['description'],
                     'temperature': weather_data['temperature'],
                     'is_good_walking_weather': weather_service.is_good_weather_for_walking(user_lat, user_lon)
                 }
-            })
+            
+            return jsonify(response)
 
         # ===== ステップ9: 成功時のレスポンスデータを作成 =====
         # ブラウザのJavaScriptに返すデータを整理
@@ -353,36 +519,40 @@ def roulette():
                 'hours': selected_restaurant['display_info']['hours_display']             # 営業時間
             },
             
-            # 距離情報
-            'distance': {
+            # 検索情報（参考データ）
+            'search_info': {
+                'total_restaurants_found': len(restaurants),   # 見つかったレストランの総数
+                'max_budget': restaurant_service.LUNCH_BUDGET_LIMIT  # 最大予算（1200円）
+            }
+        }
+        
+        # 現在地モードの場合のみ距離情報と天気情報を追加
+        if location_mode == 'current':
+            response_data['distance'] = {
                 'distance_km': selected_restaurant['distance_info']['distance_km'],              # 距離（km）
                 'distance_display': selected_restaurant['distance_info']['distance_display'],    # 距離表示用
                 'walking_time_minutes': selected_restaurant['distance_info']['walking_time_minutes'],  # 徒歩時間（分）
                 'time_display': selected_restaurant['distance_info']['time_display']             # 時間表示用
-            },
+            }
             
-            # 天気情報
-            'weather': {
+            response_data['weather'] = {
                 'description': weather_data['description'],    # 天気の説明
                 'temperature': weather_data['temperature'],    # 気温
                 'uv_index': weather_data['uv_index'],          # UV指数
                 'is_good_walking_weather': weather_service.is_good_weather_for_walking(user_lat, user_lon),  # 歩くのに良い天気か
                 'icon': weather_data['icon']                   # 天気アイコン
-            },
-            
-            # 検索情報（参考データ）
-            'search_info': {
-                'total_restaurants_found': len(restaurants),   # 見つかったレストランの総数
-                'search_radius_km': 1,                         # 検索半径（1km）
-                'max_budget': restaurant_service.LUNCH_BUDGET_LIMIT,  # 最大予算（1200円）
-                'user_location': {
-                    'latitude': user_lat,                      # ユーザーの緯度
-                    'longitude': user_lon                      # ユーザーの経度
-                }
             }
-        }
+            
+            response_data['search_info']['search_radius_km'] = 1  # 検索半径（1km）
+            response_data['search_info']['user_location'] = {
+                'latitude': user_lat,                      # ユーザーの緯度
+                'longitude': user_lon                      # ユーザーの経度
+            }
+            
+            print(f"ルーレット成功（現在地モード）: {selected_restaurant['name']} ({selected_restaurant['distance_info']['distance_display']})")
+        else:
+            print(f"ルーレット成功（エリアモード）: {selected_restaurant['name']}")
 
-        print(f"ルーレット成功: {selected_restaurant['name']} ({selected_restaurant['distance_info']['distance_display']})")
 
         # ===== ステップ10: 結果をJSON形式で返す =====
         # このデータがブラウザのJavaScriptに送られ、画面に表示されます
@@ -417,6 +587,95 @@ def roulette():
             'error_info': user_message,
             'message': user_message['message'],
             'suggestion': user_message['suggestion']
+        }), 500
+
+
+@app.route('/api/genres', methods=['GET'])
+def get_genres():
+    """
+    ジャンルマスタデータを取得するAPIエンドポイント
+    
+    フロントエンドでジャンル選択UIを表示するために使用します。
+    genres.jsonファイルからジャンルデータを読み込んで返します。
+    
+    Returns:
+        JSON形式のデータ:
+        - success: 成功フラグ
+        - genres: ジャンルリスト
+    """
+    try:
+        import json
+        
+        # ジャンルマスタファイルのパスを取得
+        genres_file = package_dir / 'data' / 'genres.json'
+        
+        # ファイルが存在しない場合はエラー
+        if not genres_file.exists():
+            return jsonify({
+                'success': False,
+                'error': 'ジャンルマスタファイルが見つかりません'
+            }), 404
+        
+        # ジャンルマスタファイルを読み込み
+        with open(genres_file, 'r', encoding='utf-8') as f:
+            genres_data = json.load(f)
+        
+        return jsonify({
+            'success': True,
+            'genres': genres_data['genres']
+        })
+    
+    except Exception as e:
+        app.logger.error(f'ジャンルマスタ取得でエラー: {str(e)}')
+        return jsonify({
+            'success': False,
+            'error': 'ジャンルマスタの取得に失敗しました'
+        }), 500
+
+
+@app.route('/api/areas', methods=['GET'])
+def get_areas():
+    """
+    エリアマスタデータを取得するAPIエンドポイント
+    
+    フロントエンドでエリア選択UIを表示するために使用します。
+    areas_tokyo.jsonファイルからエリアデータを読み込んで返します。
+    
+    Returns:
+        JSON形式のデータ:
+        - success: 成功フラグ
+        - areas: エリアリスト（large_area配下のmiddle_areas）
+    """
+    try:
+        import json
+        
+        # エリアマスタファイルのパスを取得
+        areas_file = package_dir / 'data' / 'areas_tokyo.json'
+        
+        # ファイルが存在しない場合はエラー
+        if not areas_file.exists():
+            return jsonify({
+                'success': False,
+                'error': 'エリアマスタファイルが見つかりません'
+            }), 404
+        
+        # エリアマスタファイルを読み込み
+        with open(areas_file, 'r', encoding='utf-8') as f:
+            areas_data = json.load(f)
+        
+        # middle_areasを取得（データ構造: { "large_area_code": "Z011", "large_area_name": "東京", "middle_areas": [...] }）
+        middle_areas = areas_data['middle_areas']
+        
+        return jsonify({
+            'success': True,
+            'areas': middle_areas
+        })
+    
+    except Exception as e:
+        app.logger.error(f'エリアマスタ取得でエラー: {str(e)}')
+        return jsonify({
+            'success': False,
+            'error': 'エリアマスタの取得に失敗しました'
         }), 500
 
 

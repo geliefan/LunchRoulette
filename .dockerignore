@@ -1,0 +1,66 @@
+# Dockerイメージに含めないファイル・ディレクトリ
+
+# 仮想環境
+.venv/
+venv/
+env/
+
+# Pythonキャッシュ
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# テスト・カバレッジ
+tests/
+htmlcov/
+.coverage
+.pytest_cache/
+*.coverage
+
+# 開発ツール設定
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# ドキュメント
+docs/
+*.md
+!requirements.txt
+!requirements-dev.txt
+
+# 環境設定ファイル
+.env
+.env.*
+*.env
+
+# データベース（ローカル開発用）
+*.db
+cache.db
+
+# ログ
+*.log
+
+# OS固有
+.DS_Store
+Thumbs.db
+
+# その他
+htmlcov/
+config/
+this_repo_is_ssg
+fix_test_patches.sh
+run_tests.sh
+*.sh
+pyproject.toml
+PYTEST_FIXES.md
+RESTRUCTURE_SUMMARY.md
+test_*.md

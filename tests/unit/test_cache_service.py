@@ -271,8 +271,7 @@ class TestCacheService:
             # デフォルトTTL（300秒）が使用されることを確認
             call_args = mock_conn.execute.call_args[0]
             # 有効期限が現在時刻 + 300秒程度になっていることを確認
-            expires_at_str = call_args[1][2]  # expires_at パラメータ
-            expires_at = datetime.fromisoformat(expires_at_str)
+            expires_at = call_args[1][2]  # expires_at パラメータ (datetime object)
             expected_expires = datetime.now() + timedelta(seconds=300)
 
             # 実行時間の誤差を考慮して±10秒以内で確認
